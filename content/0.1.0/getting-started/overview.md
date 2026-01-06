@@ -16,37 +16,37 @@ AI is advancing in two places: models and agents. Models are self-evident: the L
 
 Agents are software responsible for utilizing one or more LLMs to achieve an objective given to it by its creator: coding, watering plants, or trading oil futures. Fundamentally, agents are deterministic software that harnesses the non-deterministic results produced by LLMs in pursuit of a business objective.
 
-General-purpose agents, like ChatGPT, have limited utility. They cannot power the internal workings of a business without exposure to custom external tooling that interfaces with a business's surface area. Software engineers already use coding agents like Claude Code, Cursor, or Opencode (custom, domain-specific agents) even though the underlying model are often the same as ChatGPT or Claude.
+General-purpose agents, like ChatGPT, have broad but limited utility. They cannot power the internal workings of a business without exposure to custom external tooling that interfaces with a business's surface area. The answer isn't Model Context Protocol (MCP) it's domain specific agents (DSAs). Software engineers already use DSAs: coding agents. Claude Code, Cursor, or Opencode (custom, domain-specific agents) are all examples of agents that are more useful for software engineers than ChatGPT or Claude — despite using the same models.
 
-The truth is purpose-built agents yield far better results in their given domain than general-purpose agents. Despite the religious fervor of those proclaiming AGI is close at hand domain-specific agents (DSAs) are here to stay. The obvious next question is one Standard Agents exists to answer: How do you create a domain-specific agent?
+The truth is purpose-built agents yield far better results in their given domain than general-purpose agents. Despite the religious fervor of those proclaiming AGI is close at hand domain-specific agents (DSAs) are here to stay. Standard Agents exists to answer the obvious next question: How do you create a domain-specific agent?
 
 ## How
 
 The Standard Agents Specification defines the minimal set of parts required to create any agent. Those parts are:
 
-1. A model
-2. A prompt
-3. Agent rules
+- A model
+- A prompt
+- Agent rules
 
 Typically, Standard Agents also implement:
 
-4. Tools
-5. Hooks
-6. Endpoints
+- Tools
+- Hooks
+- Endpoints
 
 These six constituent parts define all Standard Agents and are capable of creating any agentic system.
 
 Standard Agents also defines a runtime: TypeScript. There is no need to run a full MCP server just to implement a custom tool. Models, prompts, rules, tools, hooks, and endpoints are all written in TypeScript. Defining a runtime has many benefits:
 
-1. Tools can be executed directly.
-2. Type safety between component parts.
-3. Agents can be distributed via package manager.
-4. Agents can be easily written with coding agents.
-5. Tools can directly access the runtime state.
+- Tools can be executed directly.
+- Type safety between component parts.
+- Agents can be distributed via package manager.
+- Agents can be easily written with coding agents.
+- Tools can directly access the runtime state.
 
 Combined these constraints provide us with a highly reproducible environment in which fine-tuned agents can be executed and interop with other agents.
 
-Instead of installing an MCP server for Gmail and expecting a model to sort out all of those tools from all of the tools in the Shopify MCP server Standard Agents suggests having a purpose built Gmail Standard Agent that is purpose built to work with gmail. That allows all the tools, prompting, and model-specific configuration to be encapsulated, distributed, and composed with other agents.
+Instead of installing an MCP server for Gmail and expecting a model to sort out all its tools from all of the tools in the Shopify MCP server Standard Agents suggests having a purpose built Gmail Standard Agent that allows all the tools, prompting, and model-specific configuration to be encapsulated, distributed, and composed with other agents.
 
 ## Who, When, and Where
 
