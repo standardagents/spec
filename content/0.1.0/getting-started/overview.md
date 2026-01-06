@@ -36,7 +36,7 @@ Typically, Standard Agents also implement:
 
 These six constituent parts define all Standard Agents and are capable of creating any agentic system.
 
-Standard Agents also defines a runtime: TypeScript. There is no need to run a full MCP server just to implement a custom tool. Models, prompts, rules, tools, hooks, and endpoints are all written in TypeScript. Defining a runtime has many bennefits:
+Standard Agents also defines a runtime: TypeScript. There is no need to run a full MCP server just to implement a custom tool. Models, prompts, rules, tools, hooks, and endpoints are all written in TypeScript. Defining a runtime has many benefits:
 
 1. Tools can be executed directly.
 2. Type safety between component parts.
@@ -44,7 +44,7 @@ Standard Agents also defines a runtime: TypeScript. There is no need to run a fu
 4. Agents can be easily written with coding agents.
 5. Tools can directly access the runtime state.
 
-Combined these constraints provide us with a highly reproducable environment in which fine-tuned agents can be executed and interop with other agents.
+Combined these constraints provide us with a highly reproducible environment in which fine-tuned agents can be executed and interop with other agents.
 
 Instead of installing an MCP server for Gmail and expecting a model to sort out all of those tools from all of the tools in the Shopify MCP server Standard Agents suggests having a purpose built Gmail Standard Agent that is purpose built to work with gmail. That allows all the tools, prompting, and model-specific configuration to be encapsulated, distributed, and composed with other agents.
 
