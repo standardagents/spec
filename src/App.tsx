@@ -1,8 +1,17 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { Layout } from './components/Layout'
 import { DocPage } from './pages/DocPage'
 import { latestVersion, getDefaultPage } from './lib/content'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
 
 // Get default page for redirect
 const defaultPage = getDefaultPage(latestVersion)
@@ -14,6 +23,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Layout routes */}
           <Route element={<Layout />}>

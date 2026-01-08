@@ -148,6 +148,7 @@ export function Header() {
               </button>
               {/* Hamburger - mobile only */}
               <button
+                type="button"
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 lg:hidden"
               >
@@ -160,7 +161,7 @@ export function Header() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="fixed inset-0 top-16 z-40 bg-gray-50 dark:bg-gray-900 lg:hidden">
+        <div className="fixed top-16 right-0 bottom-0 left-0 z-40 bg-gray-50 dark:bg-gray-900 lg:hidden">
           <div className="h-full overflow-y-auto px-4 py-6">
             {/* Version selector */}
             <div className="mb-6">

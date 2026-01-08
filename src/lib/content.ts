@@ -36,6 +36,9 @@ const groupTitles: Record<string, string> = {
 // Group ordering
 const groupOrder = ['getting-started', 'specification', 'infrastructure', 'distribution']
 
+// Explicit page ordering within specification group (primitives → complex)
+const specOrder = ['providers', 'models', 'tools', 'prompts', 'agents', 'threads', 'hooks']
+
 // Parse all content into versioned structure
 const versionedContent: VersionedContent = {}
 
@@ -107,10 +110,22 @@ export function getNavigation(version: string): NavGroup[] {
       href: `/${version}/${group}/${slug}`,
     }))
 
-    // Sort items alphabetically, but keep 'overview' first
+    // Sort items: 'overview' first, then by explicit order (for specification), then alphabetically
     items.sort((a, b) => {
       if (a.slug === 'overview') return -1
       if (b.slug === 'overview') return 1
+
+      // Use explicit ordering for specification group
+      if (group === 'specification') {
+        const aIndex = specOrder.indexOf(a.slug)
+        const bIndex = specOrder.indexOf(b.slug)
+        // If both are in specOrder, sort by that order
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
+        // If only one is in specOrder, it comes first
+        if (aIndex !== -1) return -1
+        if (bIndex !== -1) return 1
+      }
+
       return a.title.localeCompare(b.title)
     })
 

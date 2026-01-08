@@ -47,7 +47,7 @@ export function DocPage() {
         <PageActions content={content} />
       </div>
 
-      <Markdown>{bodyContent}</Markdown>
+      <Markdown compact={!isOverview}>{bodyContent}</Markdown>
 
       {isOverview && (
         <div className="mt-12">
