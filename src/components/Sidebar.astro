@@ -1,0 +1,45 @@
+---
+import { getNavigation } from '../lib/content'
+
+interface Props {
+  version: string
+  currentPath: string
+}
+
+const { version, currentPath } = Astro.props
+const navigation = await getNavigation(version)
+---
+
+<aside class="hidden w-56 flex-shrink-0 lg:block">
+  <div class="sticky top-24">
+    <nav class="space-y-6">
+      {navigation.map((group) => (
+        <div>
+          <h3 class="mb-2 font-label text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            {group.title}
+          </h3>
+          <ul class="space-y-1">
+            {group.items.map((item) => {
+              const isActive = currentPath === item.href
+              return (
+                <li>
+                  <a
+                    href={item.href}
+                    class:list={[
+                      'block rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+                    ]}
+                  >
+                    {item.title}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  </div>
+</aside>

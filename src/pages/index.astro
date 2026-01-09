@@ -1,0 +1,12 @@
+---
+import { getLatestVersion, getDefaultPage } from '../lib/content'
+
+const latestVersion = await getLatestVersion()
+const defaultPage = await getDefaultPage(latestVersion)
+
+const redirectUrl = defaultPage
+  ? `/${latestVersion}/${defaultPage.group}/${defaultPage.slug}`
+  : `/${latestVersion}`
+
+return Astro.redirect(redirectUrl)
+---

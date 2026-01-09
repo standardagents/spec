@@ -1,0 +1,57 @@
+---
+import { getCollection, render } from 'astro:content'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import Sidebar from '../../components/Sidebar.astro'
+import Header from '../../components/Header.tsx'
+
+export async function getStaticPaths() {
+  const docs = await getCollection('docs')
+  return docs.map(doc => {
+    const [version, ...rest] = doc.id.split('/')
+    const slug = rest.join('/')
+    return {
+      params: { version, slug },
+      props: { doc }
+    }
+  })
+}
+
+const { version, slug } = Astro.params
+const { doc } = Astro.props
+
+// Extract title from first H1
+const titleMatch = doc.body?.match(/^#\s+(.+)$/m)
+const pageTitle = titleMatch ? titleMatch[1] : 'Documentation'
+
+// Render the markdown content
+const { Content } = await render(doc)
+
+// Get current path for sidebar highlighting
+const currentPath = `/${version}/${slug}`
+
+// Extract the group from the slug
+const parts = slug?.split('/') || []
+const group = parts[0] || ''
+const isOverview = parts[parts.length - 1] === 'overview'
+---
+
+<BaseLayout title={`${pageTitle} - Standard Agent Specification`}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <Header
+      client:load
+      currentVersion={version}
+      currentGroup={group}
+      currentSlug={parts[parts.length - 1] || ''}
+    />
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex gap-8 py-8">
+        <Sidebar version={version!} currentPath={currentPath} />
+        <main class="min-w-0 flex-1 py-2">
+          <article class:list={['prose-content', { 'is-overview': isOverview }]}>
+            <Content />
+          </article>
+        </main>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

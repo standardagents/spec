@@ -1,0 +1,17 @@
+---
+import { getVersions, getDefaultPage } from '../../lib/content'
+
+export async function getStaticPaths() {
+  const versions = await getVersions()
+  return versions.map(version => ({ params: { version } }))
+}
+
+const { version } = Astro.params
+const defaultPage = await getDefaultPage(version!)
+
+const redirectUrl = defaultPage
+  ? `/${version}/${defaultPage.group}/${defaultPage.slug}`
+  : '/'
+
+return Astro.redirect(redirectUrl)
+---

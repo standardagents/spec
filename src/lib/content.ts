@@ -1,28 +1,9 @@
-// Load all markdown files across all versions at build time
-const contentModules = import.meta.glob(
-  '../../content/**/*.md',
-  { eager: true, query: '?raw', import: 'default' }
-) as Record<string, string>
-
-export interface PageInfo {
-  content: string
-  group: string
-  slug: string
-  title: string
-}
+import { getCollection, type CollectionEntry } from 'astro:content'
 
 export interface NavGroup {
   group: string
   title: string
   items: { slug: string; title: string; href: string }[]
-}
-
-interface VersionedContent {
-  [version: string]: {
-    [group: string]: {
-      [slug: string]: string
-    }
-  }
 }
 
 // Group title mapping
@@ -36,26 +17,8 @@ const groupTitles: Record<string, string> = {
 // Group ordering
 const groupOrder = ['getting-started', 'specification', 'infrastructure', 'distribution']
 
-// Explicit page ordering within specification group (primitives → complex)
+// Explicit page ordering within specification group (primitives -> complex)
 const specOrder = ['providers', 'models', 'tools', 'prompts', 'agents', 'threads', 'hooks']
-
-// Parse all content into versioned structure
-const versionedContent: VersionedContent = {}
-
-for (const [path, content] of Object.entries(contentModules)) {
-  // Path format: "../../content/0.1.0/specification/agents.md"
-  const match = path.match(/\.\.\/\.\.\/content\/([^/]+)\/([^/]+)\/([^/]+)\.md$/)
-  if (match) {
-    const [, version, group, slug] = match
-    if (!versionedContent[version]) {
-      versionedContent[version] = {}
-    }
-    if (!versionedContent[version][group]) {
-      versionedContent[version][group] = {}
-    }
-    versionedContent[version][group][slug] = content
-  }
-}
 
 // Sort versions (newest first using semver-like comparison)
 function compareVersions(a: string, b: string): number {
@@ -69,19 +32,6 @@ function compareVersions(a: string, b: string): number {
   return 0
 }
 
-export const versions = Object.keys(versionedContent).sort(compareVersions)
-export const latestVersion = versions[0] || '0.1.0'
-
-// Get content for a specific page
-export function getContent(version: string, group: string, slug: string): string | null {
-  return versionedContent[version]?.[group]?.[slug] || null
-}
-
-// Check if a page exists
-export function pageExists(version: string, group: string, slug: string): boolean {
-  return !!versionedContent[version]?.[group]?.[slug]
-}
-
 // Extract title from markdown (first H1)
 function extractTitle(content: string): string {
   const match = content.match(/^#\s+(.+)$/m)
@@ -93,22 +43,59 @@ function slugToTitle(slug: string): string {
   return slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
+// Get all versions from content collection
+export async function getVersions(): Promise<string[]> {
+  const docs = await getCollection('docs')
+  const versions = [...new Set(docs.map(d => d.id.split('/')[0]))]
+  return versions.sort(compareVersions)
+}
+
+// Get the latest version
+export async function getLatestVersion(): Promise<string> {
+  const versions = await getVersions()
+  return versions[0] || '0.1.0'
+}
+
+// Check if a page exists
+export async function pageExists(version: string, group: string, slug: string): Promise<boolean> {
+  const docs = await getCollection('docs')
+  const id = `${version}/${group}/${slug}`
+  return docs.some(d => d.id === id)
+}
+
 // Get navigation structure for a version
-export function getNavigation(version: string): NavGroup[] {
-  const versionContent = versionedContent[version]
-  if (!versionContent) return []
+export async function getNavigation(version: string): Promise<NavGroup[]> {
+  const docs = await getCollection('docs')
+  const versionDocs = docs.filter(d => d.id.startsWith(`${version}/`))
+
+  // Group documents by their group
+  const groupedDocs: Record<string, CollectionEntry<'docs'>[]> = {}
+  for (const doc of versionDocs) {
+    const parts = doc.id.split('/')
+    if (parts.length >= 3) {
+      const group = parts[1]
+      if (!groupedDocs[group]) {
+        groupedDocs[group] = []
+      }
+      groupedDocs[group].push(doc)
+    }
+  }
 
   const nav: NavGroup[] = []
 
   for (const group of groupOrder) {
-    const groupContent = versionContent[group]
-    if (!groupContent) continue
+    const groupDocs = groupedDocs[group]
+    if (!groupDocs || groupDocs.length === 0) continue
 
-    const items = Object.entries(groupContent).map(([slug, content]) => ({
-      slug,
-      title: extractTitle(content) || slugToTitle(slug),
-      href: `/${version}/${group}/${slug}`,
-    }))
+    const items = groupDocs.map(doc => {
+      const parts = doc.id.split('/')
+      const slug = parts[parts.length - 1]
+      return {
+        slug,
+        title: extractTitle(doc.body || '') || slugToTitle(slug),
+        href: `/${version}/${group}/${slug}`,
+      }
+    })
 
     // Sort items: 'overview' first, then by explicit order (for specification), then alphabetically
     items.sort((a, b) => {
@@ -140,10 +127,15 @@ export function getNavigation(version: string): NavGroup[] {
 }
 
 // Get the default page for a version (first page of first group)
-export function getDefaultPage(version: string): { group: string; slug: string } | null {
-  const nav = getNavigation(version)
+export async function getDefaultPage(version: string): Promise<{ group: string; slug: string } | null> {
+  const nav = await getNavigation(version)
   if (nav.length > 0 && nav[0].items.length > 0) {
     return { group: nav[0].group, slug: nav[0].items[0].slug }
   }
   return null
+}
+
+// Get all docs for generating static paths
+export async function getAllDocs() {
+  return await getCollection('docs')
 }

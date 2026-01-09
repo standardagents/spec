@@ -1,0 +1,48 @@
+---
+interface Props {
+  type?: 'tip' | 'note' | 'warning'
+}
+
+const { type = 'tip' } = Astro.props
+
+const styles = {
+  tip: {
+    container: 'border-blue-200 bg-blue-50/50 dark:border-blue-800/50 dark:bg-blue-950/30',
+    icon: 'text-blue-500 dark:text-blue-400',
+    text: 'text-blue-900 dark:text-blue-100',
+    code: 'bg-blue-100 dark:bg-blue-900/50'
+  },
+  note: {
+    container: 'border-blue-200 bg-blue-50/50 dark:border-blue-800/50 dark:bg-blue-950/30',
+    icon: 'text-blue-500 dark:text-blue-400',
+    text: 'text-blue-900 dark:text-blue-100',
+    code: 'bg-blue-100 dark:bg-blue-900/50'
+  },
+  warning: {
+    container: 'border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/30',
+    icon: 'text-amber-500 dark:text-amber-400',
+    text: 'text-amber-900 dark:text-amber-100',
+    code: 'bg-amber-100 dark:bg-amber-900/50'
+  }
+}
+
+const style = styles[type]
+---
+
+<div class={`mt-4 flex gap-3 rounded-xl border px-4 py-3 ${style.container}`}>
+  <div class="flex-shrink-0 pt-0.5">
+    {type === 'warning' ? (
+      <svg class={`h-5 w-5 ${style.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+      </svg>
+    ) : (
+      <svg class={`h-5 w-5 ${style.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10" />
+        <path stroke-linecap="round" d="M12 16v-4m0-4h.01" />
+      </svg>
+    )}
+  </div>
+  <div class={`text-sm ${style.text} [&>p]:mt-0 [&>p]:not-italic [&_code]:${style.code}`}>
+    <slot />
+  </div>
+</div>

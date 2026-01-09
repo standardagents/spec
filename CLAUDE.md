@@ -1,31 +1,47 @@
 # standardagentspec.com
 
-Standard Agent Specification website - documentation and manifesto for the Standard Agents spec.
+Standard Agent Specification website - documentation for the Standard Agents spec.
 
 ## Stack
 
-- React 19, Vite, TypeScript
+- Astro v5, TypeScript
 - Tailwind CSS v4
+- React 19 (islands for interactive components)
 - Cloudflare Pages (deploy via `wrangler pages deploy dist`)
 
 ## Commands
 
 ```bash
 pnpm dev      # Start dev server
-pnpm build    # Build for production
+pnpm build    # Build for production (static)
+pnpm preview  # Preview production build
 pnpm deploy   # Deploy to Cloudflare Pages
 ```
 
 ## Architecture
 
-### Content-Driven Pages
+### Content Collections
 
-Markdown files in `content/` are the **source of truth** for page content. They're imported as raw strings via Vite's `?raw` suffix and rendered with `react-markdown`.
+Markdown files in `content/` are loaded via Astro's Content Layer API. Version folders (e.g., `0.1.0/`) contain grouped documentation.
 
 ```
 content/
-├── manifesto-0.1.0.md    # Manifesto content
-└── ...                   # Future spec pages
+└── 0.1.0/
+    ├── getting-started/
+    │   └── overview.md
+    ├── specification/
+    │   ├── providers.md
+    │   ├── models.md
+    │   ├── tools.md
+    │   ├── prompts.md
+    │   ├── agents.md
+    │   ├── threads.md
+    │   └── hooks.md
+    ├── infrastructure/
+    │   ├── providers.md
+    │   └── runtime.md
+    └── distribution/
+        └── publishing.md
 ```
 
 ### Source Structure
@@ -33,37 +49,62 @@ content/
 ```
 src/
 ├── components/
-│   ├── Logo.tsx          # LogoMark and Logo SVG components
-│   └── Markdown.tsx      # Markdown renderer with custom styling
+│   ├── Header.tsx         # React island (mobile menu, version selector, theme)
+│   ├── Sidebar.astro      # Static navigation
+│   ├── Logo.astro         # Full wordmark SVG
+│   ├── LogoMark.astro     # Icon-only SVG
+│   └── mdx/
+│       └── Callout.astro  # Tip/Note/Warning callouts
+├── layouts/
+│   └── BaseLayout.astro   # Main HTML layout with theme script
+├── lib/
+│   └── content.ts         # Navigation helpers using getCollection
 ├── pages/
-│   └── Manifesto.tsx     # Imports and renders markdown
-├── App.tsx
-└── main.tsx
+│   ├── index.astro                    # Redirect to latest version
+│   ├── [...slug].md.ts                # Raw markdown endpoint
+│   ├── api/navigation/[version].json.ts
+│   └── [version]/
+│       ├── index.astro                # Redirect to default page
+│       └── [...slug].astro            # Dynamic doc pages
+├── styles/
+│   └── global.css         # Tailwind + prose styles
+└── content.config.ts      # Content collections definition
 ```
 
-### Markdown Rendering
+### React Islands
 
-The `<Markdown>` component provides:
-- **Lede styling**: First paragraph gets larger, muted text
-- **Custom typography**: Consistent heading, list, and link styles
-- **Code blocks**: Syntax-highlighted with dark theme
+Only `Header.tsx` uses client-side React (`client:load` directive) for:
+- Mobile menu toggle
+- Version dropdown
+- Theme toggle (calls `window.toggleTheme()`)
 
-Import markdown files with `?raw`:
-```tsx
-import content from '../../content/page.md?raw'
-<Markdown>{content}</Markdown>
-```
+All other components are static Astro components rendered at build time.
+
+### Theme System
+
+Dark/light mode is handled via inline script in BaseLayout (no React context):
+- Theme preference stored in localStorage
+- `html.dark` class toggles styles
+- `window.toggleTheme()` and `window.getTheme()` exposed globally
 
 ### Adding New Pages
 
-1. Create markdown in `content/`
-2. Create page component in `src/pages/` that imports it
-3. Add route in `App.tsx` (when routing is added)
+1. Create markdown file in `content/{version}/{group}/`
+2. First `# Heading` becomes the page title
+3. File automatically available at `/{version}/{group}/{slug}`
 
-## Logo Components
+Navigation order is controlled by the `NAV_ORDER` constant in `src/lib/content.ts`.
 
-From `src/components/Logo.tsx`:
-- `<LogoMark />` - Icon only (the "standard chart" symbol)
-- `<Logo />` - Full wordmark with icon
+### Callout Syntax
 
-Both use `fill="currentColor"` so they inherit text color via Tailwind classes like `text-gray-900`.
+Use blockquote callouts in markdown:
+
+```markdown
+> Note: Regular information callout
+
+> Tip: Helpful suggestion callout
+
+> Warning: Important warning callout
+```
+
+These render as styled callout boxes via the Callout.astro component.
