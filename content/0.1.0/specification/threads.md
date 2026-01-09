@@ -4,18 +4,25 @@
 
 ## 1. Thread Definition
 
-A thread represents an execution context with isolated storage for messages and files. ThreadState is the unified interface for all thread operations. It provides a consistent API for interacting with threads regardless of context - whether from tools during execution, hooks, or HTTP endpoints.
+A thread is an **instance** of an agent—the runtime execution context where conversations happen. Each thread has isolated storage for messages and files, and maintains its own conversation history.
 
-### 1.1 Design Principles
+### 1.1 Agent Assignment
 
-| Principle | Description |
-|-----------|-------------|
-| **Unified Interface** | Same ThreadState interface used everywhere |
-| **Context Awareness** | Execution state available when applicable |
-| **Platform Agnostic** | No implementation-specific details exposed |
-| **Minimal Surface** | Only essential operations included |
+The agent assigned to a thread can change over time while preserving all history and context. This is called a **handoff**.
 
-### 1.2 Access Contexts
+| Scenario | Behavior |
+|----------|----------|
+| **Tool handoff** | Calling an `ai_human` agent as a tool transfers control to that agent |
+| **Manual handoff** | Queue a tool call to an agent to trigger handoff programmatically |
+| **dual_ai execution** | Creates its own isolated thread instance (no handoff) |
+
+Handoffs enable workflows where specialized agents handle different parts of a conversation—a triage agent routes to support, support escalates to billing—all within the same thread with full context preserved.
+
+### 1.2 ThreadState Interface
+
+ThreadState is the unified interface for all thread operations. It provides a consistent API for interacting with threads regardless of context—whether from tools during execution, hooks, or HTTP endpoints.
+
+### 1.3 Access Contexts
 
 ThreadState is provided in different contexts:
 

@@ -122,28 +122,20 @@ function createComponents(theme: 'light' | 'dark', compact?: boolean): Component
       </div>
     ),
     blockquote: ({ children }) => {
-      // Check if this is a callout (Tip, Note, Warning, etc.)
-      const childArray = Array.isArray(children) ? children : [children]
-      const firstChild = childArray[0]
-
-      // Extract text content to check for callout pattern
-      let textContent = ''
-      if (firstChild && typeof firstChild === 'object' && 'props' in firstChild) {
-        const props = firstChild.props as { children?: React.ReactNode }
-        if (props.children) {
-          const innerChildren = Array.isArray(props.children) ? props.children : [props.children]
-          for (const child of innerChildren) {
-            if (typeof child === 'string') {
-              textContent += child
-            } else if (child && typeof child === 'object' && 'props' in child) {
-              const childProps = child.props as { children?: React.ReactNode }
-              if (typeof childProps.children === 'string') {
-                textContent += childProps.children
-              }
-            }
-          }
+      // Recursively extract all text content from a React node
+      const extractText = (node: React.ReactNode): string => {
+        if (typeof node === 'string') return node
+        if (typeof node === 'number') return String(node)
+        if (!node) return ''
+        if (Array.isArray(node)) return node.map(extractText).join('')
+        if (typeof node === 'object' && 'props' in node) {
+          const props = node.props as { children?: React.ReactNode }
+          return extractText(props.children)
         }
+        return ''
       }
+
+      const textContent = extractText(children).trim()
 
       // Check for callout patterns
       const tipMatch = textContent.match(/^💡\s*Tip:/i)
@@ -151,20 +143,69 @@ function createComponents(theme: 'light' | 'dark', compact?: boolean): Component
       const warnMatch = textContent.match(/^⚠️?\s*Warning:/i)
 
       if (tipMatch || noteMatch) {
+        // Strip the prefix (💡 Tip: or ℹ️ Note:) from the content
+        const stripPrefix = (node: React.ReactNode): React.ReactNode => {
+          if (!node) return node
+          if (Array.isArray(node)) {
+            return node.map((child, i) => i === 0 ? stripPrefix(child) : child)
+          }
+          if (typeof node === 'object' && 'props' in node) {
+            const props = node.props as { children?: React.ReactNode }
+            if (props.children) {
+              const newChildren = stripPrefix(props.children)
+              return { ...node, props: { ...props, children: newChildren } }
+            }
+          }
+          if (typeof node === 'string') {
+            return node.replace(/^💡\s*Tip:\s*/i, '').replace(/^ℹ️?\s*Note:\s*/i, '')
+          }
+          return node
+        }
+
         return (
-          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950">
-            <div className="text-sm text-blue-800 dark:text-blue-200 [&>p]:mt-0 [&>p]:not-italic">
-              {children}
+          <div className="mt-4 flex gap-3 rounded-xl border border-blue-200 bg-blue-50/50 px-4 py-3 dark:border-blue-800/50 dark:bg-blue-950/30">
+            <div className="flex-shrink-0 pt-0.5">
+              <svg className="h-5 w-5 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <circle cx="12" cy="12" r="10" />
+                <path strokeLinecap="round" d="M12 16v-4m0-4h.01" />
+              </svg>
+            </div>
+            <div className="text-sm text-blue-900 dark:text-blue-100 [&>p]:mt-0 [&>p]:not-italic [&_code]:bg-blue-100 [&_code]:dark:bg-blue-900/50">
+              {stripPrefix(children)}
             </div>
           </div>
         )
       }
 
       if (warnMatch) {
+        // Strip the prefix (⚠️ Warning:) from the content
+        const stripPrefix = (node: React.ReactNode): React.ReactNode => {
+          if (!node) return node
+          if (Array.isArray(node)) {
+            return node.map((child, i) => i === 0 ? stripPrefix(child) : child)
+          }
+          if (typeof node === 'object' && 'props' in node) {
+            const props = node.props as { children?: React.ReactNode }
+            if (props.children) {
+              const newChildren = stripPrefix(props.children)
+              return { ...node, props: { ...props, children: newChildren } }
+            }
+          }
+          if (typeof node === 'string') {
+            return node.replace(/^⚠️?\s*Warning:\s*/i, '')
+          }
+          return node
+        }
+
         return (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-            <div className="text-sm text-amber-800 dark:text-amber-200 [&>p]:mt-0 [&>p]:not-italic">
-              {children}
+          <div className="mt-4 flex gap-3 rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-3 dark:border-amber-800/50 dark:bg-amber-950/30">
+            <div className="flex-shrink-0 pt-0.5">
+              <svg className="h-5 w-5 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <div className="text-sm text-amber-900 dark:text-amber-100 [&>p]:mt-0 [&>p]:not-italic [&_code]:bg-amber-100 [&_code]:dark:bg-amber-900/50">
+              {stripPrefix(children)}
             </div>
           </div>
         )

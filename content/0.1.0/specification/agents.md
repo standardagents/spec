@@ -87,6 +87,14 @@ defineAgent({
 
 The `dual_ai` type enables two AI participants to converse with each other.
 
+**Message History Perspective:**
+
+Each AI receives the message history as if **it is the assistant** and the other AI is the user:
+- Side A sees its own messages as `assistant` and Side B's messages as `user`
+- Side B sees its own messages as `assistant` and Side A's messages as `user`
+
+> 💡 Tip: Neither side implicitly knows it is communicating with another AI. This makes `dual_ai` particularly effective for **reflection** (an agent critiques its own work), **debate** (two perspectives argue a topic), **negotiation** (parties work toward agreement), and **red teaming** (one agent probes another for weaknesses).
+
 **Behavior:**
 - Both Side A and Side B are AI participants
 - Sides alternate turns automatically
