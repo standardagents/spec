@@ -237,7 +237,7 @@ type ToolContent = TextContent | ImageContent;
 
 ### 7.1 ThreadState Parameter
 
-Tool implementations receive a `ThreadState` instance as their first parameter. See the [Threads](/specification/threads) specification for the complete interface.
+Tool implementations receive a `ThreadState` instance as their first parameter. See the [Threads specification](/specification/threads#13-typescript-reference) for the complete interface.
 
 ### 7.2 Execution State
 

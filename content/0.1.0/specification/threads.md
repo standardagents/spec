@@ -22,6 +22,84 @@ Handoffs enable workflows where specialized agents handle different parts of a c
 
 ThreadState is the unified interface for all thread operations. It provides a consistent API for interacting with threads regardless of context—whether from tools during execution, hooks, or HTTP endpoints.
 
+#### 1.2.1 Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `threadId` | `string` | Unique thread identifier (readonly) |
+| `agentId` | `string` | Owning agent name (readonly) |
+| `userId` | `string \| null` | Associated user (readonly) |
+| `createdAt` | `number` | Creation timestamp in microseconds (readonly) |
+| `context` | `Record<string, unknown>` | Per-execution key-value storage. See [Context Storage](#7-context-storage) |
+| `execution` | `ExecutionState \| null` | Execution state during active execution, null at rest. See [Execution State](#9-execution-state) |
+| `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context (non-portable). See [Runtime Context](#10-runtime-context-non-portable) |
+
+#### 1.2.2 Methods
+
+**Messages** — See [Messages](#2-messages) for details
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getMessages(options?)` | `Promise<MessagesResult>` | Get messages with pagination |
+| `getMessage(messageId)` | `Promise<Message \| null>` | Get single message by ID |
+| `injectMessage(input)` | `Promise<Message>` | Inject a new message |
+| `updateMessage(messageId, updates)` | `Promise<Message>` | Update existing message |
+
+**Logs**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getLogs(options?)` | `Promise<Log[]>` | Get execution logs |
+
+**Resource Loading** — See [Resource Loading](#3-resource-loading) for details
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `loadModel(name)` | `Promise<T>` | Load model definition |
+| `loadPrompt(name)` | `Promise<T>` | Load prompt definition |
+| `loadAgent(name)` | `Promise<T>` | Load agent definition |
+| `getPromptNames()` | `string[]` | List available prompts |
+| `getAgentNames()` | `string[]` | List available agents |
+| `getModelNames()` | `string[]` | List available models |
+
+**Tool Invocation** — See [Tool Invocation](#4-tool-invocation) for details
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `queueTool(toolName, args)` | `void` | Queue tool for async execution |
+| `invokeTool(toolName, args)` | `Promise<ToolResult>` | Invoke tool and wait for result |
+
+**Effect Scheduling** — See [Effect Scheduling](#5-effect-scheduling) for details
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `scheduleEffect(name, args, delay?)` | `Promise<string>` | Schedule effect, returns effect ID |
+| `getScheduledEffects(name?)` | `Promise<ScheduledEffect[]>` | Get pending effects |
+| `removeScheduledEffect(id)` | `Promise<boolean>` | Cancel scheduled effect |
+
+**Events** — See [Events](#6-events) for details
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `emit(event, data)` | `void` | Emit event to connected clients |
+
+**File System** — See [File System](#8-file-system) for details
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `writeFile(path, data, mimeType, options?)` | `Promise<FileRecord>` | Write file |
+| `readFile(path)` | `Promise<ArrayBuffer \| null>` | Read file content |
+| `readFileStream(path, options?)` | `Promise<AsyncIterable<FileChunk> \| null>` | Stream large files |
+| `statFile(path)` | `Promise<FileRecord \| null>` | Get file metadata |
+| `readdirFile(path)` | `Promise<ReaddirResult>` | List directory |
+| `unlinkFile(path)` | `Promise<void>` | Delete file |
+| `mkdirFile(path)` | `Promise<FileRecord>` | Create directory |
+| `rmdirFile(path)` | `Promise<void>` | Remove directory |
+| `getFileStats()` | `Promise<FileStats>` | Get filesystem stats |
+| `grepFiles(pattern)` | `Promise<GrepResult[]>` | Search file contents |
+| `findFiles(pattern)` | `Promise<FindResult>` | Find files by glob |
+| `getFileThumbnail(path)` | `Promise<ArrayBuffer \| null>` | Get image thumbnail |
+
 ### 1.3 Access Contexts
 
 ThreadState is provided in different contexts:
@@ -32,35 +110,9 @@ ThreadState is provided in different contexts:
 | Hooks | Present | Lifecycle interception |
 | Endpoints | Null | HTTP API access |
 
-## 2. Thread Identity
+## 2. Messages
 
-### 2.1 Identity Properties
-
-Thread identity is immutable after creation:
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `threadId` | `string` | Unique identifier |
-| `agentId` | `string` | Owning agent name |
-| `userId` | `string \| null` | Associated user (optional) |
-| `createdAt` | `number` | Creation timestamp (microseconds) |
-
-### 2.2 Thread Metadata
-
-The `ThreadMetadata` type captures identity in a serializable format:
-
-```typescript
-interface ThreadMetadata {
-  id: string;
-  agent_id: string;
-  user_id: string | null;
-  created_at: number;
-}
-```
-
-## 3. Messages
-
-### 3.1 Message Structure
+### 2.1 Message Structure
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -76,7 +128,7 @@ interface ThreadMetadata {
 | `silent` | `boolean` | Hidden from UI |
 | `metadata` | `Record<string, unknown>` | Custom metadata |
 
-### 3.2 Reading Messages
+### 2.2 Reading Messages
 
 ```typescript
 // Get recent messages
@@ -89,7 +141,7 @@ const { messages, total, hasMore } = await state.getMessages({
 const message = await state.getMessage('msg-123');
 ```
 
-### 3.3 Query Options
+### 2.3 Query Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
@@ -99,7 +151,7 @@ const message = await state.getMessage('msg-123');
 | `includeSilent` | `boolean` | false | Include silent messages |
 | `maxDepth` | `number` | - | Max nesting depth |
 
-### 3.4 Injecting Messages
+### 2.4 Injecting Messages
 
 Messages can be injected into the conversation:
 
@@ -112,7 +164,7 @@ const message = await state.injectMessage({
 });
 ```
 
-### 3.5 Updating Messages
+### 2.5 Updating Messages
 
 Existing messages can be updated:
 
@@ -123,9 +175,9 @@ const updated = await state.updateMessage('msg-123', {
 });
 ```
 
-## 4. Resource Loading
+## 3. Resource Loading
 
-### 4.1 Loading Definitions
+### 3.1 Loading Definitions
 
 ThreadState provides access to registered definitions:
 
@@ -140,7 +192,7 @@ const prompt = await state.loadPrompt('support-prompt');
 const agent = await state.loadAgent('customer-support');
 ```
 
-### 4.2 Listing Resources
+### 3.2 Listing Resources
 
 ```typescript
 // Get available resource names
@@ -149,9 +201,9 @@ const agents = state.getAgentNames();
 const models = state.getModelNames();
 ```
 
-## 5. Tool Invocation
+## 4. Tool Invocation
 
-### 5.1 Queuing Tools
+### 4.1 Queuing Tools
 
 Queue a tool for asynchronous execution:
 
@@ -166,7 +218,7 @@ state.queueTool('send_email', {
 
 If the thread is currently executing, the tool is added to the queue. Otherwise, a new execution is started.
 
-### 5.2 Direct Invocation
+### 4.2 Direct Invocation
 
 Invoke a tool and wait for the result:
 
@@ -178,6 +230,59 @@ const result = await state.invokeTool('get_weather', {
 
 if (result.status === 'success') {
   console.log(result.result);
+}
+```
+
+## 5. Effect Scheduling
+
+Effects are scheduled operations that run outside the normal tool execution context. Unlike tools which execute immediately during conversation, effects:
+- Run **independently** of the conversation flow
+- Can be **scheduled with delays**
+- Execute with their own **ThreadState** context
+- Are ideal for **side effects** that don't need immediate results
+
+### 5.1 Scheduling Effects
+
+```typescript
+// Schedule an effect to run after 30 minutes
+const effectId = await state.scheduleEffect(
+  'send_reminder_email',
+  { to: 'user@example.com', subject: 'Reminder' },
+  30 * 60 * 1000  // delay in milliseconds
+);
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | `string` | Effect name (file in `agents/effects/`) |
+| `args` | `Record<string, unknown>` | Arguments passed to effect handler |
+| `delay` | `number` | Delay in milliseconds (default: 0 for immediate) |
+
+Returns a unique effect ID (UUID) that can be used to cancel the effect.
+
+### 5.2 ScheduledEffect Record
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | Unique effect ID (UUID) |
+| `name` | `string` | Effect name |
+| `args` | `Record<string, unknown>` | Arguments to be passed |
+| `scheduledAt` | `number` | Scheduled execution time (microseconds) |
+| `createdAt` | `number` | When effect was scheduled (microseconds) |
+
+### 5.3 Managing Scheduled Effects
+
+```typescript
+// Get all pending effects
+const effects = await state.getScheduledEffects();
+
+// Get effects filtered by name
+const reminders = await state.getScheduledEffects('send_reminder_email');
+
+// Cancel a scheduled effect
+const removed = await state.removeScheduledEffect(effectId);
+if (removed) {
+  console.log('Effect cancelled');
 }
 ```
 
@@ -458,11 +563,53 @@ state.execution.stop();
 fetch(url, { signal: state.execution.abortSignal });
 ```
 
-## 10. Thread Endpoints
+## 10. Runtime Context (Non-Portable)
+
+The `_notPackableRuntimeContext` property allows runtime implementations to inject platform-specific context.
+
+### 10.1 Property Definition
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context injected by the implementation |
+
+### 10.2 Portability
+
+Tools that access `_notPackableRuntimeContext` cannot be packed, shared, or published to tool registries.
+
+### 10.3 Example: Accessing Cloudflare Bindings
+
+```typescript
+import { defineTool } from '@standardagents/builder';
+import { z } from 'zod';
+
+export default defineTool(
+  'Query internal database',
+  z.object({ userId: z.string() }),
+  async (state, args) => {
+    const env = state._notPackableRuntimeContext?.env as Env | undefined;
+
+    if (!env?.MY_DATABASE) {
+      return { status: 'error', error: 'Database not available' };
+    }
+
+    const result = await env.MY_DATABASE
+      .prepare('SELECT * FROM users WHERE id = ?')
+      .bind(args.userId)
+      .first();
+
+    return { status: 'success', result: JSON.stringify(result) };
+  }
+);
+```
+
+> **Tip:** Common implementations include `{ env: Env }` for Cloudflare Workers bindings (KV, D1, R2), or `{ process: NodeJS.Process }` for Node.js environments.
+
+## 11. Thread Endpoints
 
 Thread endpoints expose HTTP APIs for thread-specific operations. They automatically look up threads by ID and provide a `ThreadState` instance.
 
-### 10.1 Defining Thread Endpoints
+### 11.1 Defining Thread Endpoints
 
 ```typescript
 import { defineThreadEndpoint } from '@standardagents/spec';
@@ -476,7 +623,7 @@ export default defineThreadEndpoint(async (req, state) => {
 });
 ```
 
-### 10.2 Handler Signature
+### 11.2 Handler Signature
 
 Thread endpoint handlers receive:
 
@@ -487,7 +634,7 @@ Thread endpoint handlers receive:
 
 The handler **MUST** return a `Response` object.
 
-### 10.3 Endpoint Context
+### 11.3 Endpoint Context
 
 When accessing a thread via an endpoint, `state.execution` is always `null` because the thread is not actively executing:
 
@@ -501,7 +648,7 @@ export default defineThreadEndpoint(async (req, state) => {
 });
 ```
 
-### 10.4 Error Handling
+### 11.4 Error Handling
 
 Thread endpoints automatically handle common errors:
 
@@ -510,7 +657,7 @@ Thread endpoints automatically handle common errors:
 | Thread not found | 404: `{ error: "Thread not found: {threadId}" }` |
 | Missing thread ID | 400: `{ error: "Thread ID required" }` |
 
-### 10.5 Thread Endpoint Examples
+### 11.5 Thread Endpoint Examples
 
 **Get Thread Messages:**
 ```typescript
@@ -556,23 +703,23 @@ export default defineThreadEndpoint(async (req, state) => {
 });
 ```
 
-## 11. Conformance Requirements
+## 12. Conformance Requirements
 
-### 11.1 Thread Lifecycle
+### 12.1 Thread Lifecycle
 
 1. **Creation**: Thread created with metadata
 2. **Execution**: Agent processes messages
 3. **At Rest**: Thread accessible via endpoints
 4. **Resumption**: New execution on next message
 
-### 11.2 Platform Independence
+### 12.2 Platform Independence
 
 ThreadState is an abstract interface. Implementations **MUST NOT** expose:
 - Storage implementation details
 - Platform-specific bindings
 - Internal state management
 
-### 11.3 Error Handling
+### 12.3 Error Handling
 
 Methods that return promises **SHOULD** throw on:
 - Resource not found (loadModel, loadPrompt, loadAgent)
@@ -582,3 +729,121 @@ Methods that return promises **SHOULD** throw on:
 Methods **SHOULD NOT** throw on:
 - Empty results (return empty arrays/null instead)
 - Missing optional data
+
+## 13. TypeScript Reference
+
+```typescript
+/**
+ * Thread state interface - the unified API for thread interactions.
+ * Available to tools, hooks, and endpoints.
+ */
+interface ThreadState {
+  // ─────────────────────────────────────────────────────────────────────────
+  // Identity (readonly)
+  // ─────────────────────────────────────────────────────────────────────────
+  readonly threadId: string;
+  readonly agentId: string;
+  readonly userId: string | null;
+  readonly createdAt: number;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Messages
+  // ─────────────────────────────────────────────────────────────────────────
+  getMessages(options?: GetMessagesOptions): Promise<MessagesResult>;
+  getMessage(messageId: string): Promise<Message | null>;
+  injectMessage(input: InjectMessageInput): Promise<Message>;
+  updateMessage(messageId: string, updates: MessageUpdates): Promise<Message>;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Logs
+  // ─────────────────────────────────────────────────────────────────────────
+  getLogs(options?: GetLogsOptions): Promise<Log[]>;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Resource Loading
+  // ─────────────────────────────────────────────────────────────────────────
+  loadModel<T = unknown>(name: string): Promise<T>;
+  loadPrompt<T = unknown>(name: string): Promise<T>;
+  loadAgent<T = unknown>(name: string): Promise<T>;
+  getPromptNames(): string[];
+  getAgentNames(): string[];
+  getModelNames(): string[];
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Tool Invocation
+  // ─────────────────────────────────────────────────────────────────────────
+  queueTool(toolName: string, args: Record<string, unknown>): void;
+  invokeTool(toolName: string, args: Record<string, unknown>): Promise<ToolResult>;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Effect Scheduling
+  // ─────────────────────────────────────────────────────────────────────────
+  scheduleEffect(name: string, args: Record<string, unknown>, delay?: number): Promise<string>;
+  getScheduledEffects(name?: string): Promise<ScheduledEffect[]>;
+  removeScheduledEffect(id: string): Promise<boolean>;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Events
+  // ─────────────────────────────────────────────────────────────────────────
+  emit(event: string, data: unknown): void;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Context Storage
+  // ─────────────────────────────────────────────────────────────────────────
+  context: Record<string, unknown>;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // File System
+  // ─────────────────────────────────────────────────────────────────────────
+  writeFile(path: string, data: ArrayBuffer | string, mimeType: string, options?: WriteFileOptions): Promise<FileRecord>;
+  readFile(path: string): Promise<ArrayBuffer | null>;
+  readFileStream(path: string, options?: ReadFileStreamOptions): Promise<AsyncIterable<FileChunk> | null>;
+  statFile(path: string): Promise<FileRecord | null>;
+  readdirFile(path: string): Promise<ReaddirResult>;
+  unlinkFile(path: string): Promise<void>;
+  mkdirFile(path: string): Promise<FileRecord>;
+  rmdirFile(path: string): Promise<void>;
+  getFileStats(): Promise<FileStats>;
+  grepFiles(pattern: string): Promise<GrepResult[]>;
+  findFiles(pattern: string): Promise<FindResult>;
+  getFileThumbnail(path: string): Promise<ArrayBuffer | null>;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Execution State
+  // ─────────────────────────────────────────────────────────────────────────
+  execution: ExecutionState | null;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Runtime Context (Non-Portable)
+  // ─────────────────────────────────────────────────────────────────────────
+  readonly _notPackableRuntimeContext?: Record<string, unknown>;
+}
+
+/**
+ * Execution state available during active execution.
+ */
+interface ExecutionState {
+  readonly flowId: string;
+  readonly currentSide: 'a' | 'b';
+  readonly stepCount: number;
+  readonly sideAStepCount: number;
+  readonly sideBStepCount: number;
+  readonly stopped: boolean;
+  readonly stoppedBy?: 'a' | 'b';
+  readonly messageHistory: Message[];
+  readonly abortSignal: AbortSignal;
+  forceTurn(side: 'a' | 'b'): void;
+  stop(): void;
+}
+
+/**
+ * A scheduled effect pending execution.
+ */
+interface ScheduledEffect {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+  scheduledAt: number;  // microseconds
+  createdAt: number;    // microseconds
+}
+```
