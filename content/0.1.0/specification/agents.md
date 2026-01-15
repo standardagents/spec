@@ -29,6 +29,7 @@ An agent definition **MAY** include the following properties:
 | `toolDescription` | `string` | - | Description when used as tool |
 | `description` | `string` | - | Brief description |
 | `icon` | `string` | - | Icon URL or path |
+| `tenvs` | `Record<string, unknown>` | - | Default thread environment variables |
 
 ## 2. Definitions
 
@@ -371,6 +372,7 @@ interface AgentDefinition<
   toolDescription?: string;
   description?: string;
   icon?: string;
+  tenvs?: Record<string, unknown>;
 }
 
 /**

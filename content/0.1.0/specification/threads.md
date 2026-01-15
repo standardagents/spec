@@ -583,10 +583,10 @@ Tools that access `_notPackableRuntimeContext` cannot be packed, shared, or publ
 import { defineTool } from '@standardagents/builder';
 import { z } from 'zod';
 
-export default defineTool(
-  'Query internal database',
-  z.object({ userId: z.string() }),
-  async (state, args) => {
+export default defineTool({
+  description: 'Query internal database',
+  args: z.object({ userId: z.string() }),
+  execute: async (state, args) => {
     const env = state._notPackableRuntimeContext?.env as Env | undefined;
 
     if (!env?.MY_DATABASE) {
@@ -599,8 +599,8 @@ export default defineTool(
       .first();
 
     return { status: 'success', result: JSON.stringify(result) };
-  }
-);
+  },
+});
 ```
 
 > **Tip:** Common implementations include `{ env: Env }` for Cloudflare Workers bindings (KV, D1, R2), or `{ process: NodeJS.Process }` for Node.js environments.

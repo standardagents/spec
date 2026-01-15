@@ -95,7 +95,31 @@ Tools can be referenced by name:
 tools: ['search_docs', 'create_ticket', 'send_email']
 ```
 
-### 3.2 Sub-Prompt Tool Configuration
+### 3.2 Tool Configuration with Tenvs
+
+Tools can be configured with thread environment variable (tenv) values. This allows prompts to provide default or required values for tools that need runtime configuration:
+
+```typescript
+tools: [
+  'search_docs',  // Simple reference
+  {
+    name: 'file_search',  // Tool with tenv configuration
+    tenvs: {
+      vectorStoreId: 'vs_abc123',  // Required by file_search
+    },
+  },
+]
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `string` | Name of the tool |
+| `tenvs` | `Record<string, unknown>` | Thread environment variable values for this tool |
+| `options` | `Record<string, unknown>` | Static tool options |
+
+Tenv values set in prompts serve as defaults. They can be overridden by agent-level tenvs or thread-level tenvs at creation time. See the [Tools specification](/specification/tools#9-thread-environment-variables-tenvs) for details on tenv merging.
+
+### 3.3 Sub-Prompt Tool Configuration
 
 When a prompt is used as a tool by another prompt, the caller can configure how results are returned. These options **only apply to sub-prompts**, not to regular function tools.
 
@@ -262,6 +286,15 @@ type StructuredPrompt = PromptPart[];
 type PromptContent = string | StructuredPrompt;
 
 /**
+ * Configuration for tools with tenv values.
+ */
+interface ToolConfig<T extends string = string> {
+  name: T;
+  tenvs?: Record<string, unknown>;
+  options?: Record<string, unknown>;
+}
+
+/**
  * Configuration for sub-prompts used as tools.
  * These options control how results from sub-prompts are returned to the caller.
  */
@@ -299,7 +332,8 @@ interface PromptDefinition<
   parallelToolCalls?: boolean;
   toolChoice?: 'auto' | 'none' | 'required';
   requiredSchema?: S;
-  tools?: (string | SubpromptConfig)[];
+  tools?: (string | ToolConfig | SubpromptConfig)[];
+  tenvs?: Record<string, unknown>;
   reasoning?: ReasoningConfig;
   recentImageThreshold?: number;
 }

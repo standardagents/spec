@@ -24,13 +24,14 @@ Function tools are custom implementations that interact with external systems, p
 
 ### 2.1 Definition Structure
 
-A tool definition is a tuple containing:
+A tool definition is an object containing:
 
-| Index | Type | Description |
-|-------|------|-------------|
-| 0 | `string` | Tool description shown to the LLM |
-| 1 | `ToolArgs \| null` | Zod schema for argument validation |
-| 2 | `Tool` | Implementation function |
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `description` | `string` | Yes | Tool description shown to the LLM |
+| `args` | `ToolArgs` | No | Zod schema for argument validation |
+| `execute` | `Tool` | Yes | Implementation function |
+| `tenvs` | `ToolTenvs` | No | Thread environment variables required |
 
 ### 2.2 Tool Description
 
@@ -77,11 +78,14 @@ Tool implementations **MUST** validate all input arguments before use.
 
 ### 3.5 No Arguments
 
-Tools that require no arguments **MUST** be defined without an argument schema:
+Tools that require no arguments **MUST** be defined without an `args` property:
 
 ```typescript
-defineTool('Get current time', async (state) => {
-  return { status: 'success', result: new Date().toISOString() };
+defineTool({
+  description: 'Get current time',
+  execute: async (state) => {
+    return { status: 'success', result: new Date().toISOString() };
+  },
 });
 ```
 
@@ -180,10 +184,10 @@ This is useful for sub-prompts that need to pass through attachments from nested
 ### 5.4 Example with Attachment
 
 ```typescript
-defineTool(
-  'Generate chart',
-  z.object({ data: z.array(z.number()) }),
-  async (state, args) => {
+defineTool({
+  description: 'Generate chart',
+  args: z.object({ data: z.array(z.number()) }),
+  execute: async (state, args) => {
     const chart = await generateChart(args.data);
     return {
       status: 'success',
@@ -196,8 +200,8 @@ defineTool(
         height: 600,
       }],
     };
-  }
-);
+  },
+});
 ```
 
 ## 6. Content Types
@@ -278,7 +282,71 @@ Examples of valid tool names:
 
 Implementations **SHOULD** warn but not reject tools with non-conforming names.
 
-## 9. TypeScript Reference
+## 9. Thread Environment Variables (Tenvs)
+
+### 9.1 Overview
+
+Thread environment variables (tenvs) are runtime configuration values required by tools. They flow from prompts → agents → threads, with later values overriding earlier ones. Tenvs are commonly used for:
+
+- API credentials or identifiers (e.g., vector store IDs)
+- User-specific configuration (e.g., location preferences)
+- Runtime context that varies per thread
+
+### 9.2 Tenv Schema
+
+Tenvs are defined using a Zod object schema, following the same pattern as tool arguments:
+
+```typescript
+z.object({
+  vectorStoreId: z.string().describe('OpenAI Vector Store ID'),
+  userLocation: z.string().optional().describe('User location for results'),
+})
+```
+
+### 9.3 Required vs Optional Tenvs
+
+- **Required tenvs**: Fields without `.optional()` must be provided before thread creation
+- **Optional tenvs**: Fields with `.optional()` may be omitted
+
+Thread creation **MUST** fail if any required tenvs are missing after merging prompt, agent, and thread values.
+
+### 9.4 Tenv Merging
+
+Tenvs are merged in order, with later values winning:
+
+```
+prompt.tenvs → agent.tenvs → thread.tenvs
+```
+
+This allows defaults to be set at the prompt level and overridden at runtime.
+
+### 9.5 Defining Tools with Tenvs
+
+The `defineTool` function accepts an optional `tenvs` property for tenv requirements:
+
+```typescript
+defineTool({
+  description: 'Search through uploaded files',
+  args: z.object({ query: z.string() }),
+  execute: async (state, args) => ({ status: 'success', result: '...' }),
+  tenvs: z.object({
+    vectorStoreId: z.string().describe('Vector store to search'),
+  }),
+});
+```
+
+### 9.6 Accessing Tenvs
+
+Tool implementations access tenvs via `state.tenvs`:
+
+```typescript
+async (state, args) => {
+  const storeId = state.tenvs.vectorStoreId;
+  // Use storeId for the operation...
+}
+```
+
+## 10. TypeScript Reference
 
 ```typescript
 /**
@@ -346,6 +414,12 @@ interface ToolResult {
 type ToolArgs = z.ZodObject<ToolArgsRawShape>;
 
 /**
+ * Thread environment variable schema (Zod object).
+ * Defines which tenvs a tool requires at runtime.
+ */
+type ToolTenvs = z.ZodObject<TenvRawShape>;
+
+/**
  * Tool function signature.
  * Tools receive ThreadState as their first parameter.
  */
@@ -355,73 +429,90 @@ type Tool<Args extends ToolArgs | null = null> =
     : (state: ThreadState) => Promise<ToolResult>;
 
 /**
- * Define a tool with arguments.
+ * Tool definition object.
  */
-function defineTool<Args extends ToolArgs>(
-  description: string,
-  args: Args,
-  tool: Tool<Args>
-): [string, Args, Tool<Args>];
+interface ToolDefinition<
+  Args extends ToolArgs | null = null,
+  Tenvs extends ToolTenvs | null = null,
+> {
+  description: string;
+  args: Args;
+  execute: Tool<Args>;
+  tenvs: Tenvs;
+}
 
 /**
- * Define a tool without arguments.
+ * Options for defining a tool.
  */
-function defineTool(
-  description: string,
-  tool: Tool<null>
-): [string, null, Tool<null>];
+interface DefineToolOptions<
+  Args extends ToolArgs | null = null,
+  Tenvs extends ToolTenvs | null = null,
+> {
+  description: string;
+  args?: Args;
+  execute: Tool<Args>;
+  tenvs?: Tenvs;
+}
+
+/**
+ * Define a tool with the given options.
+ */
+function defineTool<
+  Args extends ToolArgs | null = null,
+  Tenvs extends ToolTenvs | null = null,
+>(options: DefineToolOptions<Args, Tenvs>): ToolDefinition<Args, Tenvs>;
 ```
 
-## 10. Examples
+## 11. Examples
 
-### 10.1 Basic Tool with Arguments
+### 11.1 Basic Tool with Arguments
 
 ```typescript
 import { defineTool } from '@standardagents/spec';
 import { z } from 'zod';
 
-export default defineTool(
-  'Search the knowledge base for relevant information',
-  z.object({
+export default defineTool({
+  description: 'Search the knowledge base for relevant information',
+  args: z.object({
     query: z.string().describe('Search query'),
     limit: z.number().optional().default(10).describe('Max results'),
   }),
-  async (state, args) => {
+  execute: async (state, args) => {
     const results = await searchKnowledgeBase(args.query, args.limit);
     return {
       status: 'success',
       result: JSON.stringify(results),
     };
-  }
-);
+  },
+});
 ```
 
-### 10.2 Tool without Arguments
+### 11.2 Tool without Arguments
 
 ```typescript
 import { defineTool } from '@standardagents/spec';
 
-export default defineTool(
-  'Get the current server time in ISO format',
-  async (state) => {
+export default defineTool({
+  description: 'Get the current server time in ISO format',
+  execute: async (state) => {
     return {
       status: 'success',
       result: new Date().toISOString(),
     };
-  }
-);
+  },
+});
 ```
 
-### 10.3 Tool with Error Handling
+### 11.3 Tool with Error Handling
 
 ```typescript
 import { defineTool } from '@standardagents/spec';
 import { z } from 'zod';
 
-export default defineTool(
-  'Fetch data from external API',
-  z.object({ endpoint: z.string() }),
-  async (state, args) => {
+export default defineTool({
+  description: 'Fetch data from external API',
+  args: z.object({ endpoint: z.string() }),
+  execute: async (state, args) => {
     try {
       // Use abort signal for cancellation support
       const response = await fetch(args.endpoint, {
@@ -445,24 +536,24 @@ export default defineTool(
         stack: err instanceof Error ? err.stack : undefined,
       };
     }
-  }
-);
+  },
+});
 ```
 
-### 10.4 Tool with Attachments
+### 11.4 Tool with Attachments
 
 ```typescript
 import { defineTool } from '@standardagents/spec';
 import { z } from 'zod';
 
-export default defineTool(
-  'Generate a PNG image from the given prompt',
-  z.object({
+export default defineTool({
+  description: 'Generate a PNG image from the given prompt',
+  args: z.object({
     prompt: z.string().describe('Image generation prompt'),
     width: z.number().default(512),
     height: z.number().default(512),
   }),
-  async (state, args) => {
+  execute: async (state, args) => {
     const image = await generateImage(args.prompt, args.width, args.height);
     return {
       status: 'success',
@@ -475,7 +566,34 @@ export default defineTool(
         height: args.height,
       }],
     };
-  }
-);
+  },
+});
+```
+
+### 11.5 Tool with Thread Environment Variables
+
+```typescript
+import { defineTool } from '@standardagents/spec';
+import { z } from 'zod';
+
+export default defineTool({
+  description: 'Search through uploaded files using vector embeddings',
+  args: z.object({
+    query: z.string().describe('Search query'),
+  }),
+  execute: async (state, args) => {
+    // Access tenvs from state
+    const vectorStoreId = state.tenvs.vectorStoreId;
+    const results = await searchVectorStore(vectorStoreId, args.query);
+    return {
+      status: 'success',
+      result: JSON.stringify(results),
+    };
+  },
+  // tenvs property: tenv requirements
+  tenvs: z.object({
+    vectorStoreId: z.string().describe('OpenAI Vector Store ID'),
+  }),
+});
 ```
 
