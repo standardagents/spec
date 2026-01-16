@@ -132,8 +132,11 @@ type MessageContent = string | ContentPart[];
 type ContentPart =
   | { type: 'text'; text: string }
   | { type: 'image'; data: string; mediaType: string; detail?: 'auto' | 'low' | 'high' }
+  | { type: 'image_url'; image_url: { url: string; detail?: 'auto' | 'low' | 'high' } }
   | { type: 'file'; data: string; mediaType: string; filename?: string };
 ```
+
+The `image_url` type is used for passing image URLs directly to providers (OpenAI/OpenRouter format). The `url` can be a data URI (`data:image/...`) or an HTTP(S) URL.
 
 ### 3.2 Tool Calls
 
@@ -453,6 +456,7 @@ type MessageContent = string | ContentPart[];
 type ContentPart =
   | { type: 'text'; text: string }
   | { type: 'image'; data: string; mediaType: string; detail?: 'auto' | 'low' | 'high' }
+  | { type: 'image_url'; image_url: { url: string; detail?: 'auto' | 'low' | 'high' } }
   | { type: 'file'; data: string; mediaType: string; filename?: string };
 
 // Tools
