@@ -30,6 +30,7 @@ interface Provider {
 | `getModels` | Optional. Lists available models from the provider. |
 | `getModelCapabilities` | Optional. Returns capabilities for a specific model. |
 | `getIcon` | Optional. Returns icon for the provider or a specific model. |
+| `getResponseMetadata` | Optional. Fetches additional metadata after response completes (async). |
 
 ### 1.2 Provider Factory
 
@@ -316,13 +317,99 @@ function svgToDataUri(svg: string): string {
 }
 ```
 
-## 9. Provider Tools
+## 9. Response Metadata (Async)
 
 ### 9.1 Overview
 
+Some providers (like aggregators) may not have complete metadata immediately when a response finishes. The optional `getResponseMetadata` method allows fetching additional metadata asynchronously without blocking the main execution flow.
+
+### 9.2 getResponseMetadata Method
+
+```typescript
+getResponseMetadata?(
+  summary: ResponseSummary,
+  signal?: AbortSignal
+): Promise<Record<string, unknown> | null>;
+```
+
+**Parameters:**
+- `summary`: Stripped-down response info (no content/attachments to avoid passing large data)
+- `signal`: Optional abort signal for cancellation
+
+**Returns:** Additional metadata or `null` if unavailable
+
+### 9.3 ResponseSummary Structure
+
+```typescript
+interface ResponseSummary {
+  /** Provider-specific response/generation ID */
+  responseId?: string;
+  /** Model that handled the request */
+  model: string;
+  /** How the response ended */
+  finishReason: ProviderFinishReason;
+  /** Token usage (without detailed breakdowns) */
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+```
+
+### 9.4 Use Cases
+
+| Use Case | Description |
+|----------|-------------|
+| Aggregator provider info | Fetch actual provider from aggregators like OpenRouter |
+| Accurate cost data | Get precise cost information from provider APIs |
+| Token reconciliation | Retrieve native token counts that may differ from streaming counts |
+| Generation metadata | Access provider-specific generation details (latency, etc.) |
+
+### 9.5 Implementation Notes
+
+- This method is called **after** the response is complete
+- Execution engine fires this **asynchronously** - it does not block the flow
+- The flow engine waits for all pending metadata promises before completing
+- Results are used to update log records with accurate provider information
+
+### 9.6 Example Implementation
+
+```typescript
+class OpenRouterProvider implements Provider {
+  async getResponseMetadata(
+    summary: ResponseSummary,
+    signal?: AbortSignal
+  ): Promise<Record<string, unknown> | null> {
+    if (!summary.responseId) {
+      return null;
+    }
+
+    const metadata = await fetchGenerationMetadata(
+      this.apiKey,
+      summary.responseId,
+      signal
+    );
+
+    if (!metadata) return null;
+
+    return {
+      actual_provider: metadata.providerName,
+      native_tokens_prompt: metadata.nativePromptTokens,
+      native_tokens_completion: metadata.nativeCompletionTokens,
+      generation_cost: metadata.totalCost,
+    };
+  }
+}
+```
+
+## 10. Provider Tools
+
+### 10.1 Overview
+
 Providers can embed built-in tools that leverage provider-specific capabilities. For example, OpenAI provides web search, file search, code interpreter, and image generation tools that execute server-side.
 
-### 9.2 getTools Method
+### 10.2 getTools Method
 
 The optional `getTools` method returns tools available for a given model:
 
@@ -335,7 +422,7 @@ getTools(modelId?: string): Record<string, ToolDefinition>
 - When `modelId` is provided, returns only tools available for that model
 - Returns an empty object if no tools are available
 
-### 9.3 Tool Definitions with Tenvs
+### 10.3 Tool Definitions with Tenvs
 
 Provider tools use `defineTool()` with an optional `tenvs` property for thread environment variable requirements:
 
@@ -356,7 +443,7 @@ Tenv requirements are defined using Zod schemas:
 
 See the [Tools specification](/0.1.0/specification/tools#9-thread-environment-variables-tenvs) for details on tenv schemas and merging.
 
-### 9.4 Model-Specific Tools
+### 10.4 Model-Specific Tools
 
 Different models may support different subsets of provider tools:
 
@@ -368,7 +455,7 @@ Different models may support different subsets of provider tools:
 
 Implementations **SHOULD** use `getTools(modelId)` to determine which tools are available.
 
-## 10. TypeScript Reference
+## 11. TypeScript Reference
 
 ```typescript
 // Provider interface
@@ -382,6 +469,15 @@ interface Provider {
   getModels?(filter?: string): Promise<ProviderModelInfo[]>;
   getModelCapabilities?(modelId: string): Promise<ModelCapabilities | null>;
   getIcon?(modelId?: string): string | undefined;
+  getResponseMetadata?(summary: ResponseSummary, signal?: AbortSignal): Promise<Record<string, unknown> | null>;
+}
+
+// Response metadata summary (for async metadata fetching)
+interface ResponseSummary {
+  responseId?: string;
+  model: string;
+  finishReason: ProviderFinishReason;
+  usage: { promptTokens: number; completionTokens: number; totalTokens: number };
 }
 
 // Factory type
