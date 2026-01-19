@@ -26,7 +26,7 @@ A model definition **MAY** include the following properties:
 | `outputPrice` | `number` | Cost per 1 million output tokens in USD. |
 | `cachedPrice` | `number` | Cost per 1 million cached input tokens in USD. |
 | `capabilities` | `ModelCapabilities` | Feature support and limits for this model. |
-| `providerOptions` | `Record<string, unknown>` | Provider-specific default options for this model. |
+| `providerOptions` | `InferProviderOptions<P>` | Provider-specific default options for this model. Type is inferred from the provider's schema. |
 | `providerTools` | `string[]` | Provider-embedded tools available for this model. |
 
 ## 2. Provider Reference
@@ -121,13 +121,37 @@ Implementations **SHOULD** validate that all `fallbacks` entries reference valid
 ## 7. TypeScript Reference
 
 ```typescript
+import type { z, ZodTypeAny } from 'zod';
+
 interface ProviderFactoryConfig {
   apiKey: string;
   baseUrl?: string;
   timeout?: number;
 }
 
-type ProviderFactory = (config: ProviderFactoryConfig) => Provider;
+/**
+ * Provider factory with optional typed providerOptions schema.
+ * The schema property allows type inference and runtime validation.
+ */
+interface ProviderFactoryWithOptions<TOptions extends ZodTypeAny = ZodTypeAny> {
+  (config: ProviderFactoryConfig): Provider;
+  /** Zod schema for provider-specific options */
+  providerOptions?: TOptions;
+}
+
+// ProviderFactory is an alias for backward compatibility
+type ProviderFactory = ProviderFactoryWithOptions<ZodTypeAny>;
+
+/**
+ * Extract providerOptions type from a provider factory.
+ * Returns the inferred input type from the provider's Zod schema.
+ */
+type InferProviderOptions<P> =
+  P extends ProviderFactoryWithOptions<infer S>
+    ? S extends ZodTypeAny
+      ? z.input<S>
+      : Record<string, unknown>
+    : Record<string, unknown>;
 
 interface ModelCapabilities {
   reasoningLevels?: Record<number, string | null>;
@@ -139,9 +163,12 @@ interface ModelCapabilities {
   maxOutputTokens?: number;
 }
 
-interface ModelDefinition<N extends string = string> {
+interface ModelDefinition<
+  N extends string = string,
+  P extends ProviderFactoryWithOptions<ZodTypeAny> = ProviderFactoryWithOptions<ZodTypeAny>
+> {
   name: N;
-  provider: ProviderFactory;
+  provider: P;
   model: string;
   includedProviders?: string[];
   fallbacks?: string[];
@@ -149,18 +176,133 @@ interface ModelDefinition<N extends string = string> {
   outputPrice?: number;
   cachedPrice?: number;
   capabilities?: ModelCapabilities;
-  providerOptions?: Record<string, unknown>;
+  providerOptions?: InferProviderOptions<P>;
   providerTools?: string[];
 }
 
-function defineModel<N extends string>(
-  options: ModelDefinition<N>
-): ModelDefinition<N>;
+function defineModel<N extends string, P extends ProviderFactoryWithOptions<ZodTypeAny>>(
+  options: ModelDefinition<N, P>
+): ModelDefinition<N, P>;
 ```
 
-## 8. Examples
+## 8. Typed Provider Options
 
-### 8.1 Basic Model Definition
+### 8.1 Overview
+
+Provider packages can export a Zod schema that defines the shape of their `providerOptions`. This enables:
+
+- **TypeScript autocomplete**: IDE suggestions for valid options
+- **Type checking**: Compile-time errors for invalid options
+- **Runtime validation**: Errors thrown if options don't match schema
+
+### 8.2 How It Works
+
+Provider factories can attach a `providerOptions` property containing a Zod schema:
+
+```typescript
+// Inside @standardagents/openai
+import { z } from 'zod';
+
+export const openaiProviderOptions = z.object({
+  service_tier: z.enum(['auto', 'default', 'flex']).optional(),
+  user: z.string().optional(),
+  seed: z.number().int().optional(),
+  frequency_penalty: z.number().min(-2).max(2).optional(),
+  presence_penalty: z.number().min(-2).max(2).optional(),
+}).passthrough();
+
+export const openai: ProviderFactoryWithOptions<typeof openaiProviderOptions> =
+  Object.assign(
+    (config) => new OpenAIProvider(config),
+    { providerOptions: openaiProviderOptions }
+  );
+```
+
+When you use this provider with `defineModel`, TypeScript automatically infers the correct type for `providerOptions`:
+
+```typescript
+import { defineModel } from '@standardagents/builder';
+import { openai } from '@standardagents/openai';
+
+export default defineModel({
+  name: 'gpt-4o',
+  provider: openai,
+  model: 'gpt-4o',
+  providerOptions: {
+    service_tier: 'flex',    // TypeScript knows this is valid
+    // typo_field: 'x',      // TypeScript ERROR: unknown property
+  },
+});
+```
+
+### 8.3 Runtime Validation
+
+When `defineModel` is called, if the provider has a schema and `providerOptions` are provided, the options are validated at runtime:
+
+```typescript
+// This throws an error at runtime:
+defineModel({
+  name: 'test',
+  provider: openai,
+  model: 'gpt-4o',
+  providerOptions: {
+    service_tier: 'invalid', // Error: Invalid enum value
+  },
+});
+// Error: Invalid providerOptions for model 'test': service_tier: Invalid enum value
+```
+
+### 8.4 Provider Schema Examples
+
+**OpenAI** (`@standardagents/openai`):
+```typescript
+providerOptions: {
+  service_tier: 'default' | 'auto' | 'flex',
+  user: string,
+  seed: number,
+  frequency_penalty: number,  // -2.0 to 2.0
+  presence_penalty: number,   // -2.0 to 2.0
+  logprobs: boolean,
+  top_logprobs: number,       // 0-20
+  store: boolean,
+  metadata: Record<string, string>,
+}
+```
+
+**OpenRouter** (`@standardagents/openrouter`):
+```typescript
+providerOptions: {
+  provider: {
+    order: string[],              // Provider slugs to try in order
+    allow_fallbacks: boolean,
+    require_parameters: boolean,
+    data_collection: 'allow' | 'deny',
+    zdr: boolean,                 // Zero Data Retention
+    only: string[],               // Restrict to these providers
+    ignore: string[],             // Skip these providers
+    sort: 'price' | 'throughput' | 'latency',
+    max_price: {
+      prompt: number,
+      completion: number,
+      request: number,
+      image: number,
+    },
+    quantizations: string[],
+    preferred_min_throughput: number,
+    preferred_max_latency: number,
+  },
+}
+```
+
+### 8.5 Backward Compatibility
+
+- Providers without a schema still work (accept `Record<string, unknown>`)
+- Existing model definitions continue to work without changes
+- Schema validation is opt-in (only runs if provider exports a schema)
+
+## 9. Examples
+
+### 9.1 Basic Model Definition
 
 ```typescript
 import { defineModel } from '@standardagents/builder';
@@ -173,7 +315,7 @@ export default defineModel({
 });
 ```
 
-### 8.2 Model with Pricing and Capabilities
+### 9.2 Model with Pricing and Capabilities
 
 ```typescript
 import { defineModel } from '@standardagents/builder';
@@ -194,7 +336,7 @@ export default defineModel({
 });
 ```
 
-### 8.3 Model with Reasoning Levels
+### 9.3 Model with Reasoning Levels
 
 ```typescript
 import { defineModel } from '@standardagents/builder';
@@ -214,7 +356,7 @@ export default defineModel({
 });
 ```
 
-### 8.4 Model with Fallback Chain
+### 9.4 Model with Fallback Chain
 
 ```typescript
 import { defineModel } from '@standardagents/builder';
@@ -230,7 +372,7 @@ export default defineModel({
 });
 ```
 
-### 8.5 OpenRouter with Provider Preferences
+### 9.5 OpenRouter with Typed Provider Options
 
 ```typescript
 import { defineModel } from '@standardagents/builder';
@@ -240,17 +382,26 @@ export default defineModel({
   name: 'claude-3-opus',
   provider: openrouter,
   model: 'anthropic/claude-3-opus',
-  includedProviders: ['anthropic'],
   inputPrice: 15,
   outputPrice: 75,
   capabilities: {
     supportsImages: true,
     supportsToolCalls: true,
   },
+  providerOptions: {
+    provider: {
+      zdr: true,              // TypeScript knows this is boolean
+      only: ['anthropic'],    // TypeScript knows this is string[]
+      max_price: {
+        prompt: 1,            // TypeScript autocompletes this structure
+        completion: 5,
+      },
+    },
+  },
 });
 ```
 
-### 8.6 Model with Provider Options
+### 9.6 OpenAI with Typed Provider Options
 
 ```typescript
 import { defineModel } from '@standardagents/builder';
@@ -263,12 +414,14 @@ export default defineModel({
   inputPrice: 2.5,
   outputPrice: 10,
   providerOptions: {
-    service_tier: 'flex',
+    service_tier: 'flex',     // TypeScript knows: 'auto' | 'default' | 'flex'
+    seed: 42,                 // TypeScript knows this is number
+    frequency_penalty: 0.5,   // TypeScript validates: -2.0 to 2.0
   },
 });
 ```
 
-### 8.7 Model with Provider Tools
+### 9.7 Model with Provider Tools
 
 ```typescript
 import { defineModel } from '@standardagents/builder';
