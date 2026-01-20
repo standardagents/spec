@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Sidebar from '../../components/Sidebar.astro'
+import TableOfContents from '../../components/TableOfContents.astro'
 import Header from '../../components/Header.tsx'
 
 export async function getStaticPaths() {
@@ -24,7 +25,7 @@ const titleMatch = doc.body?.match(/^#\s+(.+)$/m)
 const pageTitle = titleMatch ? titleMatch[1] : 'Documentation'
 
 // Render the markdown content
-const { Content } = await render(doc)
+const { Content, headings } = await render(doc)
 
 // Get current path for sidebar highlighting
 const currentPath = `/${version}/${slug}`
@@ -43,7 +44,7 @@ const isOverview = parts[parts.length - 1] === 'overview'
       currentGroup={group}
       currentSlug={parts[parts.length - 1] || ''}
     />
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
       <div class="flex gap-8 py-8">
         <Sidebar version={version!} currentPath={currentPath} />
         <main class="min-w-0 flex-1 py-2">
@@ -51,6 +52,7 @@ const isOverview = parts[parts.length - 1] === 'overview'
             <Content />
           </article>
         </main>
+        <TableOfContents headings={headings} />
       </div>
     </div>
   </div>

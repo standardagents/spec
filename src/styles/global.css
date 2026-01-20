@@ -211,6 +211,11 @@ html.dark .prose-content code:not(pre code) {
   border-radius: 0.5rem;
   padding: 1rem;
   font-size: 0.875rem;
+  background-color: #f4f4f4 !important;
+}
+
+html.dark .prose-content pre {
+  background-color: #1f2937 !important;
 }
 
 .prose-content blockquote {
