@@ -18,7 +18,7 @@ const groupTitles: Record<string, string> = {
 const groupOrder = ['getting-started', 'specification', 'infrastructure', 'distribution']
 
 // Explicit page ordering within specification group (primitives -> complex)
-const specOrder = ['providers', 'models', 'tools', 'prompts', 'agents', 'threads', 'hooks']
+const specOrder = ['providers', 'models', 'tools', 'prompts', 'agents', 'threads', 'hooks', 'type-registry']
 
 // Sort versions (newest first using semver-like comparison)
 function compareVersions(a: string, b: string): number {
