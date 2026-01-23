@@ -135,18 +135,30 @@ tools: [
     includeErrors: true,
     initUserMessageProperty: 'document',
   },
+  {
+    name: 'analyze_image',  // Sub-prompt with attachment configuration
+    initUserMessageProperty: 'question',
+    initAttachmentsProperty: 'image_path',
+  },
+  {
+    name: 'support_handoff',  // Agent (ai_human) with initial message
+    initUserMessageProperty: 'customer_query',
+  },
 ]
 ```
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `name` | `string` | Required | Name of the sub-prompt to call |
+| `name` | `string` | Required | Name of the sub-prompt or agent to call |
 | `includeTextResponse` | `boolean` | `true` | Include the sub-prompt's text response in the result string |
 | `includeToolCalls` | `boolean` | `true` | Serialize tool calls made by the sub-prompt (and their results) into the result string |
 | `includeErrors` | `boolean` | `true` | Serialize any errors from the sub-prompt into the result string |
-| `initUserMessageProperty` | `string` | - | Use this argument property as the initial user message when invoking the sub-prompt |
+| `initUserMessageProperty` | `string` | - | Use this argument property as the initial user message when invoking the sub-prompt or agent |
+| `initAttachmentsProperty` | `string` | - | Use this argument property (file path or array of paths) as attachments in the initial user message |
 
 The `initUserMessageProperty` is useful when the sub-prompt expects conversational input. For example, if `initUserMessageProperty: 'query'` is set and the caller passes `{ query: 'What is X?' }`, the sub-prompt receives "What is X?" as its initial user message.
+
+The `initAttachmentsProperty` allows passing file attachments (images, documents) to the sub-prompt. The property value should be a file path string or an array of paths. For example, if `initAttachmentsProperty: 'image'` is set and the caller passes `{ image: '/attachments/photo.jpg' }`, the sub-prompt receives the image as an attachment.
 
 > **💡 Tip:** Combine `initUserMessageProperty` with `includeChat: false` on the sub-prompt. The sub-prompt will only receive its own system prompt and the initial user message—allowing it to operate on a smaller, focused context with reduced token usage.
 
@@ -295,8 +307,8 @@ interface ToolConfig<T extends string = string> {
 }
 
 /**
- * Configuration for sub-prompts used as tools.
- * These options control how results from sub-prompts are returned to the caller.
+ * Configuration for sub-prompts or agents used as tools.
+ * These options control how results are returned and how initial messages are constructed.
  */
 interface SubpromptConfig<T extends string = string> {
   name: T;
@@ -304,6 +316,7 @@ interface SubpromptConfig<T extends string = string> {
   includeToolCalls?: boolean;
   includeErrors?: boolean;
   initUserMessageProperty?: string;
+  initAttachmentsProperty?: string;
 }
 
 /**

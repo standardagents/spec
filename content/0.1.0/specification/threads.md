@@ -549,6 +549,16 @@ if (state.execution) {
 | `stoppedBy` | `'a' \| 'b' \| undefined` | Who stopped |
 | `messageHistory` | `Message[]` | Current history |
 | `abortSignal` | `AbortSignal` | Cancellation signal |
+| `promptPath` | `string[]` | Path from root to current prompt |
+
+#### Prompt Path
+
+The `promptPath` property tracks the current position in the prompt hierarchy:
+- At root level: `['my_prompt']`
+- Inside a sub-prompt: `['my_prompt', 'sub_prompt']`
+- After handoff: `['new_agent_prompt']`
+
+This allows tools and hooks to understand their execution context depth.
 
 ### 9.3 Controlling Execution
 
@@ -832,6 +842,7 @@ interface ExecutionState {
   readonly stoppedBy?: 'a' | 'b';
   readonly messageHistory: Message[];
   readonly abortSignal: AbortSignal;
+  readonly promptPath: string[];
   forceTurn(side: 'a' | 'b'): void;
   stop(): void;
 }
