@@ -4,6 +4,9 @@ node_modules
 # Build output
 dist
 
+# Astro cache
+.astro
+
 # Local env files
 .env
 .env.local
