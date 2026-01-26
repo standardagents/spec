@@ -4,6 +4,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import Sidebar from '../../components/Sidebar.astro'
 import TableOfContents from '../../components/TableOfContents.astro'
 import Header from '../../components/Header.tsx'
+import Footer from '../../components/Footer.astro'
+import PageNavigation from '../../components/PageNavigation.astro'
+import { getPrevNextPages } from '../../lib/content'
 
 export async function getStaticPaths() {
   const docs = await getCollection('docs')
@@ -34,26 +37,33 @@ const currentPath = `/${version}/${slug}`
 const parts = slug?.split('/') || []
 const group = parts[0] || ''
 const isOverview = parts[parts.length - 1] === 'overview'
+
+// Get prev/next navigation (only for non-overview pages)
+const { prev, next } = isOverview
+  ? { prev: null, next: null }
+  : await getPrevNextPages(version!, currentPath)
 ---
 
 <BaseLayout title={`${pageTitle} - Standard Agent Specification`}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
     <Header
       client:load
       currentVersion={version}
       currentGroup={group}
       currentSlug={parts[parts.length - 1] || ''}
     />
-    <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
-      <div class="flex gap-8 py-8">
+    <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8 flex-1">
+      <div class="flex gap-8">
         <Sidebar version={version!} currentPath={currentPath} />
-        <main class="min-w-0 flex-1 py-2">
+        <main class="min-w-0 flex-1 py-8 pb-16">
           <article class:list={['prose-content', { 'is-overview': isOverview }]}>
             <Content />
           </article>
+          {!isOverview && <PageNavigation prev={prev} next={next} />}
         </main>
         <TableOfContents headings={headings} />
       </div>
     </div>
+    <Footer />
   </div>
 </BaseLayout>

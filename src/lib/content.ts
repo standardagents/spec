@@ -139,3 +139,41 @@ export async function getDefaultPage(version: string): Promise<{ group: string; 
 export async function getAllDocs() {
   return await getCollection('docs')
 }
+
+// Get prev/next page navigation
+export interface PageNavItem {
+  title: string
+  href: string
+  group: string
+}
+
+export async function getPrevNextPages(
+  version: string,
+  currentPath: string
+): Promise<{ prev: PageNavItem | null; next: PageNavItem | null }> {
+  const nav = await getNavigation(version)
+
+  // Flatten all pages into a single ordered list
+  const allPages: PageNavItem[] = []
+  for (const group of nav) {
+    for (const item of group.items) {
+      allPages.push({
+        title: item.title,
+        href: item.href,
+        group: group.title,
+      })
+    }
+  }
+
+  // Find current page index
+  const currentIndex = allPages.findIndex(p => p.href === currentPath)
+
+  if (currentIndex === -1) {
+    return { prev: null, next: null }
+  }
+
+  return {
+    prev: currentIndex > 0 ? allPages[currentIndex - 1] : null,
+    next: currentIndex < allPages.length - 1 ? allPages[currentIndex + 1] : null,
+  }
+}
