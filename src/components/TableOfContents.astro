@@ -16,17 +16,18 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 ---
 
 {tocHeadings.length > 0 && (
-  <nav class="hidden xl:block w-56 shrink-0">
-    <div class="sticky top-24">
+  <nav class="hidden xl:block w-56 shrink-0" id="toc-nav">
+    <div class="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto py-8 pl-4">
       <h4 class="font-label text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
         On this page
       </h4>
-      <ul class="space-y-2 text-xs">
+      <ul class="space-y-2 text-sm">
         {tocHeadings.map(heading => (
           <li class={heading.depth === 3 ? 'ml-3' : ''}>
             <a
               href={`#${heading.slug}`}
-              class="block text-gray-400 hover:text-gray-600 hover:underline dark:text-gray-500 dark:hover:text-gray-400 transition-colors"
+              data-toc-link={heading.slug}
+              class="toc-link block text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
             >
               {heading.text}
             </a>
@@ -36,3 +37,153 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
     </div>
   </nav>
 )}
+
+<style>
+  .toc-link {
+    border-left: 2px solid transparent;
+    padding-left: 0.75rem;
+    margin-left: -0.75rem;
+  }
+
+  .toc-link.active {
+    color: #111827;
+    border-left-color: #111827;
+  }
+
+  :global(html.dark) .toc-link.active {
+    color: #f3f4f6;
+    border-left-color: #f3f4f6;
+  }
+</style>
+
+<script>
+  function initScrollSpy() {
+    const tocLinks = document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
+    if (tocLinks.length === 0) return;
+
+    const headingIds = Array.from(tocLinks).map(link => link.dataset.tocLink!);
+    const headings = headingIds
+      .map(id => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (headings.length === 0) return;
+
+    let activeId: string | null = null;
+    let isClickScrolling = false;
+
+    const setActive = (id: string | null, force = false) => {
+      if (!force && isClickScrolling) return; // Ignore observer updates during click scroll
+      if (id === activeId) return;
+      activeId = id;
+
+      tocLinks.forEach(link => {
+        if (link.dataset.tocLink === id) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    };
+
+    // Handle TOC link clicks - temporarily disable observer updates
+    tocLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        const targetId = link.dataset.tocLink;
+        if (targetId) {
+          isClickScrolling = true;
+          setActive(targetId, true);
+
+          // Re-enable observer after scroll settles
+          setTimeout(() => {
+            isClickScrolling = false;
+          }, 100);
+        }
+      });
+    });
+
+    // Use Intersection Observer to track visible headings
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find headings that are intersecting
+        const visibleEntries = entries.filter(e => e.isIntersecting);
+
+        if (visibleEntries.length > 0) {
+          // Get the topmost visible heading
+          const topEntry = visibleEntries.reduce((top, entry) => {
+            return entry.boundingClientRect.top < top.boundingClientRect.top ? entry : top;
+          });
+          setActive(topEntry.target.id);
+        } else {
+          // No headings visible - find which section we're in
+          // by checking which heading is above the viewport
+          const scrollY = window.scrollY + 100; // Account for sticky header
+          let currentId: string | null = null;
+
+          for (const heading of headings) {
+            if (heading.offsetTop <= scrollY) {
+              currentId = heading.id;
+            } else {
+              break;
+            }
+          }
+
+          if (currentId) {
+            setActive(currentId);
+          }
+        }
+      },
+      {
+        rootMargin: '-80px 0px -70% 0px',
+        threshold: 0
+      }
+    );
+
+    headings.forEach(heading => observer.observe(heading));
+
+    // Check if scrolled to bottom of page
+    const isAtBottom = () => {
+      const scrolledToBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50;
+      return scrolledToBottom;
+    };
+
+    // Handle scroll to bottom - activate last item
+    const handleScroll = () => {
+      if (isClickScrolling) return;
+      if (isAtBottom() && headings.length > 0) {
+        setActive(headings[headings.length - 1].id);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Set initial active state
+    if (isAtBottom() && headings.length > 0) {
+      setActive(headings[headings.length - 1].id);
+    } else {
+      const scrollY = window.scrollY + 100;
+      let initialId: string | null = null;
+      for (const heading of headings) {
+        if (heading.offsetTop <= scrollY) {
+          initialId = heading.id;
+        } else {
+          break;
+        }
+      }
+      if (initialId) {
+        setActive(initialId);
+      } else if (headings[0]) {
+        setActive(headings[0].id);
+      }
+    }
+
+    // Cleanup on page navigation (for Astro view transitions)
+    document.addEventListener('astro:before-swap', () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+    }, { once: true });
+  }
+
+  // Initialize on load and after Astro view transitions
+  initScrollSpy();
+  document.addEventListener('astro:after-swap', initScrollSpy);
+</script>
