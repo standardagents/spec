@@ -60,6 +60,21 @@ html.dark .astro-code span {
 /* Prose styling for markdown content */
 .prose-content {
   color: #374151; /* gray-700 */
+  /* Contain wide content on mobile */
+  min-width: 0;
+}
+
+/* Mobile content containment */
+@media (max-width: 639px) {
+  /* Constrain code blocks to viewport */
+  .prose-content pre {
+    max-width: calc(100vw - 2rem);
+  }
+
+  /* Allow inline code to wrap */
+  .prose-content code {
+    word-break: break-word;
+  }
 }
 
 html.dark .prose-content {
@@ -318,21 +333,28 @@ html.dark .prose-content blockquote.pullquote::after {
   background: linear-gradient(to right, transparent, #475569, transparent);
 }
 
-/* Table wrapper for rounded corners */
-.prose-content table {
+/* ==========================================================================
+   Responsive Tables - Sticky First Column Pattern
+   On mobile: horizontal scroll with sticky first column for context
+   ========================================================================== */
+
+.prose-content .table-wrapper {
   margin-top: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5e1;
+  overflow: hidden;
+}
+
+html.dark .prose-content .table-wrapper {
+  border-color: #475569;
+}
+
+.prose-content table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   text-align: left;
   font-size: 0.875rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-
-html.dark .prose-content table {
-  border-color: #475569;
 }
 
 .prose-content thead {
@@ -374,22 +396,71 @@ html.dark .prose-content td {
   border-bottom: none;
 }
 
-.prose-content tbody tr {
-  transition: background-color 0.15s ease;
-}
-
-.prose-content tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-html.dark .prose-content tbody tr:hover {
-  background-color: rgba(30, 41, 59, 0.5);
-}
-
-/* Code in table cells */
 .prose-content td code {
   font-size: 0.8125rem;
   padding: 0.2rem 0.4rem;
+}
+
+/* Mobile: Sticky first column with horizontal scroll */
+@media (max-width: 639px) {
+  .prose-content .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Right-side inset shadow when more content exists (anchored to visible edge) */
+  .prose-content .table-wrapper.has-overflow:not(.is-at-end) {
+    box-shadow: inset -12px 0 8px -8px rgba(0,0,0,0.15);
+  }
+
+  html.dark .prose-content .table-wrapper.has-overflow:not(.is-at-end) {
+    box-shadow: inset -12px 0 8px -8px rgba(0,0,0,0.3);
+  }
+
+  .prose-content table {
+    min-width: 100%;
+  }
+
+  /* Sticky first column - always visible for context */
+  .prose-content th:first-child,
+  .prose-content td:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 1;
+  }
+
+  .prose-content thead th:first-child {
+    background: #f8fafc;
+  }
+
+  html.dark .prose-content th:first-child,
+  html.dark .prose-content td:first-child {
+    background: #1e293b;
+  }
+
+  /* Shadow on sticky column when scrolled (content underneath) */
+  .prose-content .table-wrapper.is-scrolled th:first-child,
+  .prose-content .table-wrapper.is-scrolled td:first-child {
+    box-shadow: 4px 0 8px -4px rgba(0,0,0,0.15);
+  }
+
+  html.dark .prose-content .table-wrapper.is-scrolled th:first-child,
+  html.dark .prose-content .table-wrapper.is-scrolled td:first-child {
+    box-shadow: 4px 0 8px -4px rgba(0,0,0,0.4);
+  }
+
+  /* Ensure cells don't shrink too much */
+  .prose-content th,
+  .prose-content td {
+    white-space: nowrap;
+  }
+
+  /* But allow description columns to wrap */
+  .prose-content td:last-child {
+    white-space: normal;
+    min-width: 200px;
+  }
 }
 
 .prose-content hr {

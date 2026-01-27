@@ -52,8 +52,8 @@ const { prev, next } = isOverview
       currentGroup={group}
       currentSlug={parts[parts.length - 1] || ''}
     />
-    <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8 flex-1">
-      <div class="flex gap-8">
+    <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8 flex-1 w-full">
+      <div class="flex gap-8 max-w-full">
         <Sidebar version={version!} currentPath={currentPath} />
         <main class="min-w-0 flex-1 py-8 pb-16">
           <article class:list={['prose-content', { 'is-overview': isOverview }]}>
@@ -66,4 +66,25 @@ const { prev, next } = isOverview
     </div>
     <Footer />
   </div>
+  <script>
+    // Detect table overflow and scroll position
+    function checkTableOverflow() {
+      document.querySelectorAll('.prose-content .table-wrapper').forEach(wrapper => {
+        const hasOverflow = wrapper.scrollWidth > wrapper.clientWidth
+        wrapper.classList.toggle('has-overflow', hasOverflow)
+
+        // Track scroll position for sticky column shadow
+        if (hasOverflow) {
+          wrapper.addEventListener('scroll', () => {
+            const isScrolled = wrapper.scrollLeft > 0
+            const isAtEnd = wrapper.scrollLeft >= wrapper.scrollWidth - wrapper.clientWidth - 1
+            wrapper.classList.toggle('is-scrolled', isScrolled)
+            wrapper.classList.toggle('is-at-end', isAtEnd)
+          }, { passive: true })
+        }
+      })
+    }
+    checkTableOverflow()
+    window.addEventListener('resize', checkTableOverflow)
+  </script>
 </BaseLayout>
