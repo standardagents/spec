@@ -318,7 +318,6 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
         </div>
       </header>
 
-<<<<<<< HEAD
       {/* Mobile menu backdrop - starts below header */}
       <div
         className={`fixed top-16 right-0 bottom-0 left-0 z-40 bg-gray-900/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
