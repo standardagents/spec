@@ -1,6 +1,6 @@
 # Runtime
 
-[TK]
+A runtime is the execution environment that runs Standard Agents. It manages the execution loop, assembles context for LLM requests, executes tools, enforces stop conditions, and persists conversation state to threads.
 
 ## 1. Overview
 

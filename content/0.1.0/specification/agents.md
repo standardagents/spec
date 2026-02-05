@@ -1,6 +1,6 @@
 # Agents
 
-[TK]
+An agent is the top-level orchestration unit in Standard Agents. It combines prompts, stop conditions, and behavioral rules to manage conversations—either between AI and human users, or autonomously between two AI sides.
 
 ## 1. Agent Definition
 

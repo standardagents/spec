@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css'
+import InviteGate from '../components/InviteGate'
 
 interface Props {
   title?: string
@@ -40,10 +41,21 @@ const {
         window.getTheme = function() {
           return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
         };
+
+        // Invite gate - hide content by default, show only if authenticated
+        // Check for stored invite code OR ?invite= param (which will be validated by React)
+        var hasStoredCode = localStorage.getItem('sab_spec_invite');
+        var hasUrlCode = window.location.search.indexOf('invite=') !== -1;
+        if (!hasStoredCode && !hasUrlCode) {
+          document.documentElement.classList.add('invite-gate-pending');
+        }
       })();
     </script>
   </head>
   <body>
+    <div data-invite-gate>
+      <InviteGate client:load />
+    </div>
     <slot />
   </body>
 </html>

@@ -18,7 +18,8 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 {tocHeadings.length > 0 && (
   <nav class="hidden xl:block w-56 shrink-0" id="toc-nav">
     <div class="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto py-8 pl-4">
-      <h4 class="font-label text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+      {/* original: text-gray-500 dark:text-gray-400 */}
+      <h4 class="font-label text-xs font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-3">
         On this page
       </h4>
       <ul class="space-y-2 text-sm">
@@ -27,7 +28,8 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
             <a
               href={`#${heading.slug}`}
               data-toc-link={heading.slug}
-              class="toc-link block text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+              class="toc-link block text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              {/* original: text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 */}
             >
               {heading.text}
             </a>

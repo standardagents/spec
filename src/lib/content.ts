@@ -20,6 +20,11 @@ const groupOrder = ['getting-started', 'specification', 'infrastructure', 'distr
 // Explicit page ordering within specification group (primitives -> complex)
 const specOrder = ['providers', 'models', 'tools', 'prompts', 'agents', 'threads', 'hooks', 'type-registry']
 
+// Pages to exclude from navigation (group/slug)
+const excludedPages: Record<string, string[]> = {
+  'infrastructure': ['providers'],
+}
+
 // Sort versions (newest first using semver-like comparison)
 function compareVersions(a: string, b: string): number {
   const partsA = a.split('.').map(Number)
@@ -87,7 +92,15 @@ export async function getNavigation(version: string): Promise<NavGroup[]> {
     const groupDocs = groupedDocs[group]
     if (!groupDocs || groupDocs.length === 0) continue
 
-    const items = groupDocs.map(doc => {
+    // Filter out excluded pages
+    const filteredDocs = groupDocs.filter(doc => {
+      const parts = doc.id.split('/')
+      const slug = parts[parts.length - 1]
+      const excluded = excludedPages[group] || []
+      return !excluded.includes(slug)
+    })
+
+    const items = filteredDocs.map(doc => {
       const parts = doc.id.split('/')
       const slug = parts[parts.length - 1]
       return {

@@ -116,6 +116,14 @@ interface NavGroup {
   items: NavItem[]
 }
 
+/**
+ * HIGH CONTRAST OVERRIDES — revert these when ready:
+ *   text-gray-800  → text-gray-600   (light inactive text)
+ *   text-gray-700  → text-gray-500   (light label text)
+ *   text-gray-600  → text-gray-400   (light secondary text)
+ *   dark:text-gray-300 → dark:text-gray-400 (dark inactive text)
+ *   dark:text-gray-400 → dark:text-gray-500 (dark secondary text)
+ */
 export default function Header({ currentVersion, currentGroup, currentSlug }: Props) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -172,7 +180,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
               <div className="relative hidden lg:block">
                 <button
                   onClick={() => setVersionOpen(!versionOpen)}
-                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-label text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-label text-sm font-medium text-gray-800 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
                 >
                   v{currentVersion}
                   <ChevronIcon className={`h-3 w-3 transition-transform ${versionOpen ? 'rotate-180' : ''}`} />
@@ -187,12 +195,12 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
                         className={`block w-full px-3 py-1.5 text-left text-sm ${
                           v === currentVersion
                             ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-700 dark:text-gray-100'
-                            : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'
+                            : 'text-gray-800 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
                         }`}
                       >
                         v{v}
                         {v === latestVersion && (
-                          <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">latest</span>
+                          <span className="ml-2 text-xs text-gray-600 dark:text-gray-400">latest</span>
                         )}
                       </a>
                     ))}
@@ -205,20 +213,20 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
               {/* Agent Builder - desktop only */}
               <a
                 href="https://standardagentbuilder.com"
-                className="hidden items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 lg:inline-flex"
+                className="hidden items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100 lg:inline-flex"
               >
                 Agent Builder
                 <ArrowUpRightIcon className="h-3.5 w-3.5" />
               </a>
               <a
                 href="https://github.com/standardagents"
-                className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                className="rounded-md p-2 text-gray-800 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
               >
                 <GitHubIcon className="h-5 w-5" />
               </a>
               <button
                 onClick={handleToggleTheme}
-                className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                className="rounded-md p-2 text-gray-800 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
               >
                 {theme === 'light' ? <MoonIcon className="h-5 w-5" /> : <SunIcon className="h-5 w-5" />}
               </button>
@@ -241,7 +249,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
           <div className="h-full overflow-y-auto px-4 py-6">
             {/* Version selector */}
             <div className="mb-6">
-              <h3 className="mb-2 font-label text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <h3 className="mb-2 font-label text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
                 Version
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -253,7 +261,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
                     className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                       v === currentVersion
                         ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                     }`}
                   >
                     v{v}
@@ -266,7 +274,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
             <nav className="space-y-6">
               {navigation.map((navGroup) => (
                 <div key={navGroup.group}>
-                  <h3 className="mb-2 font-label text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  <h3 className="mb-2 font-label text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
                     {navGroup.title}
                   </h3>
                   <ul className="space-y-1">
@@ -280,7 +288,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
                             className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                               isActive
                                 ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+                                : 'text-gray-800 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100'
                             }`}
                           >
                             {item.title}
@@ -297,7 +305,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
             <div className="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
               <a
                 href="https://standardagentbuilder.com"
-                className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                className="inline-flex items-center gap-1 text-sm font-medium text-gray-800 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
               >
                 Agent Builder
                 <ArrowUpRightIcon className="h-3.5 w-3.5" />

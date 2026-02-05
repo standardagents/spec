@@ -1,6 +1,6 @@
 # Prompts
 
-[TK]
+A prompt defines how each request to an LLM is crafted. It specifies system instructions, a model reference, available tools, and behavioral configuration that shapes how the agent responds.
 
 ## 1. Prompt Definition
 
