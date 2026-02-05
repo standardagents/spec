@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config'
 import react from '@astrojs/react'
 import tailwindcss from '@tailwindcss/vite'
+import rehypeWrapTables from './src/lib/rehype-wrap-tables.mjs'
 
 export default defineConfig({
   output: 'static',
@@ -10,6 +11,7 @@ export default defineConfig({
   },
   markdown: {
     remarkPlugins: ['remark-gfm'],
+    rehypePlugins: [rehypeWrapTables],
     shikiConfig: {
       themes: {
         light: 'github-light',
