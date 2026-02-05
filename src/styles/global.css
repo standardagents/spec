@@ -38,9 +38,15 @@ html.dark body.invite-gate-active > *:not([data-invite-gate]) {
   color: #111827; /* gray-900, same as dark bg */
 }
 
-/* Prevent scrolling when invite gate is active */
+/* Prevent scrolling when invite gate is pending or active */
+html.invite-gate-pending body,
 body.invite-gate-active {
   overflow: hidden;
+}
+
+/* Hide static loader once React has taken over */
+html:not(.invite-gate-pending) #invite-gate-loader {
+  display: none;
 }
 
 /* Shiki/Astro code block theme switching - dual theme support */
