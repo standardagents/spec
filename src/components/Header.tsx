@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // Type for window with our theme functions
 declare global {
@@ -129,6 +129,8 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
   const [menuOpen, setMenuOpen] = useState(false)
   const [versionOpen, setVersionOpen] = useState(false)
   const [navigation, setNavigation] = useState<NavGroup[]>([])
+  const menuRef = useRef<HTMLDivElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
 
   // Initialize theme from DOM on mount
   useEffect(() => {
@@ -136,6 +138,72 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
       setTheme(window.getTheme?.() || 'light')
     }
   }, [])
+
+  // Handle escape key and outside click to close mobile menu
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false)
+        menuButtonRef.current?.focus()
+      }
+    }
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        menuButtonRef.current &&
+        !menuButtonRef.current.contains(target)
+      ) {
+        setMenuOpen(false)
+      }
+    }
+
+    // Focus trap - keep focus within menu
+    const handleFocusTrap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !menuRef.current) return
+
+      const focusableElements = menuRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault()
+        lastElement?.focus()
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault()
+        firstElement?.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', handleFocusTrap)
+    document.addEventListener('mousedown', handleClickOutside)
+
+    // Prevent body scroll when menu is open
+    document.body.style.overflow = 'hidden'
+
+    // Focus first focusable element in menu
+    const timer = setTimeout(() => {
+      const firstFocusable = menuRef.current?.querySelector<HTMLElement>(
+        'a[href], button:not([disabled])'
+      )
+      firstFocusable?.focus()
+    }, 100) // Small delay to allow animation to start
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.removeEventListener('keydown', handleFocusTrap)
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.body.style.overflow = ''
+      clearTimeout(timer)
+    }
+  }, [menuOpen])
 
   // Fetch navigation on mount
   useEffect(() => {
@@ -156,20 +224,23 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
 
   const latestVersion = versions[0]
 
-  const handleVersionSelect = (newVersion: string) => {
-    setVersionOpen(false)
-    setMenuOpen(false)
-
-    // Try to preserve current page path, fallback to default
+  // Pure function to generate version URL - safe to call during render
+  const getVersionUrl = (newVersion: string) => {
     if (currentGroup && currentSlug) {
       return `/${newVersion}/${currentGroup}/${currentSlug}`
     }
     return `/${newVersion}`
   }
 
+  // Event handler for closing dropdowns - only called on click
+  const handleVersionClick = () => {
+    setVersionOpen(false)
+    setMenuOpen(false)
+  }
+
   return (
     <>
-      <header className="sticky top-0 z-50 bg-gray-50/60 backdrop-blur-sm dark:bg-gray-900/60">
+      <header className={`sticky top-0 z-50 ${menuOpen ? 'bg-gray-50 dark:bg-gray-900' : 'bg-gray-50/60 backdrop-blur-sm dark:bg-gray-900/60'}`}>
         <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
@@ -190,8 +261,8 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
                     {versions.map((v) => (
                       <a
                         key={v}
-                        href={handleVersionSelect(v)}
-                        onClick={() => setVersionOpen(false)}
+                        href={getVersionUrl(v)}
+                        onClick={handleVersionClick}
                         className={`block w-full px-3 py-1.5 text-left text-sm ${
                           v === currentVersion
                             ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-700 dark:text-gray-100'
@@ -232,8 +303,12 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
               </button>
               {/* Hamburger - mobile only */}
               <button
+                ref={menuButtonRef}
                 type="button"
                 onClick={() => setMenuOpen(!menuOpen)}
+                aria-expanded={menuOpen}
+                aria-controls="mobile-menu"
+                aria-label={menuOpen ? 'Close menu' : 'Open menu'}
                 className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 lg:hidden"
               >
                 {menuOpen ? <CloseIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
@@ -243,31 +318,58 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
         </div>
       </header>
 
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="fixed top-16 right-0 bottom-0 left-0 z-40 bg-gray-50 dark:bg-gray-900 lg:hidden">
-          <div className="h-full overflow-y-auto px-4 py-6">
-            {/* Version selector */}
-            <div className="mb-6">
-              <h3 className="mb-2 font-label text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                Version
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {versions.map((v) => (
-                  <a
-                    key={v}
-                    href={handleVersionSelect(v)}
-                    onClick={() => setMenuOpen(false)}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                      v === currentVersion
-                        ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                    }`}
-                  >
-                    v{v}
-                  </a>
-                ))}
-              </div>
+<<<<<<< HEAD
+      {/* Mobile menu backdrop - starts below header */}
+      <div
+        className={`fixed top-16 right-0 bottom-0 left-0 z-40 bg-gray-900/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+          menuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        aria-hidden="true"
+        onClick={() => setMenuOpen(false)}
+      />
+
+      {/* Mobile menu panel */}
+      <div
+        ref={menuRef}
+        id="mobile-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+        className={`fixed top-16 right-0 bottom-0 z-50 w-full max-w-sm bg-gray-50 shadow-xl transition-transform duration-300 ease-out dark:bg-gray-900 lg:hidden ${
+          menuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="h-full overflow-y-auto px-4 py-6">
+            {/* Version selector - dropdown style */}
+            <div className="relative mb-6">
+              <button
+                onClick={() => setVersionOpen(!versionOpen)}
+                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+              >
+                <span>v{currentVersion}</span>
+                <ChevronIcon className={`h-4 w-4 text-gray-500 transition-transform dark:text-gray-400 ${versionOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {versionOpen && (
+                <div className="absolute left-0 right-0 z-10 mt-1 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                  {versions.map((v) => (
+                    <a
+                      key={v}
+                      href={getVersionUrl(v)}
+                      onClick={handleVersionClick}
+                      className={`block px-4 py-2 text-sm ${
+                        v === currentVersion
+                          ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+                          : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      v{v}
+                      {v === latestVersion && (
+                        <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">latest</span>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Navigation */}
@@ -313,7 +415,6 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
             </div>
           </div>
         </div>
-      )}
     </>
   )
 }
