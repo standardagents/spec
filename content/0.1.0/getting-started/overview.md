@@ -1,10 +1,10 @@
-# Standard Agent Specification
+# Overview
 
 The Standard Agent Specification is an open-source standard for creating domain-specific agents that are fine-tuned, portable, and composable. Any agent that complies with this standard can be published directly to npm and installed by any execution environment that supports Standard Agents.
 
 ## Core Principles
 
-1. Agents should be the atomic unit of AI software — not models.
+1. Agents are the atomic unit of AI software — not models.
 2. Agents should be domain-specific.
 3. Agents should be vendor-agnostic.
 4. Agents should be composable.

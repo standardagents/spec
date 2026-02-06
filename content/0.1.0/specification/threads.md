@@ -1,6 +1,6 @@
 # Threads
 
-[TK]
+A thread is an instance of an agent—the runtime execution context where conversations happen. Each thread has isolated storage for messages and files, maintains its own conversation history, and can be handed off between agents while preserving full context.
 
 ## 1. Thread Definition
 

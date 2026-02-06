@@ -1,6 +1,6 @@
 # Tools
 
-[TK]
+A tool is a capability that an LLM can invoke during execution. Tools enable agents to interact with external systems, perform computations, or access resources beyond the model's built-in knowledge.
 
 ## 1. Tool Definition
 

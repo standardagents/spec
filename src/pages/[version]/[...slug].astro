@@ -52,8 +52,8 @@ const { prev, next } = isOverview
       currentGroup={group}
       currentSlug={parts[parts.length - 1] || ''}
     />
-    <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8 flex-1">
-      <div class="flex gap-8">
+    <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8 flex-1 w-full">
+      <div class="flex gap-8 max-w-full">
         <Sidebar version={version!} currentPath={currentPath} />
         <main class="min-w-0 flex-1 py-8 pb-16">
           <article class:list={['prose-content', { 'is-overview': isOverview }]}>
@@ -66,4 +66,64 @@ const { prev, next } = isOverview
     </div>
     <Footer />
   </div>
+  <script>
+    // Detect table overflow and scroll position
+    function checkTableOverflow() {
+      document.querySelectorAll('.prose-content .table-wrapper').forEach(wrapper => {
+        const table = wrapper.querySelector('table')
+        const thead = wrapper.querySelector('thead')
+        const hasOverflow = wrapper.scrollWidth > wrapper.clientWidth
+        wrapper.classList.toggle('has-overflow', hasOverflow)
+
+        // Remove existing badge if no overflow
+        let badge = wrapper.querySelector('.column-badge')
+        if (!hasOverflow) {
+          if (badge) badge.remove()
+          return
+        }
+
+        // Update badge count on scroll
+        const headerRow = thead.querySelector('tr')
+        const updateBadge = () => {
+          const ths = table.querySelectorAll('thead th:not(.column-badge)')
+          const wrapperRect = wrapper.getBoundingClientRect()
+          let hiddenCount = 0
+
+          ths.forEach(th => {
+            const thRect = th.getBoundingClientRect()
+            // Column is hidden until 40px of it is visible in the viewport
+            if (thRect.left > wrapperRect.right - 40) {
+              hiddenCount++
+            }
+          })
+
+          badge = wrapper.querySelector('.column-badge')
+          if (hiddenCount > 0) {
+            if (!badge) {
+              badge = document.createElement('th')
+              badge.className = 'column-badge'
+              headerRow.appendChild(badge)
+            }
+            badge.innerHTML = `+${hiddenCount}<span class="scroll-arrow"></span>`
+          } else if (badge) {
+            badge.remove()
+          }
+        }
+
+        // Track scroll position for sticky column shadow
+        wrapper.addEventListener('scroll', () => {
+          const isScrolled = wrapper.scrollLeft > 0
+          const isAtEnd = wrapper.scrollLeft >= wrapper.scrollWidth - wrapper.clientWidth - 1
+          wrapper.classList.toggle('is-scrolled', isScrolled)
+          wrapper.classList.toggle('is-at-end', isAtEnd)
+          updateBadge()
+        }, { passive: true })
+
+        // Initial badge update
+        updateBadge()
+      })
+    }
+    checkTableOverflow()
+    window.addEventListener('resize', checkTableOverflow)
+  </script>
 </BaseLayout>

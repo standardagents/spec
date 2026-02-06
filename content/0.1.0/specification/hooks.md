@@ -1,6 +1,6 @@
 # Hooks
 
-[TK]
+A hook is an interception point in the agent execution lifecycle. Hooks enable logging, validation, transformation, and side effects at specific moments during execution—without modifying core agent logic.
 
 ## 1. Hook Definition
 
