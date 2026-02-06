@@ -16,12 +16,14 @@ declare global {
     interface AgentRegistry {}
     interface ToolRegistry {}
     interface CallableRegistry {}
+    interface HookIdRegistry {}
 
     type Models = keyof ModelRegistry extends never ? string : keyof ModelRegistry;
     type Prompts = keyof PromptRegistry extends never ? string : keyof PromptRegistry;
     type Agents = keyof AgentRegistry extends never ? string : keyof AgentRegistry;
     type Tools = keyof ToolRegistry extends never ? string : keyof ToolRegistry;
     type Callables = keyof CallableRegistry extends never ? string : keyof CallableRegistry;
+    type HookIds = keyof HookIdRegistry extends never ? string : keyof HookIdRegistry;
   }
 }
 ```
@@ -35,6 +37,7 @@ declare global {
 | `AgentRegistry` | Agent definition names | `StandardAgentSpec.Agents` |
 | `ToolRegistry` | Tool definition names | `StandardAgentSpec.Tools` |
 | `CallableRegistry` | All callable items (prompts, agents, tools) | `StandardAgentSpec.Callables` |
+| `HookIdRegistry` | Hook IDs from `defineHook()` | `StandardAgentSpec.HookIds` |
 
 ### 1.3 Type Resolution
 
@@ -156,6 +159,12 @@ declare global {
       'search_knowledge_base': true;
       'create_ticket': true;
     }
+
+    interface HookIdRegistry {
+      'limit_to_20_messages': true;
+      'log_tool_calls': true;
+      'redact_credit_cards': true;
+    }
   }
 }
 
@@ -241,6 +250,7 @@ declare global {
       'customer_support': true;
       'support_agent': true;
     }
+    interface HookIdRegistry {}
   }
 }
 export {};
@@ -320,6 +330,9 @@ declare global {
     /** Registry of all callable items (prompts, agents, tools). */
     interface CallableRegistry {}
 
+    /** Registry of hook IDs from defineHook(). */
+    interface HookIdRegistry {}
+
     /** Union of all model names, or string when registry is empty. */
     type Models = keyof ModelRegistry extends never ? string : keyof ModelRegistry;
 
@@ -334,6 +347,9 @@ declare global {
 
     /** Union of all callable names, or string when registry is empty. */
     type Callables = keyof CallableRegistry extends never ? string : keyof CallableRegistry;
+
+    /** Union of all hook IDs, or string when registry is empty. */
+    type HookIds = keyof HookIdRegistry extends never ? string : keyof HookIdRegistry;
   }
 }
 

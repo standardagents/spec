@@ -137,6 +137,8 @@ After tool execution, the runtime **MUST** invoke applicable hooks:
 
 If a hook returns `null`, the tool call and result **MUST** be removed from history.
 
+Hook resolution follows scoping rules: prompt-level hooks take precedence over agent-level hooks. See the [Hooks specification](/specification/hooks) for details.
+
 ## 7. Stop Conditions
 
 ### 7.1 Evaluation

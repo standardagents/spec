@@ -31,6 +31,7 @@ A prompt definition **MAY** include the following properties:
 | `tools` | `(string \| ToolConfig)[]` | - | Available tools (include `ai_human` agent names for handoffs) |
 | `reasoning` | `ReasoningConfig` | - | Extended thinking config |
 | `recentImageThreshold` | `number` | `10` | Messages to keep images |
+| `hooks` | `string[]` | - | Hook IDs to run for this prompt |
 
 ## 2. Prompt Content
 
@@ -244,7 +245,28 @@ The `recentImageThreshold` property controls how images are handled in conversat
 - Older images are replaced with text descriptions
 - Helps manage context window usage in long conversations
 
-## 8. Validation
+## 8. Hook Scoping
+
+The `hooks` property declares which hooks run when this prompt is active. Hook IDs reference hooks defined in `agents/hooks/` using `defineHook()`.
+
+```typescript
+definePrompt({
+  name: 'customer_support',
+  // ...
+  hooks: ['limit_to_20_messages', 'log_tool_calls', 'redact_credit_cards'],
+});
+```
+
+**Behavior:**
+
+- When `hooks` is specified, **only** those hooks run for this prompt
+- When `hooks` is omitted, the runtime falls back to agent-level hooks
+- Hook IDs reference the `id` property from `defineHook({ hook, id, execute })`
+- See the [Hooks specification](/specification/hooks) for hook definition details
+
+This allows different prompts within the same agent to use different hooks. For example, a classifier prompt might skip message filtering hooks while a support prompt includes them.
+
+## 9. Validation
 
 ### 8.1 Required Field Validation
 
@@ -263,7 +285,7 @@ Implementations **MUST** validate that:
 2. `reasoning.effort` is one of: `'low'`, `'medium'`, `'high'`
 3. `recentImageThreshold` is a positive integer
 
-## 9. TypeScript Reference
+## 10. TypeScript Reference
 
 ```typescript
 /**
@@ -349,6 +371,7 @@ interface PromptDefinition<
   tenvs?: Record<string, unknown>;
   reasoning?: ReasoningConfig;
   recentImageThreshold?: number;
+  hooks?: string[];
 }
 
 /**
@@ -367,9 +390,9 @@ function definePrompt<N extends string, S extends ToolArgs = never>(
 ): PromptDefinition<N, S>;
 ```
 
-## 10. Examples
+## 11. Examples
 
-### 10.1 Basic Prompt
+### 11.1 Basic Prompt
 
 ```typescript
 import { definePrompt } from '@standardagents/spec';
@@ -382,7 +405,7 @@ export default definePrompt({
 });
 ```
 
-### 10.2 Prompt with Tools
+### 11.2 Prompt with Tools
 
 ```typescript
 import { definePrompt } from '@standardagents/spec';
@@ -403,7 +426,7 @@ export default definePrompt({
 });
 ```
 
-### 10.3 Structured Prompt with Includes
+### 11.3 Structured Prompt with Includes
 
 ```typescript
 import { definePrompt } from '@standardagents/spec';
@@ -422,7 +445,7 @@ export default definePrompt({
 });
 ```
 
-### 10.4 Prompt with Reasoning
+### 11.4 Prompt with Reasoning
 
 ```typescript
 import { definePrompt } from '@standardagents/spec';
@@ -437,5 +460,21 @@ export default definePrompt({
     maxTokens: 4096,
     exclude: false,
   },
+});
+```
+
+### 11.5 Prompt with Hooks
+
+```typescript
+import { definePrompt } from '@standardagents/spec';
+
+export default definePrompt({
+  name: 'customer_support',
+  toolDescription: 'Handle customer support inquiries',
+  model: 'conversational',
+  prompt: 'You are a customer support agent. Be helpful and concise.',
+  tools: ['search_knowledge_base', 'create_ticket'],
+  includeChat: true,
+  hooks: ['limit_to_20_messages', 'log_tool_calls', 'redact_credit_cards'],
 });
 ```

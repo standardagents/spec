@@ -66,7 +66,13 @@ export const models = {
   }),
 } as const;
 
-export const hooks = {} as const;
+export const hooks = {
+  limit_messages: async () => ({
+    hook: 'filter_messages' as const,
+    id: 'limit_messages',
+    execute: async (state: any, messages: any[]) => messages.slice(-50),
+  }),
+} as const;
 
 export const __meta: PackedMeta = {
   packageId: 'standardagent-my-workflow',
@@ -207,7 +213,7 @@ interface PackedExports {
   prompts: Record<string, DefinitionLoader<PromptDefinition>>;
   tools: Record<string, DefinitionLoader<ToolDefinition>>;
   models: Record<string, DefinitionLoader<ModelDefinition>>;
-  hooks: Record<string, DefinitionLoader<HookSignature>>;
+  hooks: Record<string, DefinitionLoader<HookDefinitionResult>>;
   __meta: PackedMeta;
 }
 ```
@@ -326,7 +332,9 @@ export declare const models: {
   readonly gpt_4o: DefinitionLoader<ModelDefinition>;
 };
 
-export declare const hooks: {};
+export declare const hooks: {
+  readonly limit_messages: DefinitionLoader<HookDefinitionResult>;
+};
 
 export declare const __meta: PackedMeta;
 ```

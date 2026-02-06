@@ -30,6 +30,7 @@ An agent definition **MAY** include the following properties:
 | `description` | `string` | - | Brief description |
 | `icon` | `string` | - | Icon URL or path |
 | `tenvs` | `Record<string, unknown>` | - | Default thread environment variables |
+| `hooks` | `string[]` | - | Hook IDs to run (fallback when prompts don't specify hooks) |
 
 ## 2. Definitions
 
@@ -373,6 +374,7 @@ interface AgentDefinition<
   description?: string;
   icon?: string;
   tenvs?: Record<string, unknown>;
+  hooks?: string[];
 }
 
 /**
@@ -479,4 +481,23 @@ export default defineAgent({
   },
 });
 ```
+
+### 11.6 Agent with Hooks
+
+```typescript
+import { defineAgent } from '@standardagents/spec';
+
+export default defineAgent({
+  name: 'support_agent',
+  type: 'ai_human',
+  description: 'Customer support with logging and message limits',
+  sideA: {
+    prompt: 'support_prompt',
+    stopOnResponse: true,
+  },
+  hooks: ['limit_to_50_messages', 'log_tool_calls'],
+});
+```
+
+Agent-level hooks serve as defaults. If a prompt declares its own `hooks` array, the prompt-level hooks take precedence. See the [Hooks specification](/specification/hooks) for details.
 
