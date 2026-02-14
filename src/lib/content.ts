@@ -18,7 +18,7 @@ const groupTitles: Record<string, string> = {
 const groupOrder = ['getting-started', 'specification', 'infrastructure', 'distribution']
 
 // Explicit page ordering within specification group (primitives -> complex)
-const specOrder = ['providers', 'models', 'tools', 'prompts', 'agents', 'threads', 'hooks', 'type-registry']
+const specOrder = ['providers', 'models', 'tools', 'prompts', 'agents', 'subagents', 'threads', 'hooks', 'type-registry']
 
 // Pages to exclude from navigation (group/slug)
 const excludedPages: Record<string, string[]> = {

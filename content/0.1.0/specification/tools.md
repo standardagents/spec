@@ -14,9 +14,28 @@ Standard Agents supports three types of tools:
 |------|-------------|---------------|
 | **Function** | Custom code that executes and returns a result | This document |
 | **Sub-prompt** | A prompt invoked as a nested operation | [Prompts](/specification/prompts) |
-| **Agent** | Handoff (ai_human) or sub-agent (dual_ai) invocation | [Prompts](/specification/prompts) |
+| **Agent** | Handoff (`ai_human`) or subagent (`dual_ai`) invocation | [Prompts](/specification/prompts), [Subagents](/specification/subagents) |
 
 This specification covers **function tools** defined using `defineTool()`. Sub-prompts and agent invocations are configured in prompt definitions and covered in the Prompts specification.
+
+### 1.2 Subagent Tool Configuration
+
+`dual_ai` agent tools support subagent-specific options in prompt tool lists:
+
+```typescript
+interface SubagentToolConfig {
+  name: StandardAgentSpec.Callables;
+  blocking?: boolean;
+  initUserMessageProperty?: string;
+  initAttachmentsProperty?: string;
+  resumable?: false | {
+    receives_messages: 'side_a' | 'side_b';
+    maxInstances?: number;
+  };
+}
+```
+
+Use this form when you need asynchronous subagent execution, resumable child instances, or instance limits. See [Subagents](/specification/subagents) for behavior details.
 
 ## 2. Function Tool Definition
 
@@ -596,4 +615,3 @@ export default defineTool({
   }),
 });
 ```
-

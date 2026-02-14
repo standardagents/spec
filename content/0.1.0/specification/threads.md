@@ -30,6 +30,8 @@ ThreadState is the unified interface for all thread operations. It provides a co
 | `agentId` | `string` | Owning agent name (readonly) |
 | `userId` | `string \| null` | Associated user (readonly) |
 | `createdAt` | `number` | Creation timestamp in microseconds (readonly) |
+| `children` | `SubagentRegistryEntry[]` | Resumable child subagent registry (readonly) |
+| `terminated` | `number \| null` | Termination timestamp in microseconds, or null when active (readonly) |
 | `context` | `Record<string, unknown>` | Per-execution key-value storage. See [Context Storage](#7-context-storage) |
 | `execution` | `ExecutionState \| null` | Execution state during active execution, null at rest. See [Execution State](#9-execution-state) |
 | `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context (non-portable). See [Runtime Context](#10-runtime-context-non-portable) |
@@ -43,7 +45,15 @@ ThreadState is the unified interface for all thread operations. It provides a co
 | `getMessages(options?)` | `Promise<MessagesResult>` | Get messages with pagination |
 | `getMessage(messageId)` | `Promise<Message \| null>` | Get single message by ID |
 | `injectMessage(input)` | `Promise<Message>` | Inject a new message |
+| `queueMessage(input)` | `Promise<void>` | Queue a message for delivery on next step |
 | `updateMessage(messageId, updates)` | `Promise<Message>` | Update existing message |
+
+**Subagent Hierarchy**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getChildThread(referenceId)` | `Promise<ThreadState \| null>` | Resolve child thread by subagent reference |
+| `getParentThread()` | `Promise<ThreadState \| null>` | Resolve parent thread for this thread |
 
 **Logs**
 
@@ -76,6 +86,12 @@ ThreadState is the unified interface for all thread operations. It provides a co
 | `scheduleEffect(name, args, delay?)` | `Promise<string>` | Schedule effect, returns effect ID |
 | `getScheduledEffects(name?)` | `Promise<ScheduledEffect[]>` | Get pending effects |
 | `removeScheduledEffect(id)` | `Promise<boolean>` | Cancel scheduled effect |
+
+**Lifecycle**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `terminate()` | `Promise<void>` | Soft-terminate the thread |
 
 **Events** — See [Events](#6-events) for details
 
@@ -164,7 +180,24 @@ const message = await state.injectMessage({
 });
 ```
 
-### 2.5 Updating Messages
+### 2.5 Queueing Messages
+
+Messages can be queued for delivery on the next execution step:
+
+```typescript
+await state.queueMessage({
+  role: 'user', // maps to side_b perspective
+  content: 'Follow-up task',
+  silent: true,
+});
+```
+
+Queue semantics:
+- If the thread is executing, queued messages are injected before the next LLM request.
+- If the thread is idle, queueing forces a new turn.
+- Queued messages are processed in order.
+
+### 2.6 Updating Messages
 
 Existing messages can be updated:
 
@@ -713,23 +746,48 @@ export default defineThreadEndpoint(async (req, state) => {
 });
 ```
 
-## 12. Conformance Requirements
+## 12. Subagent Hierarchy and Termination
 
-### 12.1 Thread Lifecycle
+Subagent-aware runtimes expose parent/child thread relationships through `ThreadState`:
+
+```typescript
+const child = await state.getChildThread(referenceId);
+const parent = await state.getParentThread();
+```
+
+`children` entries track resumable child references and statuses:
+
+```typescript
+interface SubagentRegistryEntry {
+  reference: string;
+  name: string;
+  description: string;
+  status: string;
+}
+```
+
+Termination is a soft shutdown:
+- `terminate()` marks the thread inactive and sets `terminated`
+- future `queueMessage()` and execution attempts are rejected
+- parent registries should reflect `'terminated'` status
+
+## 13. Conformance Requirements
+
+### 13.1 Thread Lifecycle
 
 1. **Creation**: Thread created with metadata
 2. **Execution**: Agent processes messages
 3. **At Rest**: Thread accessible via endpoints
 4. **Resumption**: New execution on next message
 
-### 12.2 Platform Independence
+### 13.2 Platform Independence
 
 ThreadState is an abstract interface. Implementations **MUST NOT** expose:
 - Storage implementation details
 - Platform-specific bindings
 - Internal state management
 
-### 12.3 Error Handling
+### 13.3 Error Handling
 
 Methods that return promises **SHOULD** throw on:
 - Resource not found (loadModel, loadPrompt, loadAgent)
@@ -740,7 +798,7 @@ Methods **SHOULD NOT** throw on:
 - Empty results (return empty arrays/null instead)
 - Missing optional data
 
-## 13. TypeScript Reference
+## 14. TypeScript Reference
 
 ```typescript
 /**
@@ -755,6 +813,8 @@ interface ThreadState {
   readonly agentId: string;
   readonly userId: string | null;
   readonly createdAt: number;
+  readonly children: SubagentRegistryEntry[];
+  readonly terminated: number | null;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Messages
@@ -762,6 +822,7 @@ interface ThreadState {
   getMessages(options?: GetMessagesOptions): Promise<MessagesResult>;
   getMessage(messageId: string): Promise<Message | null>;
   injectMessage(input: InjectMessageInput): Promise<Message>;
+  queueMessage(input: QueueMessageInput): Promise<void>;
   updateMessage(messageId: string, updates: MessageUpdates): Promise<Message>;
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -775,6 +836,8 @@ interface ThreadState {
   loadModel<T = unknown>(name: string): Promise<T>;
   loadPrompt<T = unknown>(name: string): Promise<T>;
   loadAgent<T = unknown>(name: string): Promise<T>;
+  getChildThread(referenceId: string): Promise<ThreadState | null>;
+  getParentThread(): Promise<ThreadState | null>;
   getPromptNames(): string[];
   getAgentNames(): string[];
   getModelNames(): string[];
@@ -822,6 +885,7 @@ interface ThreadState {
   // Execution State
   // ─────────────────────────────────────────────────────────────────────────
   execution: ExecutionState | null;
+  terminate(): Promise<void>;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Runtime Context (Non-Portable)

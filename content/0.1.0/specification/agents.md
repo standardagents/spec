@@ -102,6 +102,7 @@ Each AI receives the message history as if **it is the assistant** and the other
 - Sides alternate turns automatically
 - `maxSessionTurns` **SHOULD** be set to prevent infinite loops
 - Both sides **MUST** have configuration
+- `dual_ai` agents can be invoked as autonomous subagents (see [Subagents](/specification/subagents))
 
 **Example:**
 ```typescript
@@ -141,6 +142,7 @@ Each side has its own configuration controlling prompts and stop conditions:
 | `stopToolResponseProperty` | `string` | - | Property to extract from stop tool |
 | `maxSteps` | `number` | - | Maximum LLM request/response cycles for this side |
 | `endSessionTool` | `string` | - | Tool that ends entire session |
+| `statusTool` | `string` | - | Tool that publishes child status to a parent subagent registry |
 
 ### 4.2 Side Labels
 
@@ -353,6 +355,7 @@ interface SideConfig<
   stopToolResponseProperty?: string;
   maxSteps?: number;
   endSessionTool?: Callable;
+  statusTool?: Callable;
 }
 
 /**
@@ -500,4 +503,3 @@ export default defineAgent({
 ```
 
 Agent-level hooks serve as defaults. If a prompt declares its own `hooks` array, the prompt-level hooks take precedence. See the [Hooks specification](/specification/hooks) for details.
-
