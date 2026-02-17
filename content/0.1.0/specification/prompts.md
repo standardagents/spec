@@ -28,7 +28,7 @@ A prompt definition **MAY** include the following properties:
 | `parallelToolCalls` | `boolean` | `false` | Allow parallel tool execution |
 | `toolChoice` | `'auto' \| 'none' \| 'required'` | `'auto'` | Tool calling strategy |
 | `requiredSchema` | `ZodSchema` | - | Input validation schema |
-| `tools` | `(string \| ToolConfig)[]` | - | Available tools (include `ai_human` agent names for handoffs) |
+| `tools` | `(string \| ToolConfig \| SubpromptConfig \| SubagentToolConfig)[]` | - | Available tools, sub-prompts, and agent tools (including resumable/non-resumable subagents) |
 | `reasoning` | `ReasoningConfig` | - | Extended thinking config |
 | `recentImageThreshold` | `number` | `10` | Messages to keep images |
 | `hooks` | `string[]` | - | Hook IDs to run for this prompt |
@@ -342,6 +342,21 @@ interface SubpromptConfig<T extends string = string> {
 }
 
 /**
+ * Configuration for invoking a dual_ai agent as a subagent tool.
+ */
+interface SubagentToolConfig<T extends string = string> {
+  name: T;
+  blocking?: boolean;
+  initUserMessageProperty?: string;
+  initAttachmentsProperty?: string;
+  initAgentNameProperty?: string;
+  resumable?: false | {
+    receives_messages: 'side_a' | 'side_b';
+    maxInstances?: number;
+  };
+}
+
+/**
  * Reasoning configuration.
  */
 interface ReasoningConfig {
@@ -367,7 +382,7 @@ interface PromptDefinition<
   parallelToolCalls?: boolean;
   toolChoice?: 'auto' | 'none' | 'required';
   requiredSchema?: S;
-  tools?: (string | ToolConfig | SubpromptConfig)[];
+  tools?: (string | ToolConfig | SubpromptConfig | SubagentToolConfig)[];
   tenvs?: Record<string, unknown>;
   reasoning?: ReasoningConfig;
   recentImageThreshold?: number;

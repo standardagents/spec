@@ -29,6 +29,7 @@ interface SubagentToolConfig {
   blocking?: boolean; // default: true
   initUserMessageProperty?: string;
   initAttachmentsProperty?: string;
+  initAgentNameProperty?: string;
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';
     maxInstances?: number;
@@ -41,6 +42,7 @@ Rules:
 - `blocking: false` returns immediately.
 - `initUserMessageProperty` maps one tool argument field into the child's initial queued message content.
 - `initAttachmentsProperty` maps one tool argument field (string path or path array) into initial child attachments.
+- `initAgentNameProperty` maps one tool argument field into the spawned child thread display name. Implementations SHOULD persist this as a `name:<value>` thread tag for UI display.
 - `resumable` enables persistent child instances and parent re-messaging.
 - When `maxInstances` is reached, creation is blocked; implementations may route to existing instances.
 
@@ -59,15 +61,32 @@ interface SubagentRegistryEntry {
 
 When registry entries exist, the parent context includes:
 - A system message listing active child references and statuses
-- Built-in `send_to_agent` tool:
+- Built-in `subagent_message` tool:
 
 ```typescript
 {
-  name: 'send_to_agent',
+  name: 'subagent_message',
   description: 'Send a message to a resumable subagent instance.',
   args: {
     referenceId: string;
     message: string;
+    attachments: string[];
+  }
+}
+```
+
+When prompt-configured resumable subagents exist, the parent context also includes
+built-in `subagent_create`:
+
+```typescript
+{
+  name: 'subagent_create',
+  description: 'Create and run a configured resumable subagent.',
+  args: {
+    agent: string;        // enum of allowed resumable subagent names
+    message: string;
+    attachments: string[];
+    name?: string;        // optional human-friendly instance name
   }
 }
 ```

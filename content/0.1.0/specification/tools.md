@@ -28,6 +28,7 @@ interface SubagentToolConfig {
   blocking?: boolean;
   initUserMessageProperty?: string;
   initAttachmentsProperty?: string;
+  initAgentNameProperty?: string;
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';
     maxInstances?: number;
