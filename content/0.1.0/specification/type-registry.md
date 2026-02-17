@@ -105,6 +105,7 @@ interface SideConfig<
   prompt: Prompt;
   stopTool?: Callable;
   endSessionTool?: Callable;
+  failSessionTool?: Callable;
   // ...
 }
 

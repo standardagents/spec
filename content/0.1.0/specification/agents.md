@@ -142,6 +142,7 @@ Each side has its own configuration controlling prompts and stop conditions:
 | `stopToolResponseProperty` | `string` | - | Property to extract from stop tool |
 | `maxSteps` | `number` | - | Maximum LLM request/response cycles for this side |
 | `endSessionTool` | `string` | - | Tool that ends entire session |
+| `failSessionTool` | `string` | - | Tool that fails the entire session with a terminal error outcome |
 | `statusTool` | `string` | - | Tool that publishes child status to a parent subagent registry |
 
 ### 4.2 Side Labels
@@ -201,7 +202,23 @@ sideA: {
 - Different from `stopTool` which only ends the current side's turn
 - Useful for explicit termination scenarios
 
-### 5.4 Maximum Steps
+### 5.4 Fail Session Tool
+
+The `failSessionTool` property specifies a tool that ends the session as a failure:
+
+```typescript
+sideA: {
+  prompt: 'asset_worker',
+  failSessionTool: 'fail_asset_job',
+},
+```
+
+**Behavior:**
+- When called successfully, the session ends immediately with an error outcome
+- Intended for terminal blockers (missing required inputs, unrecoverable tool failures, contradictory requirements)
+- In subagent flows, this failure is delivered to the parent as a child failure message
+
+### 5.5 Maximum Steps
 
 The `maxSteps` property limits LLM request/response cycles for a single side:
 
@@ -355,6 +372,7 @@ interface SideConfig<
   stopToolResponseProperty?: string;
   maxSteps?: number;
   endSessionTool?: Callable;
+  failSessionTool?: Callable;
   statusTool?: Callable;
 }
 

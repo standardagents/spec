@@ -107,6 +107,28 @@ Default statuses:
 
 Custom status text from `statusTool` is allowed (for example, `"Processing file 3/7"`).
 
+### 5.3 Terminal Failure Result
+
+`SideConfig.failSessionTool` lets a child explicitly fail and stop its session:
+
+```typescript
+interface SideConfig {
+  failSessionTool?: Callable;
+}
+```
+
+When called successfully:
+- The child thread stops immediately with an error outcome
+- Parent receives a queued silent message:
+
+```
+Subagent (reference: {uuid}) has reported a failure:
+
+{failure details}
+```
+
+- Any returned attachments are copied child -> parent using normal attachment-copy semantics
+
 ## 6. Thread API Additions
 
 Subagent and queueing support is exposed in `ThreadState`:
