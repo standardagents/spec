@@ -3,6 +3,14 @@ import { useState, useEffect, useCallback } from 'react'
 const STORAGE_KEY = 'sab_spec_invite'
 const API_BASE = 'https://agents.standardagentbuilder.com'
 
+function shouldBypassInviteGateLocally(): boolean {
+  if (import.meta.env.DEV) return true
+  if (typeof window === 'undefined') return false
+
+  const host = window.location.hostname.toLowerCase()
+  return host === 'localhost' || host === '127.0.0.1' || host.endsWith('.orb.local')
+}
+
 // Logo component matching the existing pattern from Header.tsx
 function Logo({ className }: { className?: string }) {
   return (
@@ -83,6 +91,14 @@ export default function InviteGate() {
   // Check for stored code or URL parameter on mount
   useEffect(() => {
     const checkAuth = async () => {
+      // Local development never requires invite codes.
+      if (shouldBypassInviteGateLocally()) {
+        document.documentElement.classList.remove('invite-gate-pending')
+        document.body.classList.remove('invite-gate-active')
+        setAuthenticated(true)
+        return
+      }
+
       // Check for ?invite=CODE query parameter
       const params = new URLSearchParams(window.location.search)
       const urlCode = params.get('invite')
