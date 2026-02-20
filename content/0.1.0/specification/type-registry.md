@@ -73,7 +73,12 @@ Prompts reference models and callables:
 interface PromptDefinition<N extends string = string> {
   name: N;
   model: StandardAgentSpec.Models;
-  tools?: (StandardAgentSpec.Callables | SubpromptConfig | PromptToolConfig)[];
+  tools?: (
+    | StandardAgentSpec.Callables
+    | SubpromptConfig
+    | PromptToolConfig
+    | SubagentToolConfig
+  )[];
   // ...
 }
 
@@ -104,8 +109,12 @@ interface SideConfig<
 > {
   prompt: Prompt;
   stopTool?: Callable;
-  endSessionTool?: Callable;
-  failSessionTool?: Callable;
+  sessionStop?: SessionToolBinding<Callable>;
+  sessionFail?: SessionToolBinding<Callable>;
+  sessionStatus?: SessionToolBinding<Callable>;
+  endSessionTool?: Callable; // legacy alias
+  failSessionTool?: Callable; // legacy alias
+  statusTool?: Callable; // legacy alias
   // ...
 }
 

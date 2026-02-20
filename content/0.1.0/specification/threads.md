@@ -142,7 +142,16 @@ ThreadState is provided in different contexts:
 | `parent_id` | `string \| null` | Parent message (sub-prompts) |
 | `depth` | `number` | Nesting depth (0 = top-level) |
 | `silent` | `boolean` | Hidden from UI |
-| `metadata` | `Record<string, unknown>` | Custom metadata |
+| `metadata` | `Record<string, unknown>` | Custom metadata (may include runtime status markers such as `status_kind`) |
+| `subagent_id` | `string \| null` | Subagent reference UUID associated with the message |
+| `subagent_name` | `string \| null` | Projected child agent name (when available) |
+| `subagent_title` | `string \| null` | Projected child agent title (when available) |
+| `subagent_description` | `string \| null` | Projected child description (when available) |
+| `subagent_status` | `string \| null` | Projected child status (when available) |
+| `subagent_resumable` | `boolean \| null` | Projected resumable flag (when available) |
+| `subagent_blocking` | `boolean \| null` | Projected blocking flag (when available) |
+| `subagent_thread_name` | `string \| null` | Projected human-friendly child instance name (when available) |
+| `subagent_spawn_group_id` | `string \| null` | Projected spawn grouping identifier (when available) |
 
 ### 2.2 Reading Messages
 
@@ -746,7 +755,7 @@ export default defineThreadEndpoint(async (req, state) => {
 });
 ```
 
-## 12. Subagent Hierarchy and Termination
+## 12. Subagent Hierarchy, Communication, and Termination
 
 Subagent-aware runtimes expose parent/child thread relationships through `ThreadState`:
 
@@ -755,16 +764,36 @@ const child = await state.getChildThread(referenceId);
 const parent = await state.getParentThread();
 ```
 
-`children` entries track resumable child references and statuses:
+`children` entries track resumable child references and status/projection metadata:
 
 ```typescript
 interface SubagentRegistryEntry {
   reference: string;
   name: string;
+  title?: string;
   description: string;
+  resumable?: boolean;
+  blocking?: boolean;
+  threadName?: string;
+  spawnGroupId?: string;
+  createdAt?: number;
   status: string;
 }
 ```
+
+### 12.1 Cross-Thread Attachment Copying
+
+When communication crosses thread boundaries, filesystem references must be copied:
+- parent -> child for invocation/messaging attachments
+- child -> parent for completion/failure payload attachments
+
+Returned attachment paths must be valid in the receiving thread filesystem.
+
+### 12.2 Lifecycle Status Messages
+
+Runtimes may persist synthesized status messages (for example, system messages tagged with `metadata.status_kind`) to make cross-thread lifecycle events observable in message feeds.
+
+### 12.3 Termination
 
 Termination is a soft shutdown:
 - `terminate()` marks the thread inactive and sets `terminated`

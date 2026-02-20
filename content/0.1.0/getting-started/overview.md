@@ -2,6 +2,8 @@
 
 The Standard Agent Specification is an open-source standard for creating domain-specific agents that are fine-tuned, portable, and composable. Any agent that complies with this standard can be published directly to npm and installed by any execution environment that supports Standard Agents.
 
+Composable systems in this spec include parent/child subagents: autonomous `dual_ai` child threads that can be spawned, messaged, and resumed with durable communication and attachment copying guarantees.
+
 ## Core Principles
 
 1. Agents are the atomic unit of AI software — not models.

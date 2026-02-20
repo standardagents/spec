@@ -35,8 +35,10 @@ content/
     │   ├── tools.md
     │   ├── prompts.md
     │   ├── agents.md
+    │   ├── subagents.md
     │   ├── threads.md
-    │   └── hooks.md
+    │   ├── hooks.md
+    │   └── type-registry.md
     ├── infrastructure/
     │   ├── providers.md
     │   └── runtime.md
@@ -94,6 +96,17 @@ Dark/light mode is handled via inline script in BaseLayout (no React context):
 3. File automatically available at `/{version}/{group}/{slug}`
 
 Navigation order is controlled by the `NAV_ORDER` constant in `src/lib/content.ts`.
+
+### Subagent Documentation Scope
+
+Subagent behavior is documented across:
+- `specification/subagents.md` (overview + lifecycle matrix + communication)
+- `specification/agents.md` (`sessionStop`/`sessionFail`/`sessionStatus`)
+- `specification/tools.md` (`SubagentToolConfig`, lifecycle tools)
+- `specification/threads.md` (thread hierarchy + queue + termination surfaces)
+- `infrastructure/runtime.md` (execution/copying semantics)
+
+When subagent behavior changes, update all of these pages together.
 
 ### Callout Syntax
 

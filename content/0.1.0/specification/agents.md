@@ -1,523 +1,135 @@
 # Agents
 
-An agent is the top-level orchestration unit in Standard Agents. It combines prompts, stop conditions, and behavioral rules to manage conversations—either between AI and human users, or autonomously between two AI sides.
+An agent is the top-level conversation orchestrator in Standard Agents.
 
-## 1. Agent Definition
+Agents define:
+- conversation type (`ai_human` or `dual_ai`)
+- side prompts and stop behavior
+- session lifecycle tool bindings
+- optional tool exposure for handoff/subagent usage
 
-Agents are the top-level orchestration units in Standard Agents. They combine prompts, stop conditions, and behavioral rules into cohesive entities that manage conversations between AI models or between AI and human users.
+## 1. AgentDefinition
 
-### 1.1 Required Properties
-
-An agent definition **MUST** include the following properties:
+### 1.1 Required
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `name` | `string` | Unique identifier for this agent |
-| `sideA` | `SideConfig` | Configuration for the primary side |
+| `name` | `string` | Unique agent identifier |
+| `sideA` | `SideConfig` | Side A configuration |
 
-### 1.2 Optional Properties
-
-An agent definition **MAY** include the following properties:
+### 1.2 Optional
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `title` | `string` | - | Human-readable title (deprecated) |
-| `type` | `AgentType` | `'ai_human'` | Conversation type |
-| `maxSessionTurns` | `number` | - | Maximum turns for dual_ai |
-| `sideB` | `SideConfig` | - | Configuration for secondary side |
-| `exposeAsTool` | `boolean` | `false` | Make agent callable as tool |
-| `toolDescription` | `string` | - | Description when used as tool |
-| `description` | `string` | - | Brief description |
-| `icon` | `string` | - | Icon URL or path |
-| `tenvs` | `Record<string, unknown>` | - | Default thread environment variables |
-| `hooks` | `string[]` | - | Hook IDs to run (fallback when prompts don't specify hooks) |
+| `type` | `'ai_human' \| 'dual_ai'` | `'ai_human'` | Conversation mode |
+| `sideB` | `SideConfig` | - | Required for `dual_ai` |
+| `maxSessionTurns` | `number` | - | Session turn safety cap |
+| `title` | `string` | - | Human-readable label (legacy) |
+| `description` | `string` | - | Agent summary |
+| `icon` | `string` | - | Display icon |
+| `exposeAsTool` | `boolean` | `false` | Expose callable entrypoint |
+| `toolDescription` | `string` | - | Callable description |
+| `tenvs` | `Record<string, unknown>` | - | Default thread env values |
+| `hooks` | `string[]` | - | Fallback hook IDs |
 
-## 2. Definitions
+## 2. Agent Types
 
-### 2.1 Core Concepts
+### 2.1 `ai_human`
 
-| Term | Definition |
-|------|------------|
-| **Thread** | An abstract execution context that maintains conversation state, message history, and any associated resources (e.g., files). A thread persists across multiple sessions. Each thread **MUST** have a cryptographically unique identifier (implementations **SHOULD** use `crypto.randomUUID()`). |
-| **Session** | The period when an agent is executing autonomously in a loop. For `ai_human` agents, a session is a single turn of AI processing. For `dual_ai` agents, a session spans multiple turns between two AIs until a stop condition is met. |
-| **Turn** | A single side completing its execution. In `ai_human`, a turn is the AI responding to a user message. In `dual_ai`, each side taking its turn constitutes one turn. |
-| **Step** | A single LLM invocation within a turn. A turn may include multiple steps if the agent calls tools and continues processing. |
+- Side A is AI.
+- Side B is human (no Side B config required).
+- Typical usage: user-facing assistants.
 
-### 2.2 Execution Flow
+### 2.2 `dual_ai`
 
-A typical `ai_human` execution flow:
+- Both sides are AI.
+- Each side sees itself as `assistant`, other side as `user`.
+- `maxSessionTurns` should be set for bounded execution.
+- `dual_ai` agents can be used as autonomous subagents.
 
-1. User sends a message (starts a **session** and **turn**)
-2. Agent invokes the LLM with the configured prompt (a **step**)
-3. If the LLM returns tool calls, the agent executes them and invokes the LLM again (another **step**)
-4. Steps repeat until a stop condition is met (e.g., text response without tool calls)
-5. The **turn** and **session** end; agent waits for the next user message
-
-A typical `dual_ai` execution flow:
-
-1. Initial message triggers a **session**
-2. Side A executes its **turn** (one or more **steps**, until a stop condition is met)
-3. Side B executes its **turn** (one or more **steps**, until a stop condition is met)
-4. Turns alternate until a session ending condition is met (e.g., `maxSessionTurns` reached, or `endSessionTool` is called)
-5. The **session** ends
-
-## 3. Agent Types
-
-### 3.1 ai_human
-
-The `ai_human` type is the most common configuration, where an AI agent converses with a human user.
-
-**Behavior:**
-- Side A is the AI participant
-- Side B represents the human (no configuration needed)
-- The AI responds to human messages
-- Execution ends when stop conditions are met or the human stops
-
-**Example:**
-```typescript
-defineAgent({
-  name: 'support_agent',
-  type: 'ai_human',
-  sideA: {
-    prompt: 'customer_support',
-    stopOnResponse: true,
-  },
-});
-```
-
-### 3.2 dual_ai
-
-The `dual_ai` type enables two AI participants to converse with each other.
-
-**Message History Perspective:**
-
-Each AI receives the message history as if **it is the assistant** and the other AI is the user:
-- Side A sees its own messages as `assistant` and Side B's messages as `user`
-- Side B sees its own messages as `assistant` and Side A's messages as `user`
-
-> 💡 Tip: Neither side implicitly knows it is communicating with another AI. This makes `dual_ai` particularly effective for **reflection** (an agent critiques its own work), **debate** (two perspectives argue a topic), **negotiation** (parties work toward agreement), and **red teaming** (one agent probes another for weaknesses).
-
-**Behavior:**
-- Both Side A and Side B are AI participants
-- Sides alternate turns automatically
-- `maxSessionTurns` **SHOULD** be set to prevent infinite loops
-- Both sides **MUST** have configuration
-- `dual_ai` agents can be invoked as autonomous subagents (see [Subagents](/specification/subagents))
-
-**Example:**
-```typescript
-defineAgent({
-  name: 'debate_agent',
-  type: 'dual_ai',
-  maxSessionTurns: 20,
-  sideA: {
-    label: 'Pro',
-    prompt: 'debate_pro',
-    stopOnResponse: true,
-  },
-  sideB: {
-    label: 'Con',
-    prompt: 'debate_con',
-    stopOnResponse: true,
-  },
-});
-```
-
-### 3.3 Type Selection
-
-Implementations **SHOULD** default to `ai_human` when type is not specified.
-
-## 4. Side Configuration
-
-### 4.1 SideConfig Properties
-
-Each side has its own configuration controlling prompts and stop conditions:
+## 3. SideConfig
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `prompt` | `string` | Required | Prompt to use for this side |
-| `label` | `string` | - | Custom label for UI/logs |
-| `stopOnResponse` | `boolean` | `true` | Stop on text response |
-| `stopTool` | `string` | - | Tool that triggers stop |
-| `stopToolResponseProperty` | `string` | - | Property to extract from stop tool |
-| `maxSteps` | `number` | - | Maximum LLM request/response cycles for this side |
-| `endSessionTool` | `string` | - | Tool that ends entire session |
-| `failSessionTool` | `string` | - | Tool that fails the entire session with a terminal error outcome |
-| `statusTool` | `string` | - | Tool that publishes child status to a parent subagent registry |
+| `prompt` | `string` | Required | Prompt name for this side |
+| `label` | `string` | - | UI/log label |
+| `stopOnResponse` | `boolean` | `true` | Stop side turn on text response without tool calls |
+| `stopTool` | `string` | - | Stop side turn when this tool is called |
+| `stopToolResponseProperty` | `string` | - | Extracted property for stop tool outcomes |
+| `maxSteps` | `number` | - | Per-side step safety limit |
+| `sessionStop` | `SessionToolBinding` | - | End session successfully |
+| `sessionFail` | `SessionToolBinding` | - | End session with failure |
+| `sessionStatus` | `SessionToolBinding` | - | Publish status updates |
+| `endSessionTool` | `string` | - | Deprecated alias for `sessionStop` |
+| `failSessionTool` | `string` | - | Deprecated alias for `sessionFail` |
+| `statusTool` | `string` | - | Deprecated alias for `sessionStatus` |
 
-### 4.2 Side Labels
+## 4. SessionToolBinding
 
-Labels are optional but **RECOMMENDED** for clarity:
-
-```typescript
-sideA: {
-  label: 'ATC Controller',
-  prompt: 'atc_prompt',
-},
-sideB: {
-  label: 'Pilot',
-  prompt: 'pilot_prompt',
-},
-```
-
-## 5. Stop Conditions
-
-### 5.1 Stop on Response
-
-When `stopOnResponse` is `true` (the default):
-- The side's turn ends when the LLM produces a text response without tool calls
-- Tool-only responses do not trigger a stop
-- This is the most common stop condition
-
-### 5.2 Stop Tool
-
-The `stopTool` property specifies a tool that triggers a stop when called:
+Session lifecycle bindings can be string or object form:
 
 ```typescript
-sideA: {
-  prompt: 'classifier',
-  stopTool: 'classify_intent',
-  stopToolResponseProperty: 'intent',
-},
+type SessionToolBinding =
+  | string
+  | {
+      name: string;
+      messageProperty?: string;
+      attachmentsProperty?: string;
+    };
 ```
 
-**Requirements:**
-- When `stopTool` is set, `stopToolResponseProperty` **MUST** also be set
-- The extracted property value is used to determine the conversation outcome
-- `stopTool` overrides `stopOnResponse` when the named tool is called
+- `name`: tool that controls lifecycle action
+- `messageProperty`: which arg field becomes lifecycle message text
+- `attachmentsProperty`: which arg field contains attachment path(s)
 
-### 5.3 End Session Tool
+For subagents, mapped stop/fail payloads are the canonical child -> parent result/failure payload.
 
-The `endSessionTool` property specifies a tool that ends the entire session:
+## 5. Stop Semantics
 
-```typescript
-sideA: {
-  prompt: 'support',
-  endSessionTool: 'close_ticket',
-},
-```
+Runtime stop evaluation is typically:
+1. session-level terminal bindings (`sessionStop`/`sessionFail`)
+2. side-level stop bindings (`stopTool`)
+3. response stop (`stopOnResponse`)
+4. safety limits (`maxSteps`, `maxSessionTurns`)
 
-**Behavior:**
-- When called, the session ends for both sides
-- Different from `stopTool` which only ends the current side's turn
-- Useful for explicit termination scenarios
+## 6. Tool Exposure Semantics
 
-### 5.4 Fail Session Tool
+When `exposeAsTool: true`:
+- `ai_human` callable usage is a handoff-style tool interaction.
+- `dual_ai` callable usage is subagent behavior (see [Subagents](/specification/subagents)).
 
-The `failSessionTool` property specifies a tool that ends the session as a failure:
-
-```typescript
-sideA: {
-  prompt: 'asset_worker',
-  failSessionTool: 'fail_asset_job',
-},
-```
-
-**Behavior:**
-- When called successfully, the session ends immediately with an error outcome
-- Intended for terminal blockers (missing required inputs, unrecoverable tool failures, contradictory requirements)
-- In subagent flows, this failure is delivered to the parent as a child failure message
-
-### 5.5 Maximum Steps
-
-The `maxSteps` property limits LLM request/response cycles for a single side:
-
-```typescript
-sideA: {
-  prompt: 'researcher',
-  maxSteps: 50,
-},
-```
-
-**Behavior:**
-- When the limit is reached, the side is forced to stop
-- This is a safety limit to prevent runaway execution
-- Implementations **SHOULD** inject a budget warning message before the limit
-- `maxSteps` and `maxSessionTurns` **SHOULD** be enforced to prevent resource exhaustion
-
-## 6. Session Turns
-
-### 6.1 maxSessionTurns
-
-For `dual_ai` agents, `maxSessionTurns` limits the total back-and-forth:
+## 7. Example
 
 ```typescript
 defineAgent({
-  name: 'negotiation',
+  name: 'asset_subagent',
   type: 'dual_ai',
-  maxSessionTurns: 30,
-  sideA: { prompt: 'buyer', stopOnResponse: true },
-  sideB: { prompt: 'seller', stopOnResponse: true },
-});
-```
-
-**Behavior:**
-- Counts completed exchanges (one turn = one side completing)
-- When limit is reached, the conversation ends
-- Implementations **MUST** enforce this limit for `dual_ai` agents
-
-### 6.2 Step and Turn Counting
-
-Implementations **SHOULD** track:
-- Per-side step counts (for `maxSteps`) - counts LLM request/response cycles
-- Total session turns (for `maxSessionTurns`) - counts completed side exchanges
-- Global step count (for absolute safety limits)
-
-## 7. Agent as Tool
-
-### 7.1 Exposing Agents
-
-Agents can be exposed as tools for other prompts:
-
-```typescript
-defineAgent({
-  name: 'specialist',
+  maxSessionTurns: 40,
   exposeAsTool: true,
-  toolDescription: 'Hand off to specialist for complex issues',
-  sideA: { prompt: 'specialist_prompt', stopOnResponse: true },
-});
-```
-
-**Requirements:**
-- When `exposeAsTool` is `true`, `toolDescription` **MUST** be provided
-- The description is shown to the LLM for tool selection
-- Agents exposed as tools **SHOULD** have appropriate access controls
-
-### 7.2 Agent Handoffs
-
-When an agent is called as a tool:
-1. A new thread context is created
-2. The agent executes with the provided input
-3. The result is returned to the calling prompt
-4. The calling prompt can continue its execution
-
-## 8. Metadata Properties
-
-### 8.1 Description
-
-The description provides context for humans:
-
-```typescript
-defineAgent({
-  name: 'code_reviewer',
-  description: 'Reviews code for bugs, security issues, and best practices',
-  // ...
-});
-```
-
-### 8.2 Icon
-
-Icons improve visual identification:
-
-```typescript
-defineAgent({
-  name: 'support',
-  icon: '/icons/support.svg',  // or 'https://example.com/icon.svg'
-  // ...
-});
-```
-
-**Behavior:**
-- Absolute paths (starting with `/`) are converted to full URLs by the API
-- External URLs are used as-is
-- Icon URLs **MUST** be validated to prevent XSS via `javascript:` URLs
-
-## 9. Validation
-
-### 9.1 Required Field Validation
-
-Implementations **MUST** validate that:
-
-1. `name` is a non-empty string (validated to prevent path traversal attacks). Names **SHOULD** end in `_agent` (e.g., `support_agent`, `research_agent`)
-2. `sideA` is provided
-3. `sideA.prompt` is a non-empty string
-4. For `dual_ai` type, `sideB` and `sideB.prompt` are provided
-
-### 9.2 Conditional Validation
-
-Implementations **MUST** validate that:
-
-1. When `exposeAsTool` is `true`, `toolDescription` is provided
-2. When `stopTool` is set, `stopToolResponseProperty` is also set
-3. When `maxSteps` is set, it is a positive number
-4. When `maxSessionTurns` is set, it is a positive number
-
-### 9.3 Type Validation
-
-Implementations **MUST** validate that:
-
-1. `type` is one of: `'ai_human'`, `'dual_ai'`
-
-Implementations **SHOULD** rate-limit agent creation and execution.
-
-## 10. TypeScript Reference
-
-```typescript
-/**
- * Agent conversation type.
- */
-type AgentType = 'ai_human' | 'dual_ai';
-
-/**
- * Configuration for one side of an agent conversation.
- */
-interface SideConfig<
-  Prompt extends string = string,
-  Callable extends string = string,
-> {
-  label?: string;
-  prompt: Prompt;
-  stopOnResponse?: boolean;
-  stopTool?: Callable;
-  stopToolResponseProperty?: string;
-  maxSteps?: number;
-  endSessionTool?: Callable;
-  failSessionTool?: Callable;
-  statusTool?: Callable;
-}
-
-/**
- * Agent definition configuration.
- */
-interface AgentDefinition<
-  N extends string = string,
-  Prompt extends string = string,
-  Callable extends string = string,
-> {
-  name: N;
-  title?: string;
-  type?: AgentType;
-  maxSessionTurns?: number;
-  sideA: SideConfig<Prompt, Callable>;
-  sideB?: SideConfig<Prompt, Callable>;
-  exposeAsTool?: boolean;
-  toolDescription?: string;
-  description?: string;
-  icon?: string;
-  tenvs?: Record<string, unknown>;
-  hooks?: string[];
-}
-
-/**
- * Define an agent configuration.
- */
-function defineAgent<N extends string>(
-  options: AgentDefinition<N>
-): AgentDefinition<N>;
-```
-
-## 11. Examples
-
-### 11.1 Basic AI-Human Agent
-
-```typescript
-import { defineAgent } from '@standardagents/spec';
-
-export default defineAgent({
-  name: 'assistant',
-  type: 'ai_human',
+  toolDescription: 'Generate and QA top-down game assets.',
   sideA: {
-    prompt: 'general_assistant',
+    label: 'Worker',
+    prompt: 'asset_worker',
     stopOnResponse: true,
-  },
-});
-```
-
-### 11.2 Support Agent with Tools
-
-```typescript
-import { defineAgent } from '@standardagents/spec';
-
-export default defineAgent({
-  name: 'customer_support',
-  type: 'ai_human',
-  description: 'Handles customer inquiries and resolves issues',
-  sideA: {
-    label: 'Support Agent',
-    prompt: 'support_prompt',
-    stopOnResponse: true,
-    endSessionTool: 'close_ticket',
-    maxSteps: 50,
-  },
-  exposeAsTool: true,
-  toolDescription: 'Hand off to customer support',
-});
-```
-
-### 11.3 Dual AI Debate
-
-```typescript
-import { defineAgent } from '@standardagents/spec';
-
-export default defineAgent({
-  name: 'debate',
-  type: 'dual_ai',
-  maxSessionTurns: 10,
-  sideA: {
-    label: 'Pro',
-    prompt: 'debate_pro',
-    stopOnResponse: true,
+    sessionFail: {
+      name: 'fail_asset',
+      messageProperty: 'reason',
+      attachmentsProperty: 'attachments',
+    },
   },
   sideB: {
-    label: 'Con',
-    prompt: 'debate_con',
-    stopOnResponse: true,
-    endSessionTool: 'conclude_debate',
+    label: 'Reviewer',
+    prompt: 'asset_reviewer',
+    stopOnResponse: false,
+    sessionStop: {
+      name: 'approve_asset',
+      messageProperty: 'summary',
+      attachmentsProperty: 'attachments',
+    },
+    sessionStatus: {
+      name: 'update_asset_status',
+      messageProperty: 'status',
+    },
   },
 });
 ```
-
-### 11.4 Classifier Agent
-
-```typescript
-import { defineAgent } from '@standardagents/spec';
-
-export default defineAgent({
-  name: 'intent_classifier',
-  type: 'ai_human',
-  sideA: {
-    prompt: 'classifier_prompt',
-    stopTool: 'classify',
-    stopToolResponseProperty: 'intent',
-  },
-  exposeAsTool: true,
-  toolDescription: 'Classify user intent and route accordingly',
-});
-```
-
-### 11.5 Research Agent with High Step Limit
-
-```typescript
-import { defineAgent } from '@standardagents/spec';
-
-export default defineAgent({
-  name: 'researcher',
-  type: 'ai_human',
-  description: 'Conducts in-depth research on complex topics',
-  sideA: {
-    label: 'Research Assistant',
-    prompt: 'research_prompt',
-    stopOnResponse: true,
-    maxSteps: 100,
-  },
-});
-```
-
-### 11.6 Agent with Hooks
-
-```typescript
-import { defineAgent } from '@standardagents/spec';
-
-export default defineAgent({
-  name: 'support_agent',
-  type: 'ai_human',
-  description: 'Customer support with logging and message limits',
-  sideA: {
-    prompt: 'support_prompt',
-    stopOnResponse: true,
-  },
-  hooks: ['limit_to_50_messages', 'log_tool_calls'],
-});
-```
-
-Agent-level hooks serve as defaults. If a prompt declares its own `hooks` array, the prompt-level hooks take precedence. See the [Hooks specification](/specification/hooks) for details.

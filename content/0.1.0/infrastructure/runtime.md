@@ -1,221 +1,169 @@
 # Runtime
 
-A runtime is the execution environment that runs Standard Agents. It manages the execution loop, assembles context for LLM requests, executes tools, enforces stop conditions, and persists conversation state to threads.
+A runtime is the execution environment that runs Standard Agents on threads. It assembles LLM context, executes tools, enforces stop conditions, persists state, and coordinates parent/child thread communication for subagents.
 
 ## 1. Overview
 
-A Standard Agents runtime executes agent conversations on threads. This specification defines the observable behavior that conforming runtimes **MUST** implement.
+A conforming runtime executes conversations deterministically around non-deterministic model output.
 
-## 2. Thread Invocation
+The runtime **MUST**:
+- execute one step at a time per thread
+- persist messages and tool results before continuing
+- enforce configured limits and stop semantics
+- support queued work for idle and active threads
 
-### 2.1 Triggering Execution
+## 2. Invocation Triggers
 
-Execution begins when a thread receives input. The runtime **MUST** support:
+Execution begins when any of the following occurs:
 
 | Trigger | Description |
 |---------|-------------|
-| User message | A message is added to the thread |
-| Queued tool | A tool is queued via `queueTool()` |
-| Scheduled effect | A scheduled effect fires |
+| User message | A new message is injected/sent to the thread |
+| Queued message | `queueMessage()` is called |
+| Queued tool | `queueTool()` is called |
+| Scheduled effect | A scheduled effect alarm fires |
 
-### 2.2 Agent Loading
+If a thread is already executing, new work is queued. If idle, the runtime starts a new execution.
 
-When a thread is invoked, the runtime **MUST**:
+## 3. Step Cycle
 
-1. Load the agent definition assigned to the thread
-2. Load the prompt definition for the current side
-3. Resolve all tool definitions available to the prompt
+Each execution step **MUST** run in order:
 
-## 3. Execution Loop
-
-### 3.1 Step Cycle
-
-The runtime **MUST** execute steps in a loop until a stop condition is met. Each step consists of:
-
-1. **Assemble context** — Build the message array for the LLM
-2. **Invoke LLM** — Send request to the model provider
-3. **Store response** — Persist the assistant message
-4. **Execute tools** — Process any tool calls sequentially
-5. **Check stop conditions** — Determine if execution should end
-
-### 3.2 Step Limits
-
-The runtime **MUST** enforce step limits to prevent runaway execution:
-
-| Limit | Source | Description |
-|-------|--------|-------------|
-| Global maximum | Runtime configuration | Absolute cap on steps per invocation |
-| Per-side maximum | Agent `maxSteps` property | Limit for a single side |
-| Session turns | Agent `maxSessionTurns` property | Completed exchanges for `dual_ai` |
-
-When a limit is reached, execution **MUST** stop.
+1. Drain queued messages/tools for this step
+2. Assemble LLM message context
+3. Call the selected model
+4. Persist assistant response
+5. Execute tool calls sequentially
+6. Persist tool results
+7. Evaluate stop conditions
 
 ## 4. Context Assembly
 
-### 4.1 Message Array
+Before each model call, runtime context includes:
+- interpolated system prompt
+- filtered conversation history
+- provider/tool configuration
 
-Before each LLM invocation, the runtime **MUST** construct a message array containing:
+For `dual_ai`:
+- own side appears as `assistant`
+- opposite side appears as `user`
+- opposite-side tool calls are not directly visible
 
-1. **System message** — The interpolated prompt content
-2. **Conversation history** — Previous messages from the thread
+When supported by the model, attachments remain multimodal content. If a model does not support vision, runtimes may filter image parts at request time while preserving stored message attachments.
 
-### 4.2 History Filtering
+## 5. Tool Execution
 
-The runtime **MUST** filter the message history:
+### 5.1 Ordering
 
-| Rule | Behavior |
-|------|----------|
-| Incomplete messages | Exclude messages not yet persisted |
-| Silent messages | Exclude unless explicitly requested |
-| Tool messages | Exclude if prompt sets `include_past_tools: false` |
+Tool calls **MUST** execute sequentially in the returned order.
 
-### 4.3 Dual AI Perspective
+### 5.2 Error Handling
 
-For `dual_ai` agents, each side **MUST** see the conversation from its own perspective:
+Tool errors **MUST** be persisted as tool results and **MUST NOT** crash the execution loop.
 
-- Own messages appear as role `"assistant"`
-- Other side's messages appear as role `"user"`
-- Tool messages from the other side are not visible
+### 5.3 Tool Classes
 
-## 5. LLM Invocation
+Runtimes **MUST** support:
+- function tools
+- prompt tools
+- agent tools (`ai_human` handoff and `dual_ai` subagent behavior)
 
-### 5.1 Request
+## 6. Stop Conditions
 
-The runtime **MUST** send the assembled context to the configured model provider.
+Stop evaluation order should be:
 
-### 5.2 Retry Behavior
+1. `sessionStop` / `sessionFail` terminal lifecycle tools
+2. `stopTool`
+3. `stopOnResponse`
+4. safety limits (`maxSteps`, `maxSessionTurns`, runtime hard caps)
 
-The runtime **SHOULD** retry failed requests with exponential backoff. Non-retriable errors (validation failures, content policy violations) **MUST NOT** be retried.
+Legacy aliases (`endSessionTool`, `failSessionTool`, `statusTool`) may be supported for compatibility.
 
-### 5.3 Fallback Models
+## 7. Subagent Runtime Semantics
 
-If the primary model fails after retries, the runtime **SHOULD** attempt configured fallback models in order.
+Subagents are autonomous `dual_ai` child threads.
 
-### 5.4 Response Storage
+### 7.1 Parent/Child Threading
 
-After a successful response, the runtime **MUST**:
+Runtimes **MUST**:
+- create child threads with parent linkage
+- maintain child registry entries for resumable instances
+- expose parent/child lookup through `ThreadState`
 
-1. Create an assistant message with the response content
-2. Include any tool calls in the message
-3. Persist the message to thread storage
+### 7.2 Resumable Lifecycle Tooling
 
-## 6. Tool Execution
+For resumable subagents, runtimes should expose built-in lifecycle tools:
+- `subagent_create`
+- `subagent_message`
 
-### 6.1 Sequential Processing
+Creation attempts beyond `maxInstances` **MUST** return tool errors with actionable guidance.
 
-Tool calls **MUST** be executed sequentially in the order returned by the LLM. Parallel execution is not permitted.
+### 7.3 Initial Payload Mapping
 
-### 6.2 Execution
+Subagent tool configuration can map args to:
+- initial user message (`initUserMessageProperty`)
+- initial attachments (`initAttachmentsProperty`)
+- human-readable child name (`initAgentNameProperty`)
 
-For each tool call, the runtime **MUST**:
+## 8. Cross-Thread Communication
 
-1. Validate the tool exists and is allowed
-2. Parse arguments according to the tool schema
-3. Execute the tool with a `ThreadState` context
-4. Store the result as a tool message
+### 8.1 Parent -> Child
 
-### 6.3 Error Handling
+When parent messages a child (initial invocation or resumable message):
+- referenced attachments **MUST** be copied parent filesystem -> child filesystem
+- queued child messages must use child-local attachment paths
 
-Tool execution errors **MUST NOT** terminate the invocation. The error is stored as the tool result and execution continues.
+### 8.2 Child -> Parent
 
-### 6.4 Tool Types
+When child reports completion/failure:
+- mapped lifecycle payload (`sessionStop` / `sessionFail`) is converted to parent queued message
+- payload attachments **MUST** be copied child filesystem -> parent filesystem
+- parent message content should include subagent reference and result summary
 
-The runtime **MUST** support:
+Attachment copying is required for correctness; linked paths from the source thread are not valid in the destination thread.
 
-| Type | Behavior |
-|------|----------|
-| Function tools | Execute the defined function |
-| Prompt tools | Execute a sub-prompt as a nested invocation |
-| Agent tools | Hand off to another agent or create isolated execution |
+### 8.3 Status Updates
 
-### 6.5 Hooks
+`sessionStatus` updates child status in the parent registry without terminating child execution.
 
-After tool execution, the runtime **MUST** invoke applicable hooks:
+## 9. Queue and Delivery Semantics
 
-- `after_tool_call_success` — Tool returned successfully
-- `after_tool_call_failure` — Tool returned an error
+Queued messages are durable and ordered:
+- if active: inject before next model call
+- if idle: queue and force next turn
+- if multiple: process in FIFO order
+- persistence should survive DO eviction
 
-If a hook returns `null`, the tool call and result **MUST** be removed from history.
+## 10. Termination Semantics
 
-Hook resolution follows scoping rules: prompt-level hooks take precedence over agent-level hooks. See the [Hooks specification](/specification/hooks) for details.
+`terminate()` is a soft shutdown:
+- set terminated timestamp
+- abort in-flight work
+- reject future execute/queue/send operations
+- propagate child termination status to parent registry when linked
 
-## 7. Stop Conditions
+Non-resumable children are typically auto-terminated after delivering terminal payloads.
 
-### 7.1 Evaluation
+## 11. Concurrency
 
-After each step, the runtime **MUST** evaluate stop conditions in this order:
+A single thread **MUST NOT** execute multiple concurrent flows. Cross-thread concurrency is allowed.
 
-1. **End session tool** — The configured `endSessionTool` was called
-2. **Stop tool** — The configured `stopTool` was called
-3. **Stop on response** — Text response with no tool calls (if `stopOnResponse` is true)
+## 12. Observability
 
-### 7.2 End Session Tool
+Runtimes should emit durable logs and lifecycle markers for:
+- model invocations
+- tool calls/results
+- subagent create/message/return/failure/status events
+- execution abort/termination
 
-When called, execution ends for all sides. The session is complete.
+Implementations may persist synthesized status messages in thread history (`metadata.status_kind`) for client grouping.
 
-### 7.3 Stop Tool
-
-When called, the current side's turn ends. For `ai_human`, this ends the session. For `dual_ai`, execution may continue with the other side.
-
-### 7.4 Stop on Response
-
-When `stopOnResponse` is `true` (the default), a text response without tool calls ends the current side's turn.
-
-## 8. Side Switching
-
-### 8.1 Dual AI Behavior
-
-For `dual_ai` agents, after a side's turn ends (but not the session):
-
-1. Switch to the other side
-2. Load that side's prompt configuration
-3. Continue the execution loop
-
-### 8.2 Session Turn Counting
-
-A session turn is counted when both sides have completed at least one turn. When `maxSessionTurns` is reached, the session **MUST** end.
-
-## 9. Abort Handling
-
-### 9.1 Abort Signal
-
-The runtime **MUST** support aborting execution via an abort signal.
-
-### 9.2 Behavior
-
-When aborted:
-
-1. Stop processing after the current atomic operation
-2. Clear any pending tool queue
-3. End execution
-
-## 10. Concurrency
-
-### 10.1 Thread Exclusivity
-
-A thread **MUST NOT** have multiple concurrent executions. If a thread is already executing, new invocations **MUST** be queued or rejected.
-
-### 10.2 Effect Isolation
-
-Scheduled effects execute as independent invocations and **MAY** run concurrently across different threads.
-
-## 11. Conformance
-
-### 11.1 Required
+## 13. Conformance Summary
 
 Implementations **MUST**:
-
-- Execute steps sequentially within an invocation
-- Enforce all configured step and session limits
-- Execute tools in order, one at a time
-- Prevent concurrent execution on the same thread
-- Transform message roles correctly for `dual_ai` agents
-- Persist messages before continuing execution
-
-### 11.2 Recommended
-
-Implementations **SHOULD**:
-
-- Use exponential backoff for LLM retries
-- Support streaming responses to clients
-- Log LLM requests and responses for debugging
+- preserve sequential step and tool execution within a thread
+- enforce stop and safety semantics
+- persist messages/tool results before advancing
+- prevent per-thread concurrent execution
+- support durable queue semantics
+- copy attachment files across thread boundaries for subagent communication
