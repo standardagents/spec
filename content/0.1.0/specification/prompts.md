@@ -96,17 +96,17 @@ Tools can be referenced by name:
 tools: ['search_docs', 'create_ticket', 'send_email']
 ```
 
-### 3.2 Tool Configuration with Tenvs
+### 3.2 Tool Configuration with Env Values
 
-Tools can be configured with thread environment variable (tenv) values. This allows prompts to provide default or required values for tools that need runtime configuration:
+Tools can be configured with thread variable values using `env`. This allows prompts to provide default values for tools that need runtime configuration:
 
 ```typescript
 tools: [
   'search_docs',  // Simple reference
   {
-    name: 'file_search',  // Tool with tenv configuration
-    tenvs: {
-      vectorStoreId: 'vs_abc123',  // Required by file_search
+    name: 'file_search',  // Tool with env configuration
+    env: {
+      VECTOR_STORE_ID: 'vs_abc123',
     },
   },
 ]
@@ -115,10 +115,10 @@ tools: [
 | Property | Type | Description |
 |----------|------|-------------|
 | `name` | `string` | Name of the tool |
-| `tenvs` | `Record<string, unknown>` | Thread environment variable values for this tool |
+| `env` | `Record<string, string>` | Thread variable values for this tool |
 | `options` | `Record<string, unknown>` | Static tool options |
 
-Tenv values set in prompts serve as defaults. They can be overridden by agent-level tenvs or thread-level tenvs at creation time. See the [Tools specification](/specification/tools#9-thread-environment-variables-tenvs) for details on tenv merging.
+Prompt-level `env` values serve as defaults. They can be overridden by agent-level and thread-level values. See the [Tools specification](/specification/tools) for variable declaration details.
 
 ### 3.3 Sub-Prompt Tool Configuration
 
@@ -320,11 +320,11 @@ type StructuredPrompt = PromptPart[];
 type PromptContent = string | StructuredPrompt;
 
 /**
- * Configuration for tools with tenv values.
+ * Configuration for tools with env values.
  */
 interface ToolConfig<T extends string = string> {
   name: T;
-  tenvs?: Record<string, unknown>;
+  env?: Record<string, string>;
   options?: Record<string, unknown>;
 }
 
@@ -383,7 +383,13 @@ interface PromptDefinition<
   toolChoice?: 'auto' | 'none' | 'required';
   requiredSchema?: S;
   tools?: (string | ToolConfig | SubpromptConfig | SubagentToolConfig)[];
-  tenvs?: Record<string, unknown>;
+  variables?: Array<{
+    name: string;
+    type: 'text' | 'secret';
+    required: boolean;
+    description: string;
+  }>;
+  env?: Record<string, string>;
   reasoning?: ReasoningConfig;
   recentImageThreshold?: number;
   hooks?: string[];

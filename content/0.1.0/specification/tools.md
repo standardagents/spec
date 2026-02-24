@@ -16,10 +16,18 @@ Tools are callable capabilities exposed to models during execution.
 defineTool({
   description: 'Search indexed docs',
   args: z.object({ query: z.string() }),
-  tenvs: z.object({ vectorStoreId: z.string() }).optional(),
   execute: async (state, args) => {
+    const vectorStoreId = await state.env('VECTOR_STORE_ID');
     return { status: 'success', result: '...' };
   },
+  variables: [
+    {
+      name: 'VECTOR_STORE_ID',
+      type: 'text',
+      required: true,
+      description: 'Vector store identifier',
+    },
+  ],
 });
 ```
 

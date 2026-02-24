@@ -29,7 +29,7 @@ Agents define:
 | `icon` | `string` | - | Display icon |
 | `exposeAsTool` | `boolean` | `false` | Expose callable entrypoint |
 | `toolDescription` | `string` | - | Callable description |
-| `tenvs` | `Record<string, unknown>` | - | Default thread env values |
+| `env` | `Record<string, string>` | - | Agent-level default variable values |
 | `hooks` | `string[]` | - | Fallback hook IDs |
 
 ## 2. Agent Types

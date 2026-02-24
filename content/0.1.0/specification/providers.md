@@ -422,26 +422,31 @@ getTools(modelId?: string): Record<string, ToolDefinition>
 - When `modelId` is provided, returns only tools available for that model
 - Returns an empty object if no tools are available
 
-### 10.3 Tool Definitions with Tenvs
+### 10.3 Tool Definitions with Variables
 
-Provider tools use `defineTool()` with an optional `tenvs` property for thread environment variable requirements:
+Provider tools use `defineTool()` with an optional `variables` property for thread variable requirements:
 
 ```typescript
 defineTool({
   description: 'Search through uploaded files using vector embeddings',
   args: z.object({ query: z.string() }),
   execute: async (state, args) => ({ status: 'success', result: 'Handled by provider' }),
-  tenvs: z.object({
-    vectorStoreId: z.string().describe('Vector store to search'),
-  }),
+  variables: [
+    {
+      name: 'VECTOR_STORE_ID',
+      type: 'text',
+      required: true,
+      description: 'Vector store to search',
+    },
+  ],
 });
 ```
 
-Tenv requirements are defined using Zod schemas:
-- **Required tenvs**: Fields without `.optional()` must be provided
-- **Optional tenvs**: Fields with `.optional()` may be omitted
+Variable requirements are declared per field:
+- **Required variables**: `required: true`
+- **Optional variables**: set `required: false`
 
-See the [Tools specification](/0.1.0/specification/tools#9-thread-environment-variables-tenvs) for details on tenv schemas and merging.
+See the [Tools specification](/0.1.0/specification/tools) for details on variable declarations and runtime resolution.
 
 ### 10.4 Model-Specific Tools
 
