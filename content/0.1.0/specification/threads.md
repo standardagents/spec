@@ -71,6 +71,8 @@ ThreadState is the unified interface for all thread operations. It provides a co
 | `getPromptNames()` | `string[]` | List available prompts |
 | `getAgentNames()` | `string[]` | List available agents |
 | `getModelNames()` | `string[]` | List available models |
+| `env(propertyName)` | `Promise<string>` | Resolve env value using thread/account/instance/agent/prompt precedence |
+| `setEnv(propertyName, value)` | `Promise<void>` | Set thread env and propagate to active descendants |
 
 **Tool Invocation** — See [Tool Invocation](#4-tool-invocation) for details
 
@@ -242,6 +244,25 @@ const prompts = state.getPromptNames();
 const agents = state.getAgentNames();
 const models = state.getModelNames();
 ```
+
+### 3.3 Thread Environment Values
+
+```typescript
+// Resolve an env value for the current thread context
+const apiKey = await state.env('GOOGLE_API_KEY');
+
+// Set a thread-scoped env value
+await state.setEnv('TOPDOWN_APPROVAL_GATE', 'open');
+```
+
+`env(propertyName)` resolves in this order:
+1. Thread env
+2. User account env
+3. Instance env
+4. Agent definition env
+5. Prompt definition env
+
+`setEnv(propertyName, value)` writes to thread env storage. Runtimes that support encrypted env storage should encrypt at rest. The update is propagated recursively to active descendants; terminated descendants are skipped.
 
 ## 4. Tool Invocation
 
@@ -870,6 +891,8 @@ interface ThreadState {
   getPromptNames(): string[];
   getAgentNames(): string[];
   getModelNames(): string[];
+  env(propertyName: string): Promise<string>;
+  setEnv(propertyName: string, value: string): Promise<void>;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Tool Invocation
