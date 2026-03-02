@@ -308,6 +308,8 @@ Effects are scheduled operations that run outside the normal tool execution cont
 - Execute with their own **ThreadState** context
 - Are ideal for **side effects** that don't need immediate results
 
+Effect definition syntax is specified in [Effects](/0.1.0/specification/effects). Packed effects may use qualified names (`{packageId}/{effectName}`) to avoid collisions.
+
 ### 5.1 Scheduling Effects
 
 ```typescript

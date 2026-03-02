@@ -1,6 +1,6 @@
 # Packaging
 
-Standard Agents can be packaged into self-contained npm packages, making them installable and distributable. Each packed agent includes all its dependencies (prompts, tools, models, hooks) in a single module.
+Standard Agents can be packaged into self-contained npm packages, making them installable and distributable. Each packed agent includes all its dependencies (prompts, tools, models, hooks, effects) in a single module.
 
 ## Entry Point Exports
 
@@ -58,6 +58,16 @@ export const hooks = {
   }),
 } as const;
 
+export const effects = {
+  send_digest: async () => ([
+    'Send a digest email',
+    null,
+    async (state: any) => {
+      // effect work
+    },
+  ]),
+} as const;
+
 export const __meta: PackedMeta = {
   packageId: 'standardagent-my-workflow',
   version: '1.0.0',
@@ -98,6 +108,7 @@ interface PackedExports {
   tools: Record<string, DefinitionLoader<ToolDefinition>>;
   models: Record<string, DefinitionLoader<ModelDefinition>>;
   hooks: Record<string, DefinitionLoader<HookDefinitionResult>>;
+  effects?: Record<string, DefinitionLoader<EffectDefinition<any, any>>>;
   threadEndpoints?: Record<string, DefinitionLoader<MarkedThreadEndpoint | Controller>>;
   __meta: PackedMeta;
 }
@@ -123,6 +134,7 @@ Packed agents are identified by the `standardagent` field in `package.json`:
   "keywords": ["standardagent"],
   "standardagent": {
     "entryAgents": ["my_agent"],
+    "effects": ["send_digest", "cleanup"],
     "threadEndpoints": ["status.get", "admin/sync.post"]
   },
   "peerDependencies": {
@@ -131,7 +143,7 @@ Packed agents are identified by the `standardagent` field in `package.json`:
 }
 ```
 
-The `standardagent` field marks this as a Standard Agent package. `entryAgents` declares callable entry agents and `threadEndpoints` (optional) lists packed thread endpoint keys. The `keywords` array **MUST** include `"standardagent"` for discovery.
+The `standardagent` field marks this as a Standard Agent package. `entryAgents` declares callable entry agents, `effects` (optional) lists packed effect names, and `threadEndpoints` (optional) lists packed thread endpoint keys. The `keywords` array **MUST** include `"standardagent"` for discovery.
 
 ### PackedMeta
 
@@ -193,7 +205,7 @@ Runtimes discover packed agents by:
 ## Naming Conventions
 
 - Package names **SHOULD** start with `standardagent-`
-- Agent, tool, prompt, and hook names use `snake_case`
+- Agent, tool, prompt, hook, and effect names use `snake_case`
 - Only expose agents that should be callable from outside as entry points
 - Internal helper agents **SHOULD NOT** be entry points
 
@@ -219,6 +231,7 @@ import type {
   ToolDefinition,
   ModelDefinition,
   Controller,
+  EffectDefinition,
   HookDefinitionResult,
   MarkedThreadEndpoint,
   PackedMeta,
@@ -244,6 +257,10 @@ export declare const models: {
 
 export declare const hooks: {
   readonly limit_messages: DefinitionLoader<HookDefinitionResult>;
+};
+
+export declare const effects: {
+  readonly send_digest: DefinitionLoader<EffectDefinition<any, any>>;
 };
 
 export declare const threadEndpoints: {
