@@ -700,7 +700,17 @@ export default defineThreadEndpoint(async (req, state) => {
 });
 ```
 
-### 11.2 Handler Signature
+### 11.2 Packed Endpoint Routing
+
+When thread endpoints are loaded from packed packages, runtimes should mount them under a package namespace to avoid route collisions between packages and local endpoints.
+
+Example mount pattern:
+
+```text
+/api/packages/{packageId}/threads/{threadId}/...
+```
+
+### 11.3 Handler Signature
 
 Thread endpoint handlers receive:
 
@@ -711,7 +721,7 @@ Thread endpoint handlers receive:
 
 The handler **MUST** return a `Response` object.
 
-### 11.3 Endpoint Context
+### 11.4 Endpoint Context
 
 When accessing a thread via an endpoint, `state.execution` is always `null` because the thread is not actively executing:
 
@@ -725,7 +735,7 @@ export default defineThreadEndpoint(async (req, state) => {
 });
 ```
 
-### 11.4 Error Handling
+### 11.5 Error Handling
 
 Thread endpoints automatically handle common errors:
 
@@ -734,7 +744,7 @@ Thread endpoints automatically handle common errors:
 | Thread not found | 404: `{ error: "Thread not found: {threadId}" }` |
 | Missing thread ID | 400: `{ error: "Thread ID required" }` |
 
-### 11.5 Thread Endpoint Examples
+### 11.6 Thread Endpoint Examples
 
 **Get Thread Messages:**
 ```typescript

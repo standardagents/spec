@@ -98,6 +98,7 @@ interface PackedExports {
   tools: Record<string, DefinitionLoader<ToolDefinition>>;
   models: Record<string, DefinitionLoader<ModelDefinition>>;
   hooks: Record<string, DefinitionLoader<HookDefinitionResult>>;
+  threadEndpoints?: Record<string, DefinitionLoader<MarkedThreadEndpoint | Controller>>;
   __meta: PackedMeta;
 }
 ```
@@ -121,7 +122,8 @@ Packed agents are identified by the `standardagent` field in `package.json`:
   },
   "keywords": ["standardagent"],
   "standardagent": {
-    "entryAgents": ["my_agent"]
+    "entryAgents": ["my_agent"],
+    "threadEndpoints": ["status.get", "admin/sync.post"]
   },
   "peerDependencies": {
     "@standardagents/spec": ">=0.1.0"
@@ -129,7 +131,7 @@ Packed agents are identified by the `standardagent` field in `package.json`:
 }
 ```
 
-The `standardagent` field marks this as a Standard Agent package and declares which agents are entry points. The `keywords` array **MUST** include `"standardagent"` for discovery.
+The `standardagent` field marks this as a Standard Agent package. `entryAgents` declares callable entry agents and `threadEndpoints` (optional) lists packed thread endpoint keys. The `keywords` array **MUST** include `"standardagent"` for discovery.
 
 ### PackedMeta
 
@@ -195,6 +197,16 @@ Runtimes discover packed agents by:
 - Only expose agents that should be callable from outside as entry points
 - Internal helper agents **SHOULD NOT** be entry points
 
+## Packed Thread Endpoints
+
+Packed thread endpoints are exported under `threadEndpoints` using endpoint keys like `status.get` or `admin/sync.post`.
+
+Runtimes should mount these under a package namespace to avoid collisions, for example:
+
+```text
+/api/packages/{packageId}/threads/{threadId}/...
+```
+
 ## Type Definitions
 
 Packed agents include TypeScript definitions for type-safe consumption:
@@ -206,7 +218,9 @@ import type {
   PromptDefinition,
   ToolDefinition,
   ModelDefinition,
+  Controller,
   HookDefinitionResult,
+  MarkedThreadEndpoint,
   PackedMeta,
 } from '@standardagents/spec';
 
@@ -230,6 +244,10 @@ export declare const models: {
 
 export declare const hooks: {
   readonly limit_messages: DefinitionLoader<HookDefinitionResult>;
+};
+
+export declare const threadEndpoints: {
+  readonly "status.get": DefinitionLoader<MarkedThreadEndpoint | Controller>;
 };
 
 export declare const __meta: PackedMeta;

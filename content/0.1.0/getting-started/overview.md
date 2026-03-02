@@ -104,7 +104,7 @@ Instead of installing an MCP server for Gmail and expecting a model to sort out 
 <div class="faq-list">
   <details class="faq-item">
     <summary>Is Standard Agents a framework or a specification?</summary>
-    <p>It is a specification first. Any runtime can implement the spec and execute compatible agents. AgentBuilder is one implementation.</p>
+    <p>It is an open source specification. Anyone can build or use a compatible runtime to execute any compliant agent. <a href="https://standardagentbuilder.com">AgentBuilder</a> is one such implementation.</p>
   </details>
 
   <details class="faq-item">
