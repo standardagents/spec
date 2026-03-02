@@ -104,17 +104,17 @@ Instead of installing an MCP server for Gmail and expecting a model to sort out 
 <div class="faq-list">
   <details class="faq-item">
     <summary>Why TypeScript?</summary>
-    <p>For a truly portable specification, we need a baseline runtime that can execute anywhere. Otherwise, each implementation would require entire server stacks to run (like MCP server setups). JavaScript is the most widely supported deployment target and can be sandboxed effectively, so it is a practical baseline. TypeScript adds compile-time confidence for LLMs and developers writing agents. Instead of inventing custom validators, we can rely on standard typechecking.</p>
+    <p>A portable specification needs a baseline runtime that can execute almost anywhere. Without that baseline, implementations tend to depend on full server stacks (as in many MCP deployments). JavaScript is the most widely supported deployment target and can be sandboxed effectively, so it is a practical foundation. TypeScript then provides compile-time guarantees for both developers and LLM-authored code. Rather than maintaining custom validators, standard typechecking provides a simpler and more reliable contract.</p>
   </details>
 
   <details class="faq-item">
     <summary>Why not MCP?</summary>
-    <p>MCP mostly exposes one agent to many tools with little fine-tuning between model, prompt, and tool behavior. As tool count grows, performance and reliability often degrade. Standard Agents solves this by composing many focused agents, each tuned as a unit across model, prompt, hooks, and tools. We did not land on the moon by giving one guy a lot of tools. We need a team of experts.</p>
+    <p>MCP typically exposes one general agent to a broad tool surface, with limited tuning between model behavior, prompting strategy, and tool design. As the tool surface expands, quality and reliability often decline. Standard Agents takes a compositional approach: many focused agents, each tuned as a coherent unit across model, prompt, hooks, and tools, then orchestrated together. We did not land on the moon by giving one person every tool. We built teams of specialists.</p>
   </details>
 
   <details class="faq-item">
     <summary>Why not skills?</summary>
-    <p>Skills are additional context, and they can improve efficacy, but they still rely on a large general model to interpret and resolve everything at runtime. This has the same core scaling issue as MCP. Standard Agents composes complete agent units instead of only adding more instructions. We did not land on the moon by giving one guy a lot of documentation. We need teams of agents.</p>
+    <p>Skills add useful context, and they can improve outcomes, but they still depend on a large general model to interpret and solve problems at runtime. This creates a similar scaling challenge to MCP: more context does not automatically produce better composition. Standard Agents composes complete, task-focused agent units rather than only adding instructions. We did not land on the moon by giving one person more documentation. We built coordinated teams.</p>
   </details>
 
   <details class="faq-item">
