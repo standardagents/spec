@@ -44,9 +44,10 @@ const {
 
         // Invite gate - hide content by default, show only if authenticated
         // Check for stored invite code OR ?invite= param (which will be validated by React)
+        var host = window.location.hostname.toLowerCase();
+        var isLocal = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.orb.local');
         var hasStoredCode = localStorage.getItem('sab_spec_invite');
-        var hasUrlCode = window.location.search.indexOf('invite=') !== -1;
-        if (!hasStoredCode) {
+        if (!isLocal && !hasStoredCode) {
           document.documentElement.classList.add('invite-gate-pending');
         }
       })();
