@@ -98,12 +98,28 @@ For resumable subagents, runtimes should expose built-in lifecycle tools:
 
 Creation attempts beyond `maxInstances` **MUST** return tool errors with actionable guidance.
 
-### 7.3 Initial Payload Mapping
+### 7.3 Optional + Immediate Branches
+
+Runtimes should evaluate subagent tool flags before exposing/executing them:
+- `optional`: only enabled when the referenced environment flag resolves to `true`, `1`, or `yes` (case-insensitive)
+- `immediate`: execute before the first model step when the prompt becomes active
+
+Immediate execution should be recursive across activated child prompts.
+
+### 7.4 Initial Payload Mapping
 
 Subagent tool configuration can map args to:
 - initial user message (`initUserMessageProperty`)
 - initial attachments (`initAttachmentsProperty`)
 - human-readable child name (`initAgentNameProperty`)
+
+### 7.5 Scoped Variable Bootstrap
+
+If `subagent_create` cannot proceed because required scoped variables are missing, runtimes should return a structured bootstrap error and expose a temporary completion flow:
+- `GET /threads/{parent_thread_id}/variables/{request_id}`
+- `POST /threads/{parent_thread_id}/variables/{request_id}`
+
+`POST` stores values and immediately boots the deferred subagent.
 
 ## 8. Cross-Thread Communication
 

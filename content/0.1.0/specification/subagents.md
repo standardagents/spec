@@ -1,6 +1,6 @@
 # Subagents
 
-Subagents are autonomous `dual_ai` child agents spawned from a parent thread. They are the core composition primitive for building multi-agent workflows in Standard Agents.
+Subagents are autonomous `dual_ai` child agents spawned from a parent thread. They are the core composition primitive for multi-agent workflows in Standard Agents.
 
 ## 1. Overview
 
@@ -10,19 +10,19 @@ A subagent is:
 - executed in its own isolated thread (messages, logs, filesystem, queue, lifecycle)
 - linked to its parent via thread hierarchy and child registry state
 
-This allows composable systems where one orchestrator delegates bounded work to specialized child agents without merging storage or execution state.
+This allows orchestrators to delegate bounded work to specialized children without merging storage or execution state.
 
 ## 2. Why Compose With Subagents
 
-Subagents let you split responsibilities cleanly:
+Subagents let systems separate responsibilities:
 - parent orchestrates planning, sequencing, and aggregation
 - child performs focused work with its own prompts/tools
 - child can run synchronously (blocking) or asynchronously (non-blocking)
 - child can be disposable (non-resumable) or persistent (resumable)
 
 A common pattern is:
-- `side_a` performs production work
-- `side_b` reviews/criticizes/validates before session completion
+- `side_a` does production work
+- `side_b` reviews/criticizes/validates before completion
 
 ## 3. Invocation Modes
 
@@ -42,6 +42,8 @@ interface SubagentToolConfig {
   initUserMessageProperty?: string;
   initAttachmentsProperty?: string;
   initAgentNameProperty?: string;
+  immediate?: boolean;
+  optional?: string;
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';
     maxInstances?: number;
@@ -55,26 +57,58 @@ interface SubagentToolConfig {
 - `blocking`: if `false`, return immediately and complete asynchronously.
 - `initUserMessageProperty`: maps parent tool-call args -> initial child message content.
 - `initAttachmentsProperty`: maps parent tool-call args -> initial child attachment paths.
-- `initAgentNameProperty`: maps parent tool-call args -> child display name (implementations typically persist this as `name:<value>` tag).
+- `initAgentNameProperty`: maps parent tool-call args -> child display name (often persisted as `name:<value>` tag).
+- `immediate`: run this subagent tool as soon as the prompt becomes active (before the first model step).
+- `optional`: environment flag name controlling whether this subagent branch is enabled.
 - `resumable`: enables persistent child instances.
 - `resumable.receives_messages`: controls which child side receives parent messages.
 - `resumable.maxInstances`: limits concurrent instances per configured subagent tool.
 
-## 5. Lifecycle Tools For Resumable Subagents
+## 5. Optional + Immediate Behavior
 
-For resumable child instances, runtimes provide built-in lifecycle tools:
+### 5.1 Optional Branches
 
-- `subagent_create`: create/run configured resumable subagents
-- `subagent_message`: send messages to existing resumable instances
+When `optional` is set, the branch is enabled only when the named environment variable resolves to one of:
+- `true`
+- `1`
+- `yes`
 
-Non-resumable subagents continue to behave like normal tool calls (direct invocation, no persistent addressing).
+(case-insensitive)
+
+Disabled optional branches are not available for creation/runtime invocation.
+
+### 5.2 Immediate Execution
+
+When `immediate: true`, runtimes execute the tool immediately when the prompt becomes active:
+- thread creation bootstrap
+- handoff to a new active prompt
+
+This is recursive: if an immediate subagent is booted and its active prompt has immediate tools, those tools execute as soon as that child thread activates.
+
+## 6. Lifecycle Tools For Resumable Subagents
+
+For resumable instances, runtimes provide built-in lifecycle tools:
+- `subagent_create`
+- `subagent_message`
+
+Non-resumable subagents continue to behave like direct tool calls (no persistent addressing).
 
 When `maxInstances` is reached, new creation attempts should return a tool error explaining the cap and suggesting messaging an existing instance.
 
-## 6. Session Lifecycle Bindings On Child Sides
+## 7. Scoped Variable Bootstrap Flow
+
+If `subagent_create` is called but required scoped variables for that child graph are missing, runtimes should return a structured, actionable error (for example `subagent_env_required`) and expose a temporary bootstrap endpoint:
+
+- `GET /threads/{parent_thread_id}/variables/{request_id}`
+- `POST /threads/{parent_thread_id}/variables/{request_id}`
+
+Expected behavior:
+- `GET` returns required/missing variable names.
+- `POST` stores provided values and immediately boots the deferred subagent using the original creation payload.
+
+## 8. Session Lifecycle Bindings On Child Sides
 
 Child completion/failure/status are defined on `SideConfig`:
-
 - `sessionStop`
 - `sessionFail`
 - `sessionStatus`
@@ -85,9 +119,9 @@ Each supports:
 
 Mapped properties are the canonical payload for child -> parent communication.
 
-## 7. Parent <-> Child Communication
+## 9. Parent <-> Child Communication
 
-### 7.1 Parent -> Child
+### 9.1 Parent -> Child
 
 Parent communication occurs via:
 - initial invocation mapping (`initUserMessageProperty`, `initAttachmentsProperty`)
@@ -95,7 +129,7 @@ Parent communication occurs via:
 
 Attachment paths must be copied from parent filesystem -> child filesystem before queuing.
 
-### 7.2 Child -> Parent: Completion
+### 9.2 Child -> Parent: Completion
 
 When the child finishes via `sessionStop` (or terminal completion policy), parent receives a queued silent message:
 
@@ -107,7 +141,7 @@ Subagent (reference: {uuid}) has returned the following result:
 
 If attachments are returned, they are copied child -> parent and included as parent-local paths.
 
-### 7.3 Child -> Parent: Failure
+### 9.3 Child -> Parent: Failure
 
 When `sessionFail` is called successfully, parent receives:
 
@@ -119,11 +153,11 @@ Subagent (reference: {uuid}) has reported a failure:
 
 Returned attachments (if any) are also copied child -> parent.
 
-### 7.4 Child -> Parent: Status
+### 9.4 Child -> Parent: Status
 
 `sessionStatus` updates the parent's child registry status text without ending child execution.
 
-## 8. Child Registry + Parent Context
+## 10. Child Registry + Parent Context
 
 Resumable instances are tracked in `ThreadState.children`.
 
@@ -142,9 +176,9 @@ interface SubagentRegistryEntry {
 }
 ```
 
-When children exist, parent context should include a registry system message so the orchestrator model can reason about active instances.
+When children exist, parent context should include a registry system message so the orchestrator can reason about active instances.
 
-## 9. ThreadState Additions
+## 11. ThreadState Additions
 
 Subagent-aware runtimes expose:
 
@@ -161,7 +195,7 @@ interface ThreadState {
 }
 ```
 
-## 10. Queue + Termination Semantics
+## 12. Queue + Termination Semantics
 
 Queued messages are durable and ordered:
 - if executing: inject before next model step
@@ -174,7 +208,7 @@ Queued messages are durable and ordered:
 - rejects new execution and queued-message entry
 - updates parent registry status to `terminated` when applicable
 
-## 11. Attachment Copying Requirements
+## 13. Attachment Copying Requirements
 
 Subagent communication that crosses thread boundaries must copy filesystem references:
 - parent -> child for initial/resumable messaging attachments

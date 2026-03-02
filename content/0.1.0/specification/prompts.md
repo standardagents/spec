@@ -4,7 +4,7 @@ A prompt defines how each request to an LLM is crafted. It specifies system inst
 
 ## 1. Prompt Definition
 
-A prompt defines how each request to an LLM is crafted. Each prompt specifies system instructions, a model reference, and optional configuration for tools, input validation, and response behavior.
+Each prompt specifies system instructions, a model reference, and optional configuration for tools, input validation, and response behavior.
 
 ### 1.1 Required Properties
 
@@ -29,6 +29,8 @@ A prompt definition **MAY** include the following properties:
 | `toolChoice` | `'auto' \| 'none' \| 'required'` | `'auto'` | Tool calling strategy |
 | `requiredSchema` | `ZodSchema` | - | Input validation schema |
 | `tools` | `(string \| ToolConfig \| SubpromptConfig \| SubagentToolConfig)[]` | - | Available tools, sub-prompts, and agent tools (including resumable/non-resumable subagents) |
+| `variables` | `VariableDefinition[]` | - | Variable declarations consumed by this prompt |
+| `env` | `Record<string, string>` | - | Prompt-level default environment variable values |
 | `reasoning` | `ReasoningConfig` | - | Extended thinking config |
 | `recentImageThreshold` | `number` | `10` | Messages to keep images |
 | `hooks` | `string[]` | - | Hook IDs to run for this prompt |
@@ -96,7 +98,7 @@ Tools can be referenced by name:
 tools: ['search_docs', 'create_ticket', 'send_email']
 ```
 
-### 3.2 Tool Configuration with Env Values
+### 3.2 Tool Configuration with Environment Values
 
 Tools can be configured with thread variable values using `env`. This allows prompts to provide default values for tools that need runtime configuration:
 
@@ -115,10 +117,10 @@ tools: [
 | Property | Type | Description |
 |----------|------|-------------|
 | `name` | `string` | Name of the tool |
-| `env` | `Record<string, string>` | Thread variable values for this tool |
+| `env` | `Record<string, string>` | Environment variable values for this tool |
 | `options` | `Record<string, unknown>` | Static tool options |
 
-Prompt-level `env` values serve as defaults. They can be overridden by agent-level and thread-level values. See the [Tools specification](/specification/tools) for variable declaration details.
+Prompt-level `env` values serve as defaults. They can be overridden by higher-precedence sources. See the [Tools specification](/0.1.0/specification/tools) for variable declaration details.
 
 ### 3.3 Sub-Prompt Tool Configuration
 
@@ -262,13 +264,13 @@ definePrompt({
 - When `hooks` is specified, **only** those hooks run for this prompt
 - When `hooks` is omitted, the runtime falls back to agent-level hooks
 - Hook IDs reference the `id` property from `defineHook({ hook, id, execute })`
-- See the [Hooks specification](/specification/hooks) for hook definition details
+- See the [Hooks specification](/0.1.0/specification/hooks) for hook definition details
 
 This allows different prompts within the same agent to use different hooks. For example, a classifier prompt might skip message filtering hooks while a support prompt includes them.
 
 ## 9. Validation
 
-### 8.1 Required Field Validation
+### 9.1 Required Field Validation
 
 Implementations **MUST** validate that:
 
@@ -277,7 +279,7 @@ Implementations **MUST** validate that:
 3. `model` references a defined model
 4. `prompt` is either a string or valid structured array
 
-### 8.2 Optional Field Validation
+### 9.2 Optional Field Validation
 
 Implementations **MUST** validate that:
 
@@ -350,6 +352,8 @@ interface SubagentToolConfig<T extends string = string> {
   initUserMessageProperty?: string;
   initAttachmentsProperty?: string;
   initAgentNameProperty?: string;
+  immediate?: boolean;
+  optional?: string;
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';
     maxInstances?: number;

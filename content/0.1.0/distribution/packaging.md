@@ -97,7 +97,7 @@ interface PackedExports {
   prompts: Record<string, DefinitionLoader<PromptDefinition>>;
   tools: Record<string, DefinitionLoader<ToolDefinition>>;
   models: Record<string, DefinitionLoader<ModelDefinition>>;
-  hooks: Record<string, DefinitionLoader<HookSignature>>;
+  hooks: Record<string, DefinitionLoader<HookDefinitionResult>>;
   __meta: PackedMeta;
 }
 ```
@@ -180,30 +180,6 @@ interface PackageSignature {
 
 The signature is injected at load time (not baked into source), keeping the packed source clean.
 
-## PackedExports Interface
-
-For type-safe package consumption:
-
-```typescript
-import type { PackedExports } from '@standardagents/spec';
-
-const pkg: PackedExports = await import('standardagent-my-workflow');
-const meta = pkg.__meta;
-const agent = await pkg.agents.my_agent();
-```
-
-Full interface:
-
-```typescript
-interface PackedExports {
-  agents: Record<string, DefinitionLoader<AgentDefinition>>;
-  prompts: Record<string, DefinitionLoader<PromptDefinition>>;
-  tools: Record<string, DefinitionLoader<ToolDefinition>>;
-  models: Record<string, DefinitionLoader<ModelDefinition>>;
-  hooks: Record<string, DefinitionLoader<HookDefinitionResult>>;
-  __meta: PackedMeta;
-}
-```
 ## Discovery
 
 Runtimes discover packed agents by:

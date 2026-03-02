@@ -4,7 +4,7 @@ A thread is an instance of an agent—the runtime execution context where conver
 
 ## 1. Thread Definition
 
-A thread is an **instance** of an agent—the runtime execution context where conversations happen. Each thread has isolated storage for messages and files, and maintains its own conversation history.
+A thread is an **instance** of an agent with isolated storage for messages and files.
 
 ### 1.1 Agent Assignment
 
@@ -71,8 +71,8 @@ ThreadState is the unified interface for all thread operations. It provides a co
 | `getPromptNames()` | `string[]` | List available prompts |
 | `getAgentNames()` | `string[]` | List available agents |
 | `getModelNames()` | `string[]` | List available models |
-| `env(propertyName)` | `Promise<string>` | Resolve env value using thread/account/instance/agent/prompt precedence |
-| `setEnv(propertyName, value)` | `Promise<void>` | Set thread env and propagate to active descendants |
+| `env(propertyName)` | `Promise<string>` | Resolve environment variable using thread/user/instance/agent/prompt precedence |
+| `setEnv(propertyName, value)` | `Promise<void>` | Set a thread environment variable and propagate to active descendants (with scoped filtering) |
 
 **Tool Invocation** — See [Tool Invocation](#4-tool-invocation) for details
 
@@ -245,24 +245,28 @@ const agents = state.getAgentNames();
 const models = state.getModelNames();
 ```
 
-### 3.3 Thread Environment Values
+### 3.3 Environment Variable Resolution
 
 ```typescript
-// Resolve an env value for the current thread context
+// Resolve an environment variable for the current thread context
 const apiKey = await state.env('GOOGLE_API_KEY');
 
-// Set a thread-scoped env value
+// Set a thread-level environment variable
 await state.setEnv('TOPDOWN_APPROVAL_GATE', 'open');
 ```
 
 `env(propertyName)` resolves in this order:
-1. Thread env
-2. User account env
-3. Instance env
-4. Agent definition env
-5. Prompt definition env
+1. Thread environment variables
+2. User-account environment variables
+3. Runtime instance environment variables
+4. Agent definition defaults (`agent.env`)
+5. Prompt definition defaults (`prompt.env`)
 
-`setEnv(propertyName, value)` writes to thread env storage. Runtimes that support encrypted env storage should encrypt at rest. The update is propagated recursively to active descendants; terminated descendants are skipped.
+`setEnv(propertyName, value)` writes to thread storage and propagates recursively to active descendants. During propagation, descendants must filter out inherited values for variable names marked `scoped` in that descendant's agent graph. Terminated descendants are skipped.
+
+Thread, user, and instance environment values should be encrypted at rest when the runtime supports encrypted storage.
+
+For resumable subagent creation, runtimes may require missing scoped variables to be provided through a pending request flow before boot can continue. See [Subagents](/0.1.0/specification/subagents).
 
 ## 4. Tool Invocation
 

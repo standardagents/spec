@@ -99,6 +99,35 @@ Instead of installing an MCP server for Gmail and expecting a model to sort out 
   </div>
 </div>
 
+## Frequently Asked Questions
+
+<div class="faq-list">
+  <details class="faq-item">
+    <summary>Is Standard Agents a framework or a specification?</summary>
+    <p>It is a specification first. Any runtime can implement the spec and execute compatible agents. AgentBuilder is one implementation.</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>What is the difference between a handoff and a subagent?</summary>
+    <p>A handoff reassigns control of the same thread to another <code>ai_human</code> agent. A subagent creates a new child thread using a <code>dual_ai</code> agent.</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>How do environment variables resolve at runtime?</summary>
+    <p>Resolution is layered: thread, user account, instance, agent defaults, then prompt defaults. Scoped variables can block parent inheritance for the branches that declare them.</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>What does “immediate” mean for tools and subagents?</summary>
+    <p>Immediate tools run as soon as the prompt becomes active, before the first model step. This includes immediate subagent tool entries when they are enabled.</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>Can optional subagent branches be enabled per thread?</summary>
+    <p>Yes. Optional subagent branches are controlled by environment flags (for example <code>true</code>, <code>1</code>, or <code>yes</code>) and can be enabled or disabled per thread instance.</p>
+  </details>
+</div>
+
 ## Who, When, and Where?
 
 The Standard Agent Specification was published in 2026 by the FormKit and Standard Agent Builder team and is MIT licensed.

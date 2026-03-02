@@ -96,7 +96,7 @@ Runtime stop evaluation is typically:
 
 When `exposeAsTool: true`:
 - `ai_human` callable usage is a handoff-style tool interaction.
-- `dual_ai` callable usage is subagent behavior (see [Subagents](/specification/subagents)).
+- `dual_ai` callable usage is subagent behavior (see [Subagents](/0.1.0/specification/subagents)).
 
 ## 7. Example
 

@@ -1145,3 +1145,80 @@ html.dark .component-card h4 {
 html.dark .component-card p {
   color: #94a3b8;
 }
+
+/* Overview FAQ accordion */
+.faq-list {
+  margin: 1.5rem 0 2rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.faq-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #fff;
+  overflow: clip;
+}
+
+html.dark .faq-item {
+  border-color: #334155;
+  background: #1e293b;
+}
+
+.faq-item summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.9rem 2.5rem 0.9rem 1rem;
+  font-family: var(--font-label);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  position: relative;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+html.dark .faq-item summary {
+  color: #e2e8f0;
+}
+
+.faq-item summary::after {
+  content: '+';
+  position: absolute;
+  right: 0.95rem;
+  top: 0.8rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid #cbd5e1;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+html.dark .faq-item summary::after {
+  border-color: #475569;
+  color: #94a3b8;
+  background: #0f172a;
+}
+
+.faq-item[open] summary::after {
+  content: '−';
+}
+
+.faq-item p {
+  margin: 0;
+  padding: 0 1rem 0.95rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #475569;
+}
+
+html.dark .faq-item p {
+  color: #cbd5e1;
+}

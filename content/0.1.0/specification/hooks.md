@@ -4,7 +4,7 @@ A hook is an interception point in the agent execution lifecycle. Hooks enable l
 
 ## 1. Hook Definition
 
-A hook is an interception point in the agent execution lifecycle. Hooks enable logging, validation, transformation, and side effects without modifying core agent logic.
+This section defines hook types, required fields, and scoping behavior.
 
 ### 1.1 Available Hooks
 
@@ -80,13 +80,13 @@ defineAgent({
 });
 ```
 
-See the [Prompts](/specification/prompts) and [Agents](/specification/agents) specifications for details on declaring hooks.
+See the [Prompts](/0.1.0/specification/prompts) and [Agents](/0.1.0/specification/agents) specifications for details on declaring hooks.
 
 ## 2. Hook Context
 
 ### 2.1 ThreadState Parameter
 
-All hooks receive a `ThreadState` instance as their first parameter. See the [Threads](/specification/threads) specification for the complete interface.
+All hooks receive a `ThreadState` instance as their first parameter. See the [Threads](/0.1.0/specification/threads) specification for the complete interface.
 
 Key properties available during hook execution:
 
@@ -544,4 +544,3 @@ export default defineHook({
   },
 });
 ```
-
