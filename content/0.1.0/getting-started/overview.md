@@ -103,6 +103,21 @@ Instead of installing an MCP server for Gmail and expecting a model to sort out 
 
 <div class="faq-list">
   <details class="faq-item">
+    <summary>Why TypeScript?</summary>
+    <p>For a truly portable specification, we need a baseline runtime that can execute anywhere. Otherwise, each implementation would require entire server stacks to run (like MCP server setups). JavaScript is the most widely supported deployment target and can be sandboxed effectively, so it is a practical baseline. TypeScript adds compile-time confidence for LLMs and developers writing agents. Instead of inventing custom validators, we can rely on standard typechecking.</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>Why not MCP?</summary>
+    <p>MCP mostly exposes one agent to many tools with little fine-tuning between model, prompt, and tool behavior. As tool count grows, performance and reliability often degrade. Standard Agents solves this by composing many focused agents, each tuned as a unit across model, prompt, hooks, and tools. We did not land on the moon by giving one guy a lot of tools. We need a team of experts.</p>
+  </details>
+
+  <details class="faq-item">
+    <summary>Why not skills?</summary>
+    <p>Skills are additional context, and they can improve efficacy, but they still rely on a large general model to interpret and resolve everything at runtime. This has the same core scaling issue as MCP. Standard Agents composes complete agent units instead of only adding more instructions. We did not land on the moon by giving one guy a lot of documentation. We need teams of agents.</p>
+  </details>
+
+  <details class="faq-item">
     <summary>Is Standard Agents a framework or a specification?</summary>
     <p>It is an open source specification. Anyone can build or use a compatible runtime to execute any compliant agent. <a href="https://standardagentbuilder.com">AgentBuilder</a> is one such implementation.</p>
   </details>
