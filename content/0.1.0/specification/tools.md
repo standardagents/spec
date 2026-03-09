@@ -77,7 +77,11 @@ interface SubagentToolConfig {
   initUserMessageProperty?: string;
   initAttachmentsProperty?: string;
   initAgentNameProperty?: string;
-  immediate?: boolean;
+  immediate?: boolean | {
+    nameEnv?: string;
+    descriptionEnv?: string;
+    scopedEnv?: string[];
+  };
   optional?: string;
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';
@@ -90,7 +94,13 @@ Behavioral summary:
 - non-resumable: direct tool-call semantics.
 - resumable: runtime lifecycle tooling with persistent references.
 - `immediate: true`: execute as soon as the prompt becomes active, before the first model step.
+- `immediate: { ... }`: immediate execution with explicit per-instance env relationships.
+- `immediate.nameEnv` / `immediate.descriptionEnv`: the only per-instance env values that a runtime may expose to an internal bootstrap model when deriving initial child args.
+- `immediate.scopedEnv`: per-instance env values copied into the child thread; these remain runtime-only.
 - `optional: 'FLAG_NAME'`: branch is enabled only when that environment flag resolves to `true`, `1`, or `yes` (case-insensitive).
+
+Security rule:
+- runtimes must not expose `immediate.scopedEnv` values to the model unless the same env name is explicitly designated by `nameEnv` or `descriptionEnv`.
 
 See [Subagents](/0.1.0/specification/subagents) for full lifecycle and communication rules.
 

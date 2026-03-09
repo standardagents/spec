@@ -103,6 +103,7 @@ Creation attempts beyond `maxInstances` **MUST** return tool errors with actiona
 Runtimes should evaluate subagent tool flags before exposing/executing them:
 - `optional`: only enabled when the referenced environment flag resolves to `true`, `1`, or `yes` (case-insensitive)
 - `immediate`: execute before the first model step when the prompt becomes active
+- `immediate` object form: treat `nameEnv` and `descriptionEnv` as safe bootstrap hints and `scopedEnv` as runtime-only transfer data
 
 Immediate execution should be recursive across activated child prompts.
 
@@ -112,6 +113,11 @@ Subagent tool configuration can map args to:
 - initial user message (`initUserMessageProperty`)
 - initial attachments (`initAttachmentsProperty`)
 - human-readable child name (`initAgentNameProperty`)
+
+When `immediate` uses the object form, runtimes may perform an internal bootstrap-model pass before enqueuing the child call. In that flow:
+- only `nameEnv` and `descriptionEnv` are model-visible
+- `scopedEnv` values must remain encrypted at rest and runtime-only during transfer
+- copied child env must never be injected into LLM-visible prompt text unless explicitly promoted through `nameEnv` or `descriptionEnv`
 
 ### 7.5 Scoped Variable Bootstrap
 

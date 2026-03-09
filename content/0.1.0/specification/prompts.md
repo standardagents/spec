@@ -352,7 +352,11 @@ interface SubagentToolConfig<T extends string = string> {
   initUserMessageProperty?: string;
   initAttachmentsProperty?: string;
   initAgentNameProperty?: string;
-  immediate?: boolean;
+  immediate?: boolean | {
+    nameEnv?: string;
+    descriptionEnv?: string;
+    scopedEnv?: string[];
+  };
   optional?: string;
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';

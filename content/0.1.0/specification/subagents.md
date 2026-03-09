@@ -42,7 +42,11 @@ interface SubagentToolConfig {
   initUserMessageProperty?: string;
   initAttachmentsProperty?: string;
   initAgentNameProperty?: string;
-  immediate?: boolean;
+  immediate?: boolean | {
+    nameEnv?: string;
+    descriptionEnv?: string;
+    scopedEnv?: string[];
+  };
   optional?: string;
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';
@@ -59,6 +63,9 @@ interface SubagentToolConfig {
 - `initAttachmentsProperty`: maps parent tool-call args -> initial child attachment paths.
 - `initAgentNameProperty`: maps parent tool-call args -> child display name (often persisted as `name:<value>` tag).
 - `immediate`: run this subagent tool as soon as the prompt becomes active (before the first model step).
+- `immediate.nameEnv`: safe per-instance env used as the name hint for bootstrap.
+- `immediate.descriptionEnv`: safe per-instance env used as the description hint for bootstrap.
+- `immediate.scopedEnv`: per-instance envs copied into the child thread.
 - `optional`: environment flag name controlling whether this subagent branch is enabled.
 - `resumable`: enables persistent child instances.
 - `resumable.receives_messages`: controls which child side receives parent messages.
@@ -79,11 +86,16 @@ Disabled optional branches are not available for creation/runtime invocation.
 
 ### 5.2 Immediate Execution
 
-When `immediate: true`, runtimes execute the tool immediately when the prompt becomes active:
+When `immediate` is enabled, runtimes execute the tool immediately when the prompt becomes active:
 - thread creation bootstrap
 - handoff to a new active prompt
 
 This is recursive: if an immediate subagent is booted and its active prompt has immediate tools, those tools execute as soon as that child thread activates.
+
+When `immediate` is the object form:
+- runtimes may use `nameEnv` and `descriptionEnv` as the only model-visible hints for deriving initial child arguments
+- runtimes must treat `scopedEnv` as runtime-only transfer data
+- runtimes must not expose `scopedEnv` values to the model unless the same env is explicitly declared as `nameEnv` or `descriptionEnv`
 
 ## 6. Lifecycle Tools For Resumable Subagents
 
