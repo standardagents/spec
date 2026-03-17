@@ -9,13 +9,14 @@ export interface NavGroup {
 // Group title mapping
 const groupTitles: Record<string, string> = {
   'getting-started': 'Get Started',
+  'guides': 'Guides',
   'specification': 'Specification',
   'infrastructure': 'Infrastructure',
   'distribution': 'Distribution',
 }
 
 // Group ordering
-const groupOrder = ['getting-started', 'specification', 'infrastructure', 'distribution']
+const groupOrder = ['getting-started', 'guides', 'specification', 'infrastructure', 'distribution']
 
 // Explicit page ordering within specification group (primitives -> complex)
 const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'agents', 'subagents', 'threads', 'hooks', 'type-registry']

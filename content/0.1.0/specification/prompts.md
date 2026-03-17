@@ -361,6 +361,7 @@ interface SubagentToolConfig<T extends string = string> {
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';
     maxInstances?: number;
+    parentCommunication?: 'implicit' | 'explicit';
   };
 }
 

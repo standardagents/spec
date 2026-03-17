@@ -97,6 +97,7 @@ For resumable subagents, runtimes should expose built-in lifecycle tools:
 - `subagent_message`
 
 Creation attempts beyond `maxInstances` **MUST** return tool errors with actionable guidance.
+If `parentCommunication` is `explicit`, runtimes should not auto-queue child completion/failure to the parent.
 
 ### 7.3 Optional + Immediate Branches
 
@@ -141,6 +142,10 @@ When child reports completion/failure:
 - mapped lifecycle payload (`sessionStop` / `sessionFail`) is converted to parent queued message
 - payload attachments **MUST** be copied child filesystem -> parent filesystem
 - parent message content should include subagent reference and result summary
+
+When `parentCommunication` is `explicit`, tools/hooks may still escalate by calling:
+- `state.notifyParent(content)`
+- `state.setStatus(status)`
 
 Attachment copying is required for correctness; linked paths from the source thread are not valid in the destination thread.
 

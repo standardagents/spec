@@ -815,6 +815,7 @@ interface SubagentRegistryEntry {
   spawnGroupId?: string;
   createdAt?: number;
   status: string;
+  parentCommunication?: 'implicit' | 'explicit';
 }
 ```
 
@@ -909,6 +910,8 @@ interface ThreadState {
   getModelNames(): string[];
   env(propertyName: string): Promise<string>;
   setEnv(propertyName: string, value: string): Promise<void>;
+  notifyParent(content: string): Promise<void>;
+  setStatus(status: string): Promise<void>;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Tool Invocation

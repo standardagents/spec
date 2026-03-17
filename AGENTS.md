@@ -18,6 +18,8 @@ pnpm preview  # Preview production build
 pnpm deploy   # Deploy to Cloudflare Pages
 ```
 
+`pnpm dev` and `pnpm build` clear Astro's generated caches first. This avoids stale content-store warnings in long-lived worktrees when content files are renamed or moved.
+
 ## Architecture
 
 ### Content Collections
@@ -29,6 +31,8 @@ content/
 └── 0.1.0/
     ├── getting-started/
     │   └── overview.md
+    ├── guides/
+    │   └── agent-guide.md
     ├── specification/
     │   ├── providers.md
     │   ├── models.md

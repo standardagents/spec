@@ -51,6 +51,7 @@ interface SubagentToolConfig {
   resumable?: false | {
     receives_messages: 'side_a' | 'side_b';
     maxInstances?: number;
+    parentCommunication?: 'implicit' | 'explicit';
   };
 }
 ```
@@ -70,6 +71,7 @@ interface SubagentToolConfig {
 - `resumable`: enables persistent child instances.
 - `resumable.receives_messages`: controls which child side receives parent messages.
 - `resumable.maxInstances`: limits concurrent instances per configured subagent tool.
+- `resumable.parentCommunication`: `implicit` auto-queues completion/failure to the parent; `explicit` leaves escalation up to tools/hooks.
 
 ## 5. Optional + Immediate Behavior
 
@@ -143,7 +145,7 @@ Attachment paths must be copied from parent filesystem -> child filesystem befor
 
 ### 9.2 Child -> Parent: Completion
 
-When the child finishes via `sessionStop` (or terminal completion policy), parent receives a queued silent message:
+When the child finishes via `sessionStop` (or terminal completion policy) and `parentCommunication` is `implicit`, parent receives a queued silent message:
 
 ```text
 Subagent (reference: {uuid}) has returned the following result:
@@ -155,7 +157,7 @@ If attachments are returned, they are copied child -> parent and included as par
 
 ### 9.3 Child -> Parent: Failure
 
-When `sessionFail` is called successfully, parent receives:
+When `sessionFail` is called successfully and `parentCommunication` is `implicit`, parent receives:
 
 ```text
 Subagent (reference: {uuid}) has reported a failure:
@@ -168,6 +170,13 @@ Returned attachments (if any) are also copied child -> parent.
 ### 9.4 Child -> Parent: Status
 
 `sessionStatus` updates the parent's child registry status text without ending child execution.
+
+### 9.5 Child -> Parent: Explicit Escalation
+
+When `resumable.parentCommunication` is `explicit`, runtimes should not auto-queue completion/failure to the parent. Tools or hooks may escalate explicitly with:
+
+- `state.notifyParent(content)`
+- `state.setStatus(status)`
 
 ## 10. Child Registry + Parent Context
 
@@ -185,6 +194,7 @@ interface SubagentRegistryEntry {
   spawnGroupId?: string;
   createdAt?: number;
   status: string;
+  parentCommunication?: 'implicit' | 'explicit';
 }
 ```
 
@@ -201,6 +211,8 @@ interface ThreadState {
 
   getChildThread(referenceId: string): Promise<ThreadState | null>;
   getParentThread(): Promise<ThreadState | null>;
+  notifyParent(content: string): Promise<void>;
+  setStatus(status: string): Promise<void>;
 
   queueMessage(input: QueueMessageInput): Promise<void>;
   terminate(): Promise<void>;
