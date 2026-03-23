@@ -2,7 +2,7 @@
 
 The effective agents guide is a living record that is not part of the specification, but intended to help humans and agents use the specification to craft effective agents. It is updated regularily and not bound to any specific version of the specification.
 
-## What is an Standard Agent?
+## What is a Standard Agent?
 
 In the Standard Agent paradigm agents are the atomic unit of an AI system and it is the composition of many domain-specific agents that produces efficacy. How large should the concerns of a given agent be? There is no hard or fast rule here, the question is a bit like how big should a React component be. However, in general Standard Agents can be effective using smaller and cheaper models — but smaller and cheaper models typically suffer from poor tool discernment when presented with a broad range of tools, especially a broad range of similar tools.
 
@@ -43,9 +43,8 @@ It is quite possible to have an entire agent graph with no `ai_human` agent type
 
 The coordinator pattern can work well when a number of related subagents need to work together. Coordinators provide two significant bennefits:
 
-1. Provide subagent communication for similar domains. For example, a coding agent with a research subagent and a bash subagent. The bash subagent could ask for some examples of a given complex command it needs to run, the subagent 
-2. 
-
+1. Provide subagent communication for similar domains. For example, a coding agent with a research subagent and a bash subagent. The coordinator could request research around a given task and then pass the results from the research subagent and synthesise a request for the bash subagent. In this scenario, the bash subagent didnt even need to know the research subagent existed in order to bennefit from it.
+2. Filtering. Imagine a gmail subagent. On its own it can probably do a pretty good job of filtering out spam. But the gmail subagent shouldn't be responsible for the higher-level objectives of an organization. A communication coordinator that sits above a gmail subagent could have directives for what kind of email really matters to the CEO of a sprinkler hose company and can further reduce clutter before it passes email results to it's parent. This also serves as a way to increase the throughput on an agent graph as a whole. Not ever slack message can be sent to a to-level coordinator, but an effective tree heirarchy can filter out a lot of noise.
 
 ## 2. How big should an agent be?
 
