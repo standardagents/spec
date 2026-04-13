@@ -6,7 +6,8 @@ import TableOfContents from '../../components/TableOfContents.astro'
 import Header from '../../components/Header.tsx'
 import Footer from '../../components/Footer.astro'
 import PageNavigation from '../../components/PageNavigation.astro'
-import { getPrevNextPages } from '../../lib/content'
+import PageActions from '../../components/PageActions.astro'
+import { getLatestVersion, getPrevNextPages } from '../../lib/content'
 
 export async function getStaticPaths() {
   const docs = await getCollection('docs')
@@ -32,11 +33,14 @@ const { Content, headings } = await render(doc)
 
 // Get current path for sidebar highlighting
 const currentPath = `/${version}/${slug}`
+const markdownPath = `${currentPath}.md`
 
 // Extract the group from the slug
 const parts = slug?.split('/') || []
 const group = parts[0] || ''
 const isOverview = parts[parts.length - 1] === 'overview'
+const latestVersion = await getLatestVersion()
+const showPageActions = version === latestVersion
 
 // Get prev/next navigation (only for non-overview pages)
 const { prev, next } = isOverview
@@ -56,6 +60,7 @@ const { prev, next } = isOverview
       <div class="flex gap-8 max-w-full">
         <Sidebar version={version!} currentPath={currentPath} />
         <main class="min-w-0 flex-1 py-8 pb-16">
+          {showPageActions && <PageActions markdownUrl={markdownPath} />}
           <article class:list={['prose-content', { 'is-overview': isOverview }]}>
             <Content />
           </article>

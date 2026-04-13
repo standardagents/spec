@@ -57,6 +57,7 @@ src/
 ├── components/
 │   ├── Header.tsx         # React island (mobile menu, version selector, theme)
 │   ├── Sidebar.astro      # Static navigation
+│   ├── PageActions.astro  # Latest-version doc actions (copy/view markdown)
 │   ├── Logo.astro         # Full wordmark SVG
 │   ├── LogoMark.astro     # Icon-only SVG
 │   └── mdx/
@@ -68,6 +69,7 @@ src/
 ├── pages/
 │   ├── index.astro                    # Redirect to latest version
 │   ├── [...slug].md.ts                # Raw markdown endpoint
+│   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
 │   ├── models.md.ts                   # Live curated models markdown endpoint
 │   ├── api/navigation/[version].json.ts
 │   └── [version]/
