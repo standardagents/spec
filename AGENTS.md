@@ -68,10 +68,13 @@ src/
 ├── pages/
 │   ├── index.astro                    # Redirect to latest version
 │   ├── [...slug].md.ts                # Raw markdown endpoint
+│   ├── models.md.ts                   # Live curated models markdown endpoint
 │   ├── api/navigation/[version].json.ts
 │   └── [version]/
 │       ├── index.astro                # Redirect to default page
 │       └── [...slug].astro            # Dynamic doc pages
+├── data/
+│   └── models.md           # Curated live model guidance consumed by /models.md
 ├── styles/
 │   └── global.css         # Tailwind + prose styles
 └── content.config.ts      # Content collections definition
