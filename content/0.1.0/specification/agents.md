@@ -60,9 +60,6 @@ Agents define:
 | `sessionStop` | `SessionToolBinding` | - | End session successfully |
 | `sessionFail` | `SessionToolBinding` | - | End session with failure |
 | `sessionStatus` | `SessionToolBinding` | - | Publish status updates |
-| `endSessionTool` | `string` | - | Deprecated alias for `sessionStop` |
-| `failSessionTool` | `string` | - | Deprecated alias for `sessionFail` |
-| `statusTool` | `string` | - | Deprecated alias for `sessionStatus` |
 
 ## 4. SessionToolBinding
 

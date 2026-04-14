@@ -112,9 +112,6 @@ interface SideConfig<
   sessionStop?: SessionToolBinding<Callable>;
   sessionFail?: SessionToolBinding<Callable>;
   sessionStatus?: SessionToolBinding<Callable>;
-  endSessionTool?: Callable; // legacy alias
-  failSessionTool?: Callable; // legacy alias
-  statusTool?: Callable; // legacy alias
   // ...
 }
 

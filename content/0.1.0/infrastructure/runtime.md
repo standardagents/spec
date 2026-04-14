@@ -77,8 +77,6 @@ Stop evaluation order should be:
 3. `stopOnResponse`
 4. safety limits (`maxSteps`, `maxSessionTurns`, runtime hard caps)
 
-Legacy aliases (`endSessionTool`, `failSessionTool`, `statusTool`) may be supported for compatibility.
-
 ## 7. Subagent Runtime Semantics
 
 Subagents are autonomous `dual_ai` child threads.
