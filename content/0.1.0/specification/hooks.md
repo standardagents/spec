@@ -335,8 +335,11 @@ interface HookToolResult {
   result?: string;
   error?: string;
   stack?: string;
+  attachments?: Array<ToolAttachment | AttachmentRef>;
 }
 ```
+
+Files returned by a tool are surfaced through `attachments`. Each entry is either a new `ToolAttachment` (binary data to store) or an `AttachmentRef` (pointer to an existing file in the thread filesystem). Hooks that inspect tool output can read these; hooks that rewrite tool results **MUST** preserve or replace this field deliberately.
 
 ### 6.4 LLMMessage
 

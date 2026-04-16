@@ -33,6 +33,8 @@ A **subagent** is not a separate concept — it is a `dual_ai` agent invoked by 
 | `env` | `Record<string, string>` | - | Agent-level default variable values |
 | `hooks` | `string[]` | - | Fallback hook IDs |
 
+`AgentDefinition` also accepts optional packaging metadata — `packageName`, `version`, `author`, `license` — consumed only when the agent is packed for distribution. See [Packaging](/0.1.0/distribution/packaging).
+
 ## 2. Agent Types
 
 ### 2.1 `ai_human`
