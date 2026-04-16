@@ -61,11 +61,11 @@ Pricing properties are used for cost tracking and reporting. All prices are expr
 
 ### 4.2 Pricing Priority
 
-Pricing configuration is optional. Providers MAY return pricing information per-request (e.g., in response headers or metadata). When provider pricing is available:
+Pricing configuration is optional. Providers **MAY** return pricing information per-request (e.g. in response headers or metadata). When provider-reported pricing is available:
 
-- Provider-reported pricing **SHOULD** take priority over static model configuration
-- Static pricing serves as a fallback when provider pricing is unavailable
-- Pricing information **SHOULD NOT** be exposed to end users without appropriate access controls
+- Provider-reported pricing **SHOULD** take priority over static model configuration.
+- Static pricing serves as a fallback when provider pricing is unavailable.
+- Implementations **MUST** restrict cost information to authorized parties.
 
 ## 5. Capabilities
 

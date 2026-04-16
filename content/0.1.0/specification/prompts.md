@@ -45,7 +45,7 @@ The simplest form is a plain string containing the system instructions:
 prompt: 'You are a helpful assistant. Be concise and accurate.'
 ```
 
-System prompts **SHOULD NOT** contain secrets or sensitive credentials. Implementations **SHOULD** sanitize prompt content to prevent injection.
+System prompts **MUST NOT** contain secrets or sensitive credentials. Implementations **MUST** sanitize prompt content that incorporates untrusted input to prevent injection.
 
 ### 2.2 Structured Prompts
 
@@ -163,7 +163,7 @@ The `initUserMessageProperty` is useful when the sub-prompt expects conversation
 
 The `initAttachmentsProperty` allows passing file attachments (images, documents) to the sub-prompt. The property value should be a file path string or an array of paths. For example, if `initAttachmentsProperty: 'image'` is set and the caller passes `{ image: '/attachments/photo.jpg' }`, the sub-prompt receives the image as an attachment.
 
-> **💡 Tip:** Combine `initUserMessageProperty` with `includeChat: false` on the sub-prompt. The sub-prompt will only receive its own system prompt and the initial user message—allowing it to operate on a smaller, focused context with reduced token usage.
+> **Tip:** Combine `initUserMessageProperty` with `includeChat: false` on the sub-prompt. The sub-prompt then receives only its own system prompt and the initial user message — a smaller, focused context that reduces token usage.
 
 ## 4. Tool Choice Strategy
 
@@ -210,7 +210,7 @@ When a required schema is provided:
 
 User inputs **MUST** be validated before inclusion in prompts.
 
-> **💡 Tip:** TypeScript implementations can use the `PromptInput<T>` helper type to extract the inferred input type from a prompt's schema: `type SearchInput = PromptInput<typeof searchPrompt>`.
+> **Tip:** TypeScript implementations can use the `PromptInput<T>` helper to extract the inferred input type from a prompt's schema: `type SearchInput = PromptInput<typeof searchPrompt>`.
 
 ## 6. Reasoning Configuration
 

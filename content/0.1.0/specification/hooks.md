@@ -1,6 +1,8 @@
 # Hooks
 
-A hook is an interception point in the agent execution lifecycle. Hooks enable logging, validation, transformation, and side effects at specific moments during execution—without modifying core agent logic.
+A hook is an interception point in the agent execution lifecycle. Hooks enable logging, validation, transformation, and side effects at specific moments during execution — without modifying core agent logic.
+
+Hook handlers receive a [`ThreadState`](/0.1.0/specification/threads) with [`state.execution`](/0.1.0/specification/threads/execution-state) populated — step counts, the active dual-side, and the abort signal are all available for inspection and flow control.
 
 ## 1. Hook Definition
 
@@ -28,7 +30,7 @@ Each hook implementation **MUST** be created using `defineHook()` with three pro
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `hook` | `HookName` | The hook type from Section 1.1 |
+| `hook` | `HookName` | The hook type from §1.1 |
 | `id` | `string` | Unique identifier for this hook (snake_case) |
 | `execute` | `Function` | The hook implementation (typed per hook type) |
 
@@ -46,13 +48,13 @@ export default defineHook({
 
 **Requirements:**
 
-- Hook `hook` values **MUST** match one of the defined hook types in Section 1.1
-- Hook `id` values **MUST** be unique across all hooks and follow snake_case format
-- Multiple hooks of the same type MAY exist (each with a distinct `id`)
-- Hook implementations **SHOULD** be idempotent where possible
-- Implementations **SHOULD** enforce timeouts on hook execution
-- Hooks **SHOULD NOT** perform blocking operations that could timeout execution
-- Hooks **MUST NOT** expose sensitive data in logs or error messages
+- The `hook` property **MUST** reference one of the hook types in §1.1.
+- The `id` property **MUST** be unique across all hooks and follow `snake_case` format.
+- Multiple hooks of the same type **MAY** exist, each with a distinct `id`.
+- Hook implementations **SHOULD** be idempotent.
+- Runtimes **SHOULD** enforce a timeout on hook execution.
+- Hooks **SHOULD NOT** perform blocking operations that could exceed that timeout.
+- Hooks **MUST NOT** expose sensitive data in logs or error messages.
 
 ### 1.3 Hook Scoping
 
@@ -173,7 +175,7 @@ Called after messages are transformed into LLM chat format, before the request i
 - Modify message content before LLM sees it
 - Inject reminders or constraints
 
-Hooks modifying message content **SHOULD** validate inputs to prevent injection attacks.
+Hooks that modify message content **MUST** validate inputs against an expected schema to prevent prompt-injection attacks.
 
 **Example:**
 ```typescript

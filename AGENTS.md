@@ -31,23 +31,27 @@ content/
 └── 0.1.0/
     ├── getting-started/
     │   └── overview.md
-    ├── guides/
-    │   └── agent-guide.md
     ├── specification/
     │   ├── providers.md
     │   ├── models.md
     │   ├── tools.md
+    │   ├── effects.md
     │   ├── prompts.md
     │   ├── agents.md
-    │   ├── subagents.md
     │   ├── threads.md
+    │   ├── threads/
+    │   │   ├── messages.md
+    │   │   ├── filesystem.md
+    │   │   ├── code-execution.md
+    │   │   ├── execution-state.md
+    │   │   └── endpoints.md
     │   ├── hooks.md
     │   └── type-registry.md
     ├── infrastructure/
     │   ├── providers.md
     │   └── runtime.md
     └── distribution/
-        └── publishing.md
+        └── packaging.md
 ```
 
 ### Source Structure
@@ -108,14 +112,14 @@ Navigation order is controlled by the `NAV_ORDER` constant in `src/lib/content.t
 
 ### Subagent Documentation Scope
 
-Subagent behavior is documented across:
-- `specification/subagents.md` (overview + lifecycle matrix + communication)
-- `specification/agents.md` (`sessionStop`/`sessionFail`/`sessionStatus`)
-- `specification/tools.md` (`SubagentToolConfig`, lifecycle tools)
-- `specification/threads.md` (thread hierarchy + queue + termination surfaces)
-- `infrastructure/runtime.md` (execution/copying semantics)
+Subagent behavior is documented on the [Agents](content/0.1.0/specification/agents.md) page (a subagent is a `dual_ai` agent used as a tool from a parent thread). Supporting docs:
 
-When subagent behavior changes, update all of these pages together.
+- `specification/agents.md` — agent definition, `sessionStop`/`sessionFail`/`sessionStatus`, and the full Subagents section (lifecycle, invocation modes, parent ↔ child communication)
+- `specification/tools.md` — `SubagentToolConfig` type and lifecycle tools (`subagent_create`, `subagent_message`)
+- `specification/threads.md` — thread hierarchy, queue, termination; subagent-specific `notifyParent` / `setStatus`
+- `infrastructure/runtime.md` — execution/copying semantics
+
+When subagent behavior changes, update each of these together.
 
 ### Callout Syntax
 

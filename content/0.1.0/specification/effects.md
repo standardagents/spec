@@ -84,14 +84,14 @@ This avoids collisions between global and package-local effect names.
 
 ## 3. Execution Semantics
 
-Implementations:
+Runtimes:
 
-- **MUST** enqueue effect execution asynchronously
-- **MUST** preserve scheduled args for execution time
-- **SHOULD** expose inspection and cancellation APIs (`getScheduledEffects`, `removeScheduledEffect`)
-- **SHOULD** keep effect handlers idempotent where possible
+- **MUST** enqueue effects asynchronously for execution.
+- **MUST** preserve scheduled `args` until execution time.
+- **SHOULD** expose inspection and cancellation APIs (`getScheduledEffects`, `removeScheduledEffect`).
+- **SHOULD** keep effect handlers idempotent.
 
-Effect execution is runtime-managed and may occur after the originating flow has completed.
+Effect execution is runtime-managed and may occur after the invoking conversation has completed.
 
 ## 4. Type Definitions
 
@@ -107,5 +107,6 @@ export type EffectDefinition<State = ThreadState, Args extends ToolArgs | null =
 
 See also:
 
-- [Threads](/0.1.0/specification/threads) for scheduling APIs
+- [Threads](/0.1.0/specification/threads) for the scheduling APIs on `ThreadState`
+- [Code Execution](/0.1.0/specification/threads/code-execution) for effects that evaluate JS/TS via `state.runCode`
 - [Packaging](/0.1.0/distribution/packaging) for packed effect export structure

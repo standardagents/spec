@@ -1,9 +1,16 @@
 import { getCollection, type CollectionEntry } from 'astro:content'
 
+export interface NavItem {
+  slug: string
+  title: string
+  href: string
+  children?: NavItem[]
+}
+
 export interface NavGroup {
   group: string
   title: string
-  items: { slug: string; title: string; href: string }[]
+  items: NavItem[]
 }
 
 // Group title mapping
@@ -19,7 +26,19 @@ const groupTitles: Record<string, string> = {
 const groupOrder = ['getting-started', 'guides', 'specification', 'infrastructure', 'distribution']
 
 // Explicit page ordering within specification group (primitives -> complex)
-const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'agents', 'subagents', 'threads', 'hooks', 'type-registry']
+const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'agents', 'threads', 'hooks', 'type-registry']
+
+// Explicit ordering of subpages under a parent slug (per group)
+// Key is "{group}/{parent}", value is the ordered list of child slugs.
+const subpageOrder: Record<string, string[]> = {
+  'specification/threads': [
+    'messages',
+    'filesystem',
+    'code-execution',
+    'execution-state',
+    'endpoints',
+  ],
+}
 
 // Pages to exclude from navigation (group/slug)
 const excludedPages: Record<string, string[]> = {
@@ -69,60 +88,115 @@ export async function pageExists(version: string, group: string, slug: string): 
   return docs.some(d => d.id === id)
 }
 
+type DocEntry = CollectionEntry<'docs'>
+
+interface BuiltItem extends NavItem {
+  _orderKey: string
+}
+
+function buildItem(doc: DocEntry, version: string): { group: string; parent: string | null; slug: string; item: BuiltItem } | null {
+  const parts = doc.id.split('/')
+  // parts = [version, group, ...rest]
+  if (parts.length < 3 || parts[0] !== version) return null
+
+  const group = parts[1]
+  // rest is the path after the group
+  const rest = parts.slice(2)
+  // We only support top-level (rest.length === 1) and one level of nesting (rest.length === 2)
+  if (rest.length === 1) {
+    const slug = rest[0]
+    return {
+      group,
+      parent: null,
+      slug,
+      item: {
+        slug,
+        title: extractTitle(doc.body || '') || slugToTitle(slug),
+        href: `/${version}/${group}/${slug}`,
+        _orderKey: slug,
+      },
+    }
+  }
+  if (rest.length === 2) {
+    const parent = rest[0]
+    const slug = rest[1]
+    return {
+      group,
+      parent,
+      slug,
+      item: {
+        slug,
+        title: extractTitle(doc.body || '') || slugToTitle(slug),
+        href: `/${version}/${group}/${parent}/${slug}`,
+        _orderKey: slug,
+      },
+    }
+  }
+  return null
+}
+
 // Get navigation structure for a version
 export async function getNavigation(version: string): Promise<NavGroup[]> {
   const docs = await getCollection('docs')
   const versionDocs = docs.filter(d => d.id.startsWith(`${version}/`))
 
-  // Group documents by their group
-  const groupedDocs: Record<string, CollectionEntry<'docs'>[]> = {}
+  // Bucket: top-level items by group, and children keyed by "group/parent"
+  const topLevelByGroup: Record<string, BuiltItem[]> = {}
+  const childrenByParent: Record<string, BuiltItem[]> = {}
+
   for (const doc of versionDocs) {
-    const parts = doc.id.split('/')
-    if (parts.length >= 3) {
-      const group = parts[1]
-      if (!groupedDocs[group]) {
-        groupedDocs[group] = []
-      }
-      groupedDocs[group].push(doc)
+    const built = buildItem(doc, version)
+    if (!built) continue
+
+    // Apply exclusion (top-level only — subpage exclusion not yet needed)
+    if (built.parent === null) {
+      const excluded = excludedPages[built.group] || []
+      if (excluded.includes(built.slug)) continue
+      topLevelByGroup[built.group] ??= []
+      topLevelByGroup[built.group].push(built.item)
+    } else {
+      const key = `${built.group}/${built.parent}`
+      childrenByParent[key] ??= []
+      childrenByParent[key].push(built.item)
+    }
+  }
+
+  // Attach children to their matching top-level items
+  for (const group of Object.keys(topLevelByGroup)) {
+    for (const item of topLevelByGroup[group]) {
+      const key = `${group}/${item.slug}`
+      const kids = childrenByParent[key]
+      if (!kids || kids.length === 0) continue
+
+      const order = subpageOrder[key] || []
+      kids.sort((a, b) => {
+        const ai = order.indexOf(a.slug)
+        const bi = order.indexOf(b.slug)
+        if (ai !== -1 && bi !== -1) return ai - bi
+        if (ai !== -1) return -1
+        if (bi !== -1) return 1
+        return a.title.localeCompare(b.title)
+      })
+      // Strip the internal order key before exposing
+      item.children = kids.map(k => ({ slug: k.slug, title: k.title, href: k.href }))
     }
   }
 
   const nav: NavGroup[] = []
 
   for (const group of groupOrder) {
-    const groupDocs = groupedDocs[group]
+    const groupDocs = topLevelByGroup[group]
     if (!groupDocs || groupDocs.length === 0) continue
 
-    // Filter out excluded pages
-    const filteredDocs = groupDocs.filter(doc => {
-      const parts = doc.id.split('/')
-      const slug = parts[parts.length - 1]
-      const excluded = excludedPages[group] || []
-      return !excluded.includes(slug)
-    })
-
-    const items = filteredDocs.map(doc => {
-      const parts = doc.id.split('/')
-      const slug = parts[parts.length - 1]
-      return {
-        slug,
-        title: extractTitle(doc.body || '') || slugToTitle(slug),
-        href: `/${version}/${group}/${slug}`,
-      }
-    })
-
     // Sort items: 'overview' first, then by explicit order (for specification), then alphabetically
-    items.sort((a, b) => {
+    groupDocs.sort((a, b) => {
       if (a.slug === 'overview') return -1
       if (b.slug === 'overview') return 1
 
-      // Use explicit ordering for specification group
       if (group === 'specification') {
         const aIndex = specOrder.indexOf(a.slug)
         const bIndex = specOrder.indexOf(b.slug)
-        // If both are in specOrder, sort by that order
         if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
-        // If only one is in specOrder, it comes first
         if (aIndex !== -1) return -1
         if (bIndex !== -1) return 1
       }
@@ -133,7 +207,7 @@ export async function getNavigation(version: string): Promise<NavGroup[]> {
     nav.push({
       group,
       title: groupTitles[group] || slugToTitle(group),
-      items,
+      items: groupDocs.map(({ _orderKey, ...item }) => item),
     })
   }
 
@@ -167,21 +241,20 @@ export async function getPrevNextPages(
 ): Promise<{ prev: PageNavItem | null; next: PageNavItem | null }> {
   const nav = await getNavigation(version)
 
-  // Flatten all pages into a single ordered list
+  // Flatten all pages into a single ordered list: parent, then its children, before the next sibling.
   const allPages: PageNavItem[] = []
   for (const group of nav) {
     for (const item of group.items) {
-      allPages.push({
-        title: item.title,
-        href: item.href,
-        group: group.title,
-      })
+      allPages.push({ title: item.title, href: item.href, group: group.title })
+      if (item.children) {
+        for (const child of item.children) {
+          allPages.push({ title: child.title, href: child.href, group: group.title })
+        }
+      }
     }
   }
 
-  // Find current page index
   const currentIndex = allPages.findIndex(p => p.href === currentPath)
-
   if (currentIndex === -1) {
     return { prev: null, next: null }
   }

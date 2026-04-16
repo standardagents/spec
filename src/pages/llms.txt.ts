@@ -24,6 +24,11 @@ export const GET: APIRoute = async () => {
 
     for (const item of group.items) {
       lines.push(`- ${item.title}: ${BASE_URL}${item.href}.md`)
+      if (item.children) {
+        for (const child of item.children) {
+          lines.push(`  - ${child.title}: ${BASE_URL}${child.href}.md`)
+        }
+      }
     }
   }
 

@@ -143,7 +143,13 @@ Packed agents are identified by the `standardagent` field in `package.json`:
 }
 ```
 
-The `standardagent` field marks this as a Standard Agent package. `entryAgents` declares callable entry agents, `effects` (optional) lists packed effect names, and `threadEndpoints` (optional) lists packed thread endpoint keys. The `keywords` array **MUST** include `"standardagent"` for discovery.
+The `standardagent` field marks this as a Standard Agent package. Its sub-fields:
+
+- `entryAgents` declares callable entry agents.
+- `effects` (optional) lists packed effect names.
+- `threadEndpoints` (optional) lists packed thread endpoint keys.
+
+The `keywords` array **MUST** include `"standardagent"` for discovery.
 
 ### PackedMeta
 
@@ -166,7 +172,7 @@ export interface PackedMeta {
 
 ## Namespace Isolation
 
-Packed agents operate in isolated namespaces, preventing conflicts with the host application and other packages.
+Each packed agent's definitions are isolated by package ID, preventing name collisions with host code or with other packages.
 
 ### Visibility Rules
 
@@ -192,7 +198,7 @@ interface PackageSignature {
 }
 ```
 
-The signature is injected at load time (not baked into source), keeping the packed source clean.
+Signatures are injected at load time, not embedded in source, so packed definitions remain portable.
 
 ## Discovery
 

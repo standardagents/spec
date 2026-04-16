@@ -108,6 +108,7 @@ interface NavItem {
   slug: string
   title: string
   href: string
+  children?: NavItem[]
 }
 
 interface NavGroup {
@@ -380,7 +381,9 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
                   </h3>
                   <ul className="space-y-1">
                     {navGroup.items.map((item) => {
-                      const isActive = item.href === `/${currentVersion}/${currentGroup}/${currentSlug}`
+                      const currentPath = `/${currentVersion}/${currentGroup}${currentSlug ? `/${currentSlug}` : ''}`
+                      const isActive = item.href === currentPath
+                      const hasActiveChild = item.children?.some(c => c.href === currentPath) ?? false
                       return (
                         <li key={item.href}>
                           <a
@@ -394,6 +397,28 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
                           >
                             {item.title}
                           </a>
+                          {item.children && (isActive || hasActiveChild) && (
+                            <ul className="ml-3 mt-1 space-y-1 border-l border-gray-200 pl-3 dark:border-gray-700">
+                              {item.children.map((child) => {
+                                const childActive = child.href === currentPath
+                                return (
+                                  <li key={child.href}>
+                                    <a
+                                      href={child.href}
+                                      onClick={() => setMenuOpen(false)}
+                                      className={`block rounded-md px-3 py-1.5 text-sm transition-colors ${
+                                        childActive
+                                          ? 'bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-gray-100'
+                                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+                                      }`}
+                                    >
+                                      {child.title}
+                                    </a>
+                                  </li>
+                                )
+                              })}
+                            </ul>
+                          )}
                         </li>
                       )
                     })}

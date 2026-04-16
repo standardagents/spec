@@ -368,10 +368,10 @@ interface ResponseSummary {
 
 ### 9.5 Implementation Notes
 
-- This method is called **after** the response is complete
-- Execution engine fires this **asynchronously** - it does not block the flow
-- The flow engine waits for all pending metadata promises before completing
-- Results are used to update log records with accurate provider information
+- This method is called **after** the response completes.
+- Runtimes **MUST** invoke it asynchronously and **MUST NOT** block the flow on it.
+- The flow engine waits for all pending metadata promises before completing.
+- Results update log records with provider-reported metadata.
 
 ### 9.6 Example Implementation
 

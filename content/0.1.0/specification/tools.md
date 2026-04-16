@@ -10,6 +10,8 @@ Tools are callable capabilities exposed to models during execution.
 | Prompt tool | Nested prompt invocation | `definePrompt({ exposeAsTool: true })` |
 | Agent tool | Agent callable (handoff or subagent) | `defineAgent({ exposeAsTool: true })` |
 
+Function tools that evaluate model- or user-authored JavaScript or TypeScript **SHOULD** do so through [`state.runCode`](/0.1.0/specification/threads/code-execution) rather than `eval` or `new Function`. The sandbox enforces isolation, memory caps, and caller-initiated termination.
+
 ## 2. Function Tool Definition
 
 ```typescript
@@ -104,7 +106,7 @@ Behavioral summary:
 Security rule:
 - runtimes must not expose `immediate.scopedEnv` values to the model unless the same env name is explicitly designated by `nameEnv` or `descriptionEnv`.
 
-See [Subagents](/0.1.0/specification/subagents) for full lifecycle and communication rules.
+See [Agents §7](/0.1.0/specification/agents#7-subagents) for full lifecycle and communication rules.
 
 ## 6. Resumable Lifecycle Tools
 
@@ -132,8 +134,9 @@ Returned attachment references must always be valid for the receiving thread fil
 
 ## 8. Conformance Notes
 
-Implementations MUST:
-- validate tool args against schema
-- execute local tools sequentially in returned order
-- persist tool results as messages
-- surface tool errors as tool results (not hard-crash the run)
+Implementations **MUST**:
+
+- validate tool args against the declared schema.
+- execute local tools sequentially in the order they were returned.
+- persist tool results as messages before advancing.
+- persist tool errors as tool result messages rather than halting execution.

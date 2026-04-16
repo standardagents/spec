@@ -47,9 +47,9 @@ The computed types use TypeScript conditional types:
 type Models = keyof ModelRegistry extends never ? string : keyof ModelRegistry;
 ```
 
-This means:
-- **Empty registry**: `keyof ModelRegistry` is `never`, so `Models` equals `string`
-- **Populated registry**: `keyof ModelRegistry` is a union of keys, so `Models` narrows to that union
+Resolution:
+- **Empty registry**: `keyof ModelRegistry` is `never`, so `Models` resolves to `string`.
+- **Populated registry**: `keyof ModelRegistry` is a union of the declared keys, so `Models` narrows to that union.
 
 ## 2. How Types Are Used
 
@@ -291,7 +291,7 @@ definePrompt({
 
 ### 5.3 Refactoring Safety
 
-Renaming a model, prompt, agent, or tool propagates through the type system. TypeScript will flag all references that need updating.
+Renaming a model, prompt, agent, or tool propagates through the registry types. TypeScript flags every stale reference so all callers can be updated in lockstep.
 
 ## 6. Backward Compatibility
 

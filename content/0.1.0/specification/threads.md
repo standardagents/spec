@@ -1,6 +1,14 @@
 # Threads
 
-A thread is an instance of an agent—the runtime execution context where conversations happen. Each thread has isolated storage for messages and files, maintains its own conversation history, and can be handed off between agents while preserving full context.
+A thread is an instance of an agent — the runtime execution context where conversations happen. Each thread has isolated storage for messages and files, maintains its own conversation history, and can be handed off between agents while preserving full context.
+
+This page covers the core ideas: what a thread is, its identity, the `ThreadState` interface, and the small primitives that live directly on it (resource loading, tool invocation, effects, events, context, runtime context, subagent hierarchy, lifecycle). Larger surfaces have their own pages:
+
+- [Messages](/0.1.0/specification/threads/messages) — reading, injecting, queuing, updating, deleting
+- [File System](/0.1.0/specification/threads/filesystem) — per-thread file storage, streaming, search
+- [Code Execution](/0.1.0/specification/threads/code-execution) — isolated JS/TS sandbox via `runCode`
+- [Execution State](/0.1.0/specification/threads/execution-state) — step counts, turn control, cancellation
+- [Thread Endpoints](/0.1.0/specification/threads/endpoints) — HTTP APIs that receive a `ThreadState`
 
 ## 1. Thread Definition
 
@@ -16,11 +24,11 @@ The agent assigned to a thread can change over time while preserving all history
 | **Manual handoff** | Queue a tool call to an agent to trigger handoff programmatically |
 | **dual_ai execution** | Creates its own isolated thread instance (no handoff) |
 
-Handoffs enable workflows where specialized agents handle different parts of a conversation—a triage agent routes to support, support escalates to billing—all within the same thread with full context preserved.
+Handoffs enable workflows where specialized agents handle different parts of a conversation — a triage agent routes to support, support escalates to billing — all within the same thread with full context preserved.
 
 ### 1.2 ThreadState Interface
 
-ThreadState is the unified interface for all thread operations. It provides a consistent API for interacting with threads regardless of context—whether from tools during execution, hooks, or HTTP endpoints.
+`ThreadState` is the unified interface for all thread operations. It provides a consistent API for interacting with threads regardless of context — whether from tools during execution, hooks, or HTTP endpoints.
 
 #### 1.2.1 Properties
 
@@ -32,13 +40,15 @@ ThreadState is the unified interface for all thread operations. It provides a co
 | `createdAt` | `number` | Creation timestamp in microseconds (readonly) |
 | `children` | `SubagentRegistryEntry[]` | Resumable child subagent registry (readonly) |
 | `terminated` | `number \| null` | Termination timestamp in microseconds, or null when active (readonly) |
-| `context` | `Record<string, unknown>` | Per-execution key-value storage. See [Context Storage](#7-context-storage) |
-| `execution` | `ExecutionState \| null` | Execution state during active execution, null at rest. See [Execution State](#9-execution-state) |
-| `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context (non-portable). See [Runtime Context](#10-runtime-context-non-portable) |
+| `context` | `Record<string, unknown>` | Per-execution key-value storage. See [Context Storage](#6-context-storage) |
+| `execution` | `ExecutionState \| null` | Execution state during active execution, null at rest. See [Execution State](/0.1.0/specification/threads/execution-state) |
+| `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context (non-portable). See [Runtime Context](#9-runtime-context-non-portable) |
 
 #### 1.2.2 Methods
 
-**Messages** — See [Messages](#2-messages) for details
+The methods directory below is grouped by topic. Topics with their own page link out; the rest are documented on this page.
+
+**Messages** — [Messages →](/0.1.0/specification/threads/messages)
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -47,61 +57,9 @@ ThreadState is the unified interface for all thread operations. It provides a co
 | `injectMessage(input)` | `Promise<Message>` | Inject a new message |
 | `queueMessage(input)` | `Promise<void>` | Queue a message for delivery on next step |
 | `updateMessage(messageId, updates)` | `Promise<Message>` | Update existing message |
+| `deleteMessage(messageId)` | `Promise<boolean>` | Delete a message |
 
-**Subagent Hierarchy**
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `getChildThread(referenceId)` | `Promise<ThreadState \| null>` | Resolve child thread by subagent reference |
-| `getParentThread()` | `Promise<ThreadState \| null>` | Resolve parent thread for this thread |
-
-**Logs**
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `getLogs(options?)` | `Promise<Log[]>` | Get execution logs |
-
-**Resource Loading** — See [Resource Loading](#3-resource-loading) for details
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `loadModel(name)` | `Promise<T>` | Load model definition |
-| `loadPrompt(name)` | `Promise<T>` | Load prompt definition |
-| `loadAgent(name)` | `Promise<T>` | Load agent definition |
-| `getPromptNames()` | `string[]` | List available prompts |
-| `getAgentNames()` | `string[]` | List available agents |
-| `getModelNames()` | `string[]` | List available models |
-| `env(propertyName)` | `Promise<string>` | Resolve environment variable using thread/user/instance/agent/prompt precedence |
-| `setEnv(propertyName, value)` | `Promise<void>` | Set a thread environment variable and propagate to active descendants (with scoped filtering) |
-
-**Tool Invocation** — See [Tool Invocation](#4-tool-invocation) for details
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `queueTool(toolName, args)` | `void` | Queue tool for async execution |
-| `invokeTool(toolName, args)` | `Promise<ToolResult>` | Invoke tool and wait for result |
-
-**Effect Scheduling** — See [Effect Scheduling](#5-effect-scheduling) for details
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `scheduleEffect(name, args, delay?)` | `Promise<string>` | Schedule effect, returns effect ID |
-| `getScheduledEffects(name?)` | `Promise<ScheduledEffect[]>` | Get pending effects |
-| `removeScheduledEffect(id)` | `Promise<boolean>` | Cancel scheduled effect |
-
-**Lifecycle**
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `terminate()` | `Promise<void>` | Soft-terminate the thread |
-
-**Events** — See [Events](#6-events) for details
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `emit(event, data)` | `void` | Emit event to connected clients |
-
-**File System** — See [File System](#8-file-system) for details
+**File System** — [File System →](/0.1.0/specification/threads/filesystem)
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -118,9 +76,64 @@ ThreadState is the unified interface for all thread operations. It provides a co
 | `findFiles(pattern)` | `Promise<FindResult>` | Find files by glob |
 | `getFileThumbnail(path)` | `Promise<ArrayBuffer \| null>` | Get image thumbnail |
 
+**Code Execution** — [Code Execution →](/0.1.0/specification/threads/code-execution)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `runCode(source, options?)` | `CodeExecution` | Execute JS/TS source in an isolated sandbox; returns a thenable handle with `terminate()` |
+
+**Subagent Hierarchy** — see [§8 Subagent Hierarchy](#8-subagent-hierarchy-communication-and-termination)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getChildThread(referenceId)` | `Promise<ThreadState \| null>` | Resolve child thread by subagent reference |
+| `getParentThread()` | `Promise<ThreadState \| null>` | Resolve parent thread for this thread |
+| `notifyParent(content)` | `Promise<void>` | Queue a silent message to this thread's parent |
+| `setStatus(status)` | `Promise<void>` | Update this thread's status in the parent registry |
+
+**Resource Loading** — see [§2 Resource Loading](#2-resource-loading)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `loadModel(name)` | `Promise<T>` | Load model definition |
+| `loadPrompt(name)` | `Promise<T>` | Load prompt definition |
+| `loadAgent(name)` | `Promise<T>` | Load agent definition |
+| `getPromptNames()` | `string[]` | List available prompts |
+| `getAgentNames()` | `string[]` | List available agents |
+| `getModelNames()` | `string[]` | List available models |
+| `env(propertyName)` | `Promise<string>` | Resolve environment variable using thread/user/instance/agent/prompt precedence |
+| `setEnv(propertyName, value)` | `Promise<void>` | Set a thread environment variable and propagate to active descendants |
+
+**Tool Invocation** — see [§3 Tool Invocation](#3-tool-invocation)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `queueTool(toolName, args)` | `void` | Queue tool for async execution |
+| `invokeTool(toolName, args)` | `Promise<ToolResult>` | Invoke tool and wait for result |
+
+**Effect Scheduling** — see [§4 Effect Scheduling](#4-effect-scheduling)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `scheduleEffect(name, args, delay?)` | `Promise<string>` | Schedule effect, returns effect ID |
+| `getScheduledEffects(name?)` | `Promise<ScheduledEffect[]>` | Get pending effects |
+| `removeScheduledEffect(id)` | `Promise<boolean>` | Cancel scheduled effect |
+
+**Events** — see [§5 Events](#5-events)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `emit(event, data)` | `void` | Emit event to connected clients |
+
+**Lifecycle** — see [§7 Lifecycle](#7-lifecycle)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `terminate()` | `Promise<void>` | Soft-terminate the thread |
+
 ### 1.3 Access Contexts
 
-ThreadState is provided in different contexts:
+`ThreadState` is provided in different contexts:
 
 | Context | Execution State | Use Case |
 |---------|-----------------|----------|
@@ -128,130 +141,30 @@ ThreadState is provided in different contexts:
 | Hooks | Present | Lifecycle interception |
 | Endpoints | Null | HTTP API access |
 
-## 2. Messages
+## 2. Resource Loading
 
-### 2.1 Message Structure
+### 2.1 Loading Definitions
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `string` | Unique message ID |
-| `role` | `'system' \| 'user' \| 'assistant' \| 'tool'` | Message role |
-| `content` | `string \| null` | Message content |
-| `name` | `string \| null` | Tool name (for tool results) |
-| `tool_calls` | `string \| null` | JSON-encoded tool calls |
-| `tool_call_id` | `string \| null` | Tool call ID (for results) |
-| `created_at` | `number` | Creation timestamp |
-| `parent_id` | `string \| null` | Parent message (sub-prompts) |
-| `depth` | `number` | Nesting depth (0 = top-level) |
-| `silent` | `boolean` | Hidden from UI |
-| `metadata` | `Record<string, unknown>` | Custom metadata (may include runtime status markers such as `status_kind`) |
-| `subagent_id` | `string \| null` | Subagent reference UUID associated with the message |
-| `subagent_name` | `string \| null` | Projected child agent name (when available) |
-| `subagent_title` | `string \| null` | Projected child agent title (when available) |
-| `subagent_description` | `string \| null` | Projected child description (when available) |
-| `subagent_status` | `string \| null` | Projected child status (when available) |
-| `subagent_resumable` | `boolean \| null` | Projected resumable flag (when available) |
-| `subagent_blocking` | `boolean \| null` | Projected blocking flag (when available) |
-| `subagent_thread_name` | `string \| null` | Projected human-friendly child instance name (when available) |
-| `subagent_spawn_group_id` | `string \| null` | Projected spawn grouping identifier (when available) |
-
-### 2.2 Reading Messages
+`ThreadState` provides access to registered definitions:
 
 ```typescript
-// Get recent messages
-const { messages, total, hasMore } = await state.getMessages({
-  limit: 50,
-  order: 'desc',
-});
-
-// Get a single message
-const message = await state.getMessage('msg-123');
-```
-
-### 2.3 Query Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `limit` | `number` | - | Max messages to return |
-| `offset` | `number` | 0 | Messages to skip |
-| `order` | `'asc' \| 'desc'` | `'desc'` | Sort order |
-| `includeSilent` | `boolean` | false | Include silent messages |
-| `maxDepth` | `number` | - | Max nesting depth |
-
-### 2.4 Injecting Messages
-
-Messages can be injected into the conversation:
-
-```typescript
-const message = await state.injectMessage({
-  role: 'user',
-  content: 'Additional context...',
-  silent: true, // Hide from UI
-  metadata: { source: 'tool' },
-});
-```
-
-### 2.5 Queueing Messages
-
-Messages can be queued for delivery on the next execution step:
-
-```typescript
-await state.queueMessage({
-  role: 'user', // maps to side_b perspective
-  content: 'Follow-up task',
-  silent: true,
-});
-```
-
-Queue semantics:
-- If the thread is executing, queued messages are injected before the next LLM request.
-- If the thread is idle, queueing forces a new turn.
-- Queued messages are processed in order.
-
-### 2.6 Updating Messages
-
-Existing messages can be updated:
-
-```typescript
-const updated = await state.updateMessage('msg-123', {
-  content: 'Updated content',
-  metadata: { edited: true },
-});
-```
-
-## 3. Resource Loading
-
-### 3.1 Loading Definitions
-
-ThreadState provides access to registered definitions:
-
-```typescript
-// Load a model definition
 const model = await state.loadModel('gpt-4o');
-
-// Load a prompt definition
 const prompt = await state.loadPrompt('support-prompt');
-
-// Load an agent definition
 const agent = await state.loadAgent('customer-support');
 ```
 
-### 3.2 Listing Resources
+### 2.2 Listing Resources
 
 ```typescript
-// Get available resource names
 const prompts = state.getPromptNames();
 const agents = state.getAgentNames();
 const models = state.getModelNames();
 ```
 
-### 3.3 Environment Variable Resolution
+### 2.3 Environment Variable Resolution
 
 ```typescript
-// Resolve an environment variable for the current thread context
 const apiKey = await state.env('GOOGLE_API_KEY');
-
-// Set a thread-level environment variable
 await state.setEnv('TOPDOWN_APPROVAL_GATE', 'open');
 ```
 
@@ -266,16 +179,15 @@ await state.setEnv('TOPDOWN_APPROVAL_GATE', 'open');
 
 Thread, user, and instance environment values should be encrypted at rest when the runtime supports encrypted storage.
 
-For resumable subagent creation, runtimes may require missing scoped variables to be provided through a pending request flow before boot can continue. See [Subagents](/0.1.0/specification/subagents).
+For resumable subagent creation, runtimes may require missing scoped variables to be provided through a pending request flow before boot can continue. See [Agents §7.8](/0.1.0/specification/agents#78-scoped-variable-bootstrap).
 
-## 4. Tool Invocation
+## 3. Tool Invocation
 
-### 4.1 Queuing Tools
+### 3.1 Queuing Tools
 
 Queue a tool for asynchronous execution:
 
 ```typescript
-// Queue a tool (non-blocking)
 state.queueTool('send_email', {
   to: 'user@example.com',
   subject: 'Hello',
@@ -285,12 +197,11 @@ state.queueTool('send_email', {
 
 If the thread is currently executing, the tool is added to the queue. Otherwise, a new execution is started.
 
-### 4.2 Direct Invocation
+### 3.2 Direct Invocation
 
 Invoke a tool and wait for the result:
 
 ```typescript
-// Invoke directly (blocking)
 const result = await state.invokeTool('get_weather', {
   location: 'San Francisco',
 });
@@ -300,7 +211,7 @@ if (result.status === 'success') {
 }
 ```
 
-## 5. Effect Scheduling
+## 4. Effect Scheduling
 
 Effects are scheduled operations that run outside the normal tool execution context. Unlike tools which execute immediately during conversation, effects:
 - Run **independently** of the conversation flow
@@ -310,10 +221,9 @@ Effects are scheduled operations that run outside the normal tool execution cont
 
 Effect definition syntax is specified in [Effects](/0.1.0/specification/effects). Packed effects may use qualified names (`{packageId}/{effectName}`) to avoid collisions.
 
-### 5.1 Scheduling Effects
+### 4.1 Scheduling Effects
 
 ```typescript
-// Schedule an effect to run after 30 minutes
 const effectId = await state.scheduleEffect(
   'send_reminder_email',
   { to: 'user@example.com', subject: 'Reminder' },
@@ -329,7 +239,7 @@ const effectId = await state.scheduleEffect(
 
 Returns a unique effect ID (UUID) that can be used to cancel the effect.
 
-### 5.2 ScheduledEffect Record
+### 4.2 ScheduledEffect Record
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -339,25 +249,21 @@ Returns a unique effect ID (UUID) that can be used to cancel the effect.
 | `scheduledAt` | `number` | Scheduled execution time (microseconds) |
 | `createdAt` | `number` | When effect was scheduled (microseconds) |
 
-### 5.3 Managing Scheduled Effects
+### 4.3 Managing Scheduled Effects
 
 ```typescript
-// Get all pending effects
 const effects = await state.getScheduledEffects();
-
-// Get effects filtered by name
 const reminders = await state.getScheduledEffects('send_reminder_email');
 
-// Cancel a scheduled effect
 const removed = await state.removeScheduledEffect(effectId);
 if (removed) {
   console.log('Effect cancelled');
 }
 ```
 
-## 6. Events
+## 5. Events
 
-### 6.1 Emitting Events
+### 5.1 Emitting Events
 
 Send custom events to connected clients:
 
@@ -371,27 +277,26 @@ state.emit('progress', {
 
 Events are delivered via WebSocket to any connected clients.
 
-### 6.2 Event Guidelines
+### 5.2 Event Guidelines
 
 - Event names **SHOULD** be lowercase with underscores
 - Event data **MUST** be JSON-serializable
 - Events **SHOULD NOT** contain sensitive information
 
-## 7. Context Storage
+## 6. Context Storage
 
-### 7.1 Per-Execution Context
+### 6.1 Per-Execution Context
 
 The `context` property provides temporary storage:
 
 ```typescript
-// Store data during execution
 state.context.userData = { id: 123, name: 'Alice' };
 
 // Retrieve in another tool call
 const user = state.context.userData;
 ```
 
-### 7.2 Context Limitations
+### 6.2 Context Limitations
 
 | Aspect | Behavior |
 |--------|----------|
@@ -400,399 +305,22 @@ const user = state.context.userData;
 | **Type** | `Record<string, unknown>` |
 | **Size** | No enforced limit |
 
-For persistent storage, use the file system or external storage solutions.
+For persistent storage across executions, use the [file system](/0.1.0/specification/threads/filesystem) or external storage.
 
-## 8. File System
+## 7. Lifecycle
 
-Each thread has access to an isolated file system for storing files, images, and other binary data.
+`terminate()` is a soft shutdown:
 
-### 8.1 File Record
-
-Files are represented by the `FileRecord` type:
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `path` | `string` | File path (relative to thread root) |
-| `name` | `string` | File name |
-| `mimeType` | `string` | MIME type |
-| `storage` | `string` | Implementation-defined storage identifier |
-| `size` | `number` | File size in bytes |
-| `isDirectory` | `boolean` | Whether this is a directory |
-| `metadata` | `Record<string, unknown>` | Custom metadata |
-| `width` | `number` | Image width in pixels (if applicable) |
-| `height` | `number` | Image height in pixels (if applicable) |
-
-### 8.2 Writing Files
+- Marks the thread inactive and sets `terminated`
+- Aborts in-flight execution
+- Rejects future `queueMessage()` and execution attempts
+- Parent registries should reflect `'terminated'` status
 
 ```typescript
-// Write a text file
-const record = await state.writeFile(
-  '/data/config.json',
-  JSON.stringify({ key: 'value' }),
-  'application/json'
-);
-
-// Write a binary file with metadata
-const imageRecord = await state.writeFile(
-  '/images/photo.jpg',
-  imageBuffer,
-  'image/jpeg',
-  { width: 1920, height: 1080 }
-);
+await state.terminate();
 ```
 
-### 8.3 Reading Files
-
-```typescript
-// Read file content
-const data = await state.readFile('/data/config.json');
-if (data) {
-  const text = new TextDecoder().decode(data);
-  const config = JSON.parse(text);
-}
-
-// Get file metadata without reading content
-const info = await state.statFile('/images/photo.jpg');
-if (info) {
-  console.log(`Size: ${info.size} bytes`);
-}
-```
-
-### 8.4 Directory Operations
-
-```typescript
-// Create a directory
-await state.mkdirFile('/documents');
-
-// List directory contents
-const { entries } = await state.readdirFile('/documents');
-for (const entry of entries) {
-  console.log(`${entry.isDirectory ? 'DIR' : 'FILE'}: ${entry.name}`);
-}
-
-// Remove an empty directory
-await state.rmdirFile('/documents');
-
-// Delete a file
-await state.unlinkFile('/data/config.json');
-```
-
-### 8.5 Search Operations
-
-```typescript
-// Search file contents
-const grepResults = await state.grepFiles('error');
-for (const result of grepResults) {
-  console.log(`${result.path}:`);
-  for (const match of result.matches) {
-    console.log(`  Line ${match.line}: ${match.content}`);
-  }
-}
-
-// Find files by glob pattern
-const { paths } = await state.findFiles('**/*.json');
-console.log('JSON files:', paths);
-```
-
-### 8.6 File Statistics
-
-```typescript
-const stats = await state.getFileStats();
-console.log(`Files: ${stats.fileCount}`);
-console.log(`Directories: ${stats.directoryCount}`);
-console.log(`Total size: ${stats.totalSize} bytes`);
-```
-
-### 8.7 Image Thumbnails
-
-```typescript
-// Get thumbnail for an image
-const thumbnail = await state.getFileThumbnail('/images/photo.jpg');
-if (thumbnail) {
-  // Use thumbnail data
-}
-```
-
-### 8.8 Streaming Files
-
-For large files, `readFileStream` provides memory-efficient access by yielding data in chunks.
-
-#### Method
-
-```typescript
-readFileStream(
-  path: string,
-  options?: ReadFileStreamOptions
-): Promise<AsyncIterable<FileChunk> | null>
-```
-
-#### Options
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `signal` | `AbortSignal` | Optional abort signal for cancellation |
-
-#### FileChunk
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `data` | `Uint8Array` | Raw binary data for this chunk |
-| `index` | `number` | 0-based index of this chunk |
-| `totalChunks` | `number` | Total number of chunks |
-| `isLast` | `boolean` | Whether this is the final chunk |
-
-#### Behavior
-
-1. **File Not Found**: Returns `null` if the file does not exist.
-
-2. **External Files**: Returns `null` for files stored externally (S3, R2, URL). External files must be fetched using their storage location.
-
-3. **Small Files**: Files under the chunk threshold are yielded as a single chunk with `index: 0`, `totalChunks: 1`, and `isLast: true`.
-
-4. **Chunked Files**: Large files yield multiple chunks in sequential order (0, 1, 2...).
-
-5. **Ordering Guarantee**: Chunks are always yielded in sequential order. Implementations **MUST NOT** yield chunks out of order.
-
-6. **Abort Signal**: When triggered, the stream stops yielding new chunks. Already-yielded chunks remain valid.
-
-#### Example: Processing Large File
-
-```typescript
-const stream = await state.readFileStream('/uploads/video.mp4');
-if (!stream) {
-  throw new Error('File not found');
-}
-
-for await (const chunk of stream) {
-  console.log(`Progress: ${chunk.index + 1}/${chunk.totalChunks}`);
-  // Process chunk.data without loading entire file into memory
-}
-```
-
-#### Example: HTTP Streaming Response
-
-```typescript
-const stream = await state.readFileStream('/uploads/large-file.bin');
-if (!stream) {
-  return new Response('Not Found', { status: 404 });
-}
-
-const readable = new ReadableStream({
-  async start(controller) {
-    for await (const chunk of stream) {
-      controller.enqueue(chunk.data);
-    }
-    controller.close();
-  }
-});
-
-return new Response(readable, {
-  headers: { 'Content-Type': 'application/octet-stream' }
-});
-```
-
-## 9. Execution State
-
-### 9.1 Availability
-
-The `execution` property is:
-- **Present** during active execution (tools, hooks)
-- **Null** when accessing at rest (endpoints)
-
-```typescript
-if (state.execution) {
-  console.log(`Step ${state.execution.stepCount}`);
-}
-```
-
-### 9.2 Execution Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `flowId` | `string` | Unique execution ID |
-| `currentSide` | `'a' \| 'b'` | Active side (dual_ai) |
-| `stepCount` | `number` | Total LLM request/response cycles |
-| `sideAStepCount` | `number` | Side A steps |
-| `sideBStepCount` | `number` | Side B steps |
-| `stopped` | `boolean` | Execution stopped |
-| `stoppedBy` | `'a' \| 'b' \| undefined` | Who stopped |
-| `messageHistory` | `Message[]` | Current history |
-| `abortSignal` | `AbortSignal` | Cancellation signal |
-| `promptPath` | `string[]` | Path from root to current prompt |
-
-#### Prompt Path
-
-The `promptPath` property tracks the current position in the prompt hierarchy:
-- At root level: `['my_prompt']`
-- Inside a sub-prompt: `['my_prompt', 'sub_prompt']`
-- After handoff: `['new_agent_prompt']`
-
-This allows tools and hooks to understand their execution context depth.
-
-### 9.3 Controlling Execution
-
-```typescript
-// Force next turn to a specific side (dual_ai only)
-state.execution.forceTurn('b');
-
-// Stop execution after current operation
-state.execution.stop();
-
-// Use abort signal for cancellation
-fetch(url, { signal: state.execution.abortSignal });
-```
-
-## 10. Runtime Context (Non-Portable)
-
-The `_notPackableRuntimeContext` property allows runtime implementations to inject platform-specific context.
-
-### 10.1 Property Definition
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context injected by the implementation |
-
-### 10.2 Portability
-
-Tools that access `_notPackableRuntimeContext` cannot be packed, shared, or published to tool registries.
-
-### 10.3 Example: Accessing Cloudflare Bindings
-
-```typescript
-import { defineTool } from '@standardagents/builder';
-import { z } from 'zod';
-
-export default defineTool({
-  description: 'Query internal database',
-  args: z.object({ userId: z.string() }),
-  execute: async (state, args) => {
-    const env = state._notPackableRuntimeContext?.env as Env | undefined;
-
-    if (!env?.MY_DATABASE) {
-      return { status: 'error', error: 'Database not available' };
-    }
-
-    const result = await env.MY_DATABASE
-      .prepare('SELECT * FROM users WHERE id = ?')
-      .bind(args.userId)
-      .first();
-
-    return { status: 'success', result: JSON.stringify(result) };
-  },
-});
-```
-
-> **Tip:** Common implementations include `{ env: Env }` for Cloudflare Workers bindings (KV, D1, R2), or `{ process: NodeJS.Process }` for Node.js environments.
-
-## 11. Thread Endpoints
-
-Thread endpoints expose HTTP APIs for thread-specific operations. They automatically look up threads by ID and provide a `ThreadState` instance.
-
-### 11.1 Defining Thread Endpoints
-
-```typescript
-import { defineThreadEndpoint } from '@standardagents/spec';
-
-export default defineThreadEndpoint(async (req, state) => {
-  const { messages, total } = await state.getMessages({ limit: 10 });
-  return Response.json({
-    threadId: state.threadId,
-    messageCount: total,
-  });
-});
-```
-
-### 11.2 Packed Endpoint Routing
-
-When thread endpoints are loaded from packed packages, runtimes should mount them under a package namespace to avoid route collisions between packages and local endpoints.
-
-Example mount pattern:
-
-```text
-/api/packages/{packageId}/threads/{threadId}/...
-```
-
-### 11.3 Handler Signature
-
-Thread endpoint handlers receive:
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `req` | `Request` | The incoming HTTP request |
-| `state` | `ThreadState` | Thread state for the requested thread |
-
-The handler **MUST** return a `Response` object.
-
-### 11.4 Endpoint Context
-
-When accessing a thread via an endpoint, `state.execution` is always `null` because the thread is not actively executing:
-
-```typescript
-export default defineThreadEndpoint(async (req, state) => {
-  // Execution is always null in endpoints
-  if (state.execution === null) {
-    // Thread is at rest, not executing
-  }
-  return Response.json({ threadId: state.threadId });
-});
-```
-
-### 11.5 Error Handling
-
-Thread endpoints automatically handle common errors:
-
-| Condition | Response |
-|-----------|----------|
-| Thread not found | 404: `{ error: "Thread not found: {threadId}" }` |
-| Missing thread ID | 400: `{ error: "Thread ID required" }` |
-
-### 11.6 Thread Endpoint Examples
-
-**Get Thread Messages:**
-```typescript
-import { defineThreadEndpoint } from '@standardagents/spec';
-
-export default defineThreadEndpoint(async (req, state) => {
-  const url = new URL(req.url);
-  const limit = parseInt(url.searchParams.get('limit') || '50');
-  const offset = parseInt(url.searchParams.get('offset') || '0');
-
-  const result = await state.getMessages({ limit, offset, order: 'desc' });
-  return Response.json(result);
-});
-```
-
-**Export Thread Data:**
-```typescript
-import { defineThreadEndpoint } from '@standardagents/spec';
-
-export default defineThreadEndpoint(async (req, state) => {
-  const { messages } = await state.getMessages({ order: 'asc' });
-
-  return Response.json({
-    exportedAt: new Date().toISOString(),
-    thread: {
-      id: state.threadId,
-      agent: state.agentId,
-      user: state.userId,
-      createdAt: state.createdAt,
-    },
-    messages,
-  });
-});
-```
-
-**List Thread Files:**
-```typescript
-import { defineThreadEndpoint } from '@standardagents/spec';
-
-export default defineThreadEndpoint(async (req, state) => {
-  const { entries } = await state.readdirFile('/');
-  return Response.json({ files: entries });
-});
-```
-
-## 12. Subagent Hierarchy, Communication, and Termination
+## 8. Subagent Hierarchy, Communication, and Termination
 
 Subagent-aware runtimes expose parent/child thread relationships through `ThreadState`:
 
@@ -819,42 +347,86 @@ interface SubagentRegistryEntry {
 }
 ```
 
-### 12.1 Cross-Thread Attachment Copying
+See [Agents §7](/0.1.0/specification/agents#7-subagents) for the full lifecycle, communication modes, and cross-thread semantics.
+
+### 8.1 Cross-Thread Attachment Copying
 
 When communication crosses thread boundaries, filesystem references must be copied:
-- parent -> child for invocation/messaging attachments
-- child -> parent for completion/failure payload attachments
+- parent → child for invocation/messaging attachments
+- child → parent for completion/failure payload attachments
 
 Returned attachment paths must be valid in the receiving thread filesystem.
 
-### 12.2 Lifecycle Status Messages
+### 8.2 Lifecycle Status Messages
 
 Runtimes may persist synthesized status messages (for example, system messages tagged with `metadata.status_kind`) to make cross-thread lifecycle events observable in message feeds.
 
-### 12.3 Termination
+### 8.3 Parent Messaging
 
-Termination is a soft shutdown:
-- `terminate()` marks the thread inactive and sets `terminated`
-- future `queueMessage()` and execution attempts are rejected
-- parent registries should reflect `'terminated'` status
+Children can push information up the hierarchy without waiting for completion:
 
-## 13. Conformance Requirements
+```typescript
+await state.notifyParent('halfway through the batch');
+await state.setStatus('running');
+```
 
-### 13.1 Thread Lifecycle
+## 9. Runtime Context (Non-Portable)
+
+The `_notPackableRuntimeContext` property allows runtime implementations to inject platform-specific context.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context injected by the implementation |
+
+### 9.1 Portability
+
+Tools that access `_notPackableRuntimeContext` cannot be packed, shared, or published to tool registries.
+
+### 9.2 Example: Accessing a Host-Provided Binding
+
+```typescript
+import { defineTool } from '@standardagents/builder';
+import { z } from 'zod';
+
+export default defineTool({
+  description: 'Query internal database',
+  args: z.object({ userId: z.string() }),
+  execute: async (state, args) => {
+    const env = state._notPackableRuntimeContext?.env as HostEnv | undefined;
+
+    if (!env?.DATABASE) {
+      return { status: 'error', error: 'Database not available' };
+    }
+
+    const result = await env.DATABASE
+      .prepare('SELECT * FROM users WHERE id = ?')
+      .bind(args.userId)
+      .first();
+
+    return { status: 'success', result: JSON.stringify(result) };
+  },
+});
+```
+
+> **Tip:** The shape of `_notPackableRuntimeContext` is runtime-defined. Typical implementations expose either a handle to host bindings (databases, key-value stores, object storage) under `env`, or a process/environment handle for server-style runtimes. Consult your runtime's documentation for the specific contract.
+
+## 10. Conformance Requirements
+
+### 10.1 Thread Lifecycle
 
 1. **Creation**: Thread created with metadata
 2. **Execution**: Agent processes messages
 3. **At Rest**: Thread accessible via endpoints
 4. **Resumption**: New execution on next message
 
-### 13.2 Platform Independence
+### 10.2 Platform Independence
 
-ThreadState is an abstract interface. Implementations **MUST NOT** expose:
+`ThreadState` is an abstract interface. Implementations **MUST NOT** expose:
 - Storage implementation details
 - Platform-specific bindings
 - Internal state management
 
-### 13.3 Error Handling
+### 10.3 Error Handling
 
 Methods that return promises **SHOULD** throw on:
 - Resource not found (loadModel, loadPrompt, loadAgent)
@@ -865,7 +437,7 @@ Methods **SHOULD NOT** throw on:
 - Empty results (return empty arrays/null instead)
 - Missing optional data
 
-## 14. TypeScript Reference
+## 11. TypeScript Reference
 
 ```typescript
 /**
@@ -884,18 +456,14 @@ interface ThreadState {
   readonly terminated: number | null;
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Messages
+  // Messages — see /threads/messages
   // ─────────────────────────────────────────────────────────────────────────
   getMessages(options?: GetMessagesOptions): Promise<MessagesResult>;
   getMessage(messageId: string): Promise<Message | null>;
   injectMessage(input: InjectMessageInput): Promise<Message>;
   queueMessage(input: QueueMessageInput): Promise<void>;
   updateMessage(messageId: string, updates: MessageUpdates): Promise<Message>;
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Logs
-  // ─────────────────────────────────────────────────────────────────────────
-  getLogs(options?: GetLogsOptions): Promise<Log[]>;
+  deleteMessage(messageId: string): Promise<boolean>;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Resource Loading
@@ -937,7 +505,7 @@ interface ThreadState {
   context: Record<string, unknown>;
 
   // ─────────────────────────────────────────────────────────────────────────
-  // File System
+  // File System — see /threads/filesystem
   // ─────────────────────────────────────────────────────────────────────────
   writeFile(path: string, data: ArrayBuffer | string, mimeType: string, options?: WriteFileOptions): Promise<FileRecord>;
   readFile(path: string): Promise<ArrayBuffer | null>;
@@ -953,7 +521,12 @@ interface ThreadState {
   getFileThumbnail(path: string): Promise<ArrayBuffer | null>;
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Execution State
+  // Code Execution — see /threads/code-execution
+  // ─────────────────────────────────────────────────────────────────────────
+  runCode(source: string, options?: CodeExecutionOptions): CodeExecution;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Execution State — see /threads/execution-state
   // ─────────────────────────────────────────────────────────────────────────
   execution: ExecutionState | null;
   terminate(): Promise<void>;
@@ -962,24 +535,6 @@ interface ThreadState {
   // Runtime Context (Non-Portable)
   // ─────────────────────────────────────────────────────────────────────────
   readonly _notPackableRuntimeContext?: Record<string, unknown>;
-}
-
-/**
- * Execution state available during active execution.
- */
-interface ExecutionState {
-  readonly flowId: string;
-  readonly currentSide: 'a' | 'b';
-  readonly stepCount: number;
-  readonly sideAStepCount: number;
-  readonly sideBStepCount: number;
-  readonly stopped: boolean;
-  readonly stoppedBy?: 'a' | 'b';
-  readonly messageHistory: Message[];
-  readonly abortSignal: AbortSignal;
-  readonly promptPath: string[];
-  forceTurn(side: 'a' | 'b'): void;
-  stop(): void;
 }
 
 /**

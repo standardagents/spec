@@ -38,6 +38,7 @@ const markdownPath = `${currentPath}.md`
 // Extract the group from the slug
 const parts = slug?.split('/') || []
 const group = parts[0] || ''
+const subSlug = parts.slice(1).join('/')
 const isOverview = parts[parts.length - 1] === 'overview'
 const latestVersion = await getLatestVersion()
 const showPageActions = version === latestVersion
@@ -54,7 +55,7 @@ const { prev, next } = isOverview
       client:load
       currentVersion={version}
       currentGroup={group}
-      currentSlug={parts[parts.length - 1] || ''}
+      currentSlug={subSlug}
     />
     <div class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8 flex-1 w-full">
       <div class="flex gap-8 max-w-full">
