@@ -273,7 +273,27 @@ A runtime **SHOULD**:
 - Surface syntactic and linker errors with `line`/`column` pointing to the caller's source.
 - Call `handle.terminate()` when `state.execution?.abortSignal` fires.
 
-## 14. Conformance Summary
+## 14. Durable Key-Value Store
+
+`ThreadState.getValue` / `ThreadState.setValue` expose a simple durable key-value store scoped to the thread. The caller-facing surface is specified in [Threads §7](/0.1.0/specification/threads#7-durable-key-value-store); the runtime semantics below define how implementations must back it.
+
+### 14.1 Runtime Semantics
+
+1. Values **MUST** be persisted to durable per-thread storage that survives execution boundaries, process restarts, and runtime redeploys.
+2. A value written by `setValue(key, value)` **MUST** be visible to every subsequent `getValue(key)` on the same thread, across any execution context (tools, hooks, endpoints).
+3. Each thread **MUST** maintain its own isolated key space. Values **MUST NOT** be readable by any other thread, including parent, child, or sibling threads.
+4. Values **MUST** round-trip with JSON-equivalent structure (objects, arrays, strings, numbers, booleans, `null`). Runtimes **MAY** reject non-JSON-serializable values with a thrown error.
+5. `getValue(key)` **MUST** return `null` when no value has been set for the key, when the value has been deleted, or when the thread is accessed after the store has never been written.
+6. `setValue(key, null)` and `setValue(key, undefined)` **MUST** delete the key so that subsequent `getValue(key)` calls return `null`.
+7. Writes **SHOULD** be durable before the promise returned by `setValue` resolves.
+8. Values **MUST NOT** be automatically copied, inherited, or synchronized between threads when subagents are spawned.
+9. Storage is **not** required to be encrypted at rest (unlike `env`); runtimes **MAY** encrypt at their discretion.
+
+### 14.2 Capacity and Errors
+
+Runtimes **MAY** enforce implementation-defined caps on key length, value size, and total number of keys per thread. When a cap is exceeded, `setValue` **SHOULD** reject with an error that identifies which limit was hit. Caps **SHOULD** be documented with the runtime.
+
+## 15. Conformance Summary
 
 Implementations **MUST**:
 - preserve sequential step and tool execution within a thread
@@ -283,3 +303,4 @@ Implementations **MUST**:
 - support durable queue semantics
 - copy attachment files across thread boundaries for subagent communication
 - honor the [Code Execution](#13-code-execution-runtime) runtime contract when `ThreadState.runCode` is exposed
+- back `ThreadState.getValue` / `ThreadState.setValue` with a durable, per-thread key-value store per [§14](#14-durable-key-value-store)

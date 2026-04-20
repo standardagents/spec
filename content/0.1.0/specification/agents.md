@@ -241,7 +241,7 @@ When `resumable.parentCommunication` is `explicit`, runtimes **MUST NOT** auto-q
 - `state.notifyParent(content)`
 - `state.setStatus(status)`
 
-See [Threads](/0.1.0/specification/threads#8-subagent-hierarchy-communication-and-termination) for the host-side surface.
+See [Threads](/0.1.0/specification/threads#9-subagent-hierarchy-communication-and-termination) for the host-side surface.
 
 ### 7.11 Child Registry
 

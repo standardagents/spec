@@ -42,7 +42,7 @@ Handoffs enable workflows where specialized agents handle different parts of a c
 | `terminated` | `number \| null` | Termination timestamp in microseconds, or null when active (readonly) |
 | `context` | `Record<string, unknown>` | Per-execution key-value storage. See [Context Storage](#6-context-storage) |
 | `execution` | `ExecutionState \| null` | Execution state during active execution, null at rest. See [Execution State](/0.1.0/specification/threads/execution-state) |
-| `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context (non-portable). See [Runtime Context](#9-runtime-context-non-portable) |
+| `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context (non-portable). See [Runtime Context](#10-runtime-context-non-portable) |
 
 #### 1.2.2 Methods
 
@@ -82,7 +82,7 @@ The methods directory below is grouped by topic. Topics with their own page link
 |--------|---------|-------------|
 | `runCode(source, options?)` | `CodeExecution` | Execute JS/TS source in an isolated sandbox; returns a thenable handle with `terminate()` |
 
-**Subagent Hierarchy** — see [§8 Subagent Hierarchy](#8-subagent-hierarchy-communication-and-termination)
+**Subagent Hierarchy** — see [§9 Subagent Hierarchy](#9-subagent-hierarchy-communication-and-termination)
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -125,7 +125,14 @@ The methods directory below is grouped by topic. Topics with their own page link
 |--------|---------|-------------|
 | `emit(event, data)` | `void` | Emit event to connected clients |
 
-**Lifecycle** — see [§7 Lifecycle](#7-lifecycle)
+**Durable Key-Value Store** — see [§7 Durable Key-Value Store](#7-durable-key-value-store)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getValue(key)` | `Promise<T \| null>` | Read a value from the thread's durable key-value store |
+| `setValue(key, value)` | `Promise<void>` | Write a JSON-serializable value; `null`/`undefined` deletes the key |
+
+**Lifecycle** — see [§8 Lifecycle](#8-lifecycle)
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -305,9 +312,47 @@ const user = state.context.userData;
 | **Type** | `Record<string, unknown>` |
 | **Size** | No enforced limit |
 
-For persistent storage across executions, use the [file system](/0.1.0/specification/threads/filesystem) or external storage.
+For persistent storage across executions, use the [durable key-value store](#7-durable-key-value-store), the [file system](/0.1.0/specification/threads/filesystem), or external storage.
 
-## 7. Lifecycle
+## 7. Durable Key-Value Store
+
+`getValue` and `setValue` provide a simple durable key-value store scoped to the thread. Values persist across executions, tool calls, hook invocations, and endpoint requests for the lifetime of the thread.
+
+It is one of two ways to store persistent data on a thread, alongside the [file system](/0.1.0/specification/threads/filesystem).
+
+### 7.1 Reading and Writing Values
+
+```typescript
+const count = (await state.getValue<number>('invocation_count')) ?? 0;
+await state.setValue('invocation_count', count + 1);
+
+await state.setValue('preferences', { theme: 'dark', locale: 'en-US' });
+const prefs = await state.getValue<{ theme: string; locale: string }>('preferences');
+```
+
+### 7.2 Semantics
+
+| Aspect | Behavior |
+|--------|----------|
+| **Scope** | Per-thread; not shared with parent, child, or sibling threads |
+| **Persistence** | Durable across executions for the lifetime of the thread |
+| **Value type** | Any JSON-serializable value (objects, arrays, strings, numbers, booleans, `null`) |
+| **Missing keys** | `getValue` returns `null` |
+| **Deletion** | `setValue(key, null)` or `setValue(key, undefined)` deletes the key |
+| **Subagents** | Values are **not** automatically copied to spawned child threads |
+
+### 7.3 Comparison With Other Storage
+
+| Surface | Scope | Persistence | Intended Use |
+|---------|-------|-------------|--------------|
+| `context` | Single execution | Ephemeral | Sharing state between tool calls in one execution |
+| `getValue` / `setValue` | Thread | Durable | Small structured state scoped to the thread |
+| `env` / `setEnv` | Thread → user → instance → agent → prompt | Durable (encrypted at rest when supported) | Configuration and secrets with layered resolution |
+| File system | Thread | Durable | Large or binary payloads |
+
+Runtime semantics and conformance requirements for the durable key-value store live in [Runtime §15](/0.1.0/infrastructure/runtime#15-durable-key-value-store).
+
+## 8. Lifecycle
 
 `terminate()` is a soft shutdown:
 
@@ -320,7 +365,7 @@ For persistent storage across executions, use the [file system](/0.1.0/specifica
 await state.terminate();
 ```
 
-## 8. Subagent Hierarchy, Communication, and Termination
+## 9. Subagent Hierarchy, Communication, and Termination
 
 Subagent-aware runtimes expose parent/child thread relationships through `ThreadState`:
 
@@ -349,7 +394,7 @@ interface SubagentRegistryEntry {
 
 See [Agents §7](/0.1.0/specification/agents#7-subagents) for the full lifecycle, communication modes, and cross-thread semantics.
 
-### 8.1 Cross-Thread Attachment Copying
+### 9.1 Cross-Thread Attachment Copying
 
 When communication crosses thread boundaries, filesystem references must be copied:
 - parent → child for invocation/messaging attachments
@@ -357,11 +402,11 @@ When communication crosses thread boundaries, filesystem references must be copi
 
 Returned attachment paths must be valid in the receiving thread filesystem.
 
-### 8.2 Lifecycle Status Messages
+### 9.2 Lifecycle Status Messages
 
 Runtimes may persist synthesized status messages (for example, system messages tagged with `metadata.status_kind`) to make cross-thread lifecycle events observable in message feeds.
 
-### 8.3 Parent Messaging
+### 9.3 Parent Messaging
 
 Children can push information up the hierarchy without waiting for completion:
 
@@ -370,7 +415,7 @@ await state.notifyParent('halfway through the batch');
 await state.setStatus('running');
 ```
 
-## 9. Runtime Context (Non-Portable)
+## 10. Runtime Context (Non-Portable)
 
 The `_notPackableRuntimeContext` property allows runtime implementations to inject platform-specific context.
 
@@ -378,11 +423,11 @@ The `_notPackableRuntimeContext` property allows runtime implementations to inje
 |----------|------|-------------|
 | `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context injected by the implementation |
 
-### 9.1 Portability
+### 10.1 Portability
 
 Tools that access `_notPackableRuntimeContext` cannot be packed, shared, or published to tool registries.
 
-### 9.2 Example: Accessing a Host-Provided Binding
+### 10.2 Example: Accessing a Host-Provided Binding
 
 ```typescript
 import { defineTool } from '@standardagents/builder';
@@ -410,23 +455,23 @@ export default defineTool({
 
 > **Tip:** The shape of `_notPackableRuntimeContext` is runtime-defined. Typical implementations expose either a handle to host bindings (databases, key-value stores, object storage) under `env`, or a process/environment handle for server-style runtimes. Consult your runtime's documentation for the specific contract.
 
-## 10. Conformance Requirements
+## 11. Conformance Requirements
 
-### 10.1 Thread Lifecycle
+### 11.1 Thread Lifecycle
 
 1. **Creation**: Thread created with metadata
 2. **Execution**: Agent processes messages
 3. **At Rest**: Thread accessible via endpoints
 4. **Resumption**: New execution on next message
 
-### 10.2 Platform Independence
+### 11.2 Platform Independence
 
 `ThreadState` is an abstract interface. Implementations **MUST NOT** expose:
 - Storage implementation details
 - Platform-specific bindings
 - Internal state management
 
-### 10.3 Error Handling
+### 11.3 Error Handling
 
 Methods that return promises **SHOULD** throw on:
 - Resource not found (loadModel, loadPrompt, loadAgent)
@@ -437,7 +482,7 @@ Methods **SHOULD NOT** throw on:
 - Empty results (return empty arrays/null instead)
 - Missing optional data
 
-## 11. TypeScript Reference
+## 12. TypeScript Reference
 
 ```typescript
 /**
@@ -503,6 +548,12 @@ interface ThreadState {
   // Context Storage
   // ─────────────────────────────────────────────────────────────────────────
   context: Record<string, unknown>;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Durable Key-Value Store
+  // ─────────────────────────────────────────────────────────────────────────
+  getValue<T = unknown>(key: string): Promise<T | null>;
+  setValue(key: string, value: unknown): Promise<void>;
 
   // ─────────────────────────────────────────────────────────────────────────
   // File System — see /threads/filesystem
