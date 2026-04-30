@@ -113,6 +113,8 @@ Subagent tool configuration can map args to:
 - initial attachments (`initAttachmentsProperty`)
 - human-readable child name (`initAgentNameProperty`)
 
+For runtime lifecycle creation, `subagent_create` must receive a non-empty `name` argument and runtimes should persist that name for child thread display.
+
 When `immediate` uses the object form, runtimes may perform an internal bootstrap-model pass before enqueuing the child call. In that flow:
 - only `nameEnv` and `descriptionEnv` are model-visible
 - `scopedEnv` values must remain encrypted at rest and runtime-only during transfer
@@ -195,12 +197,13 @@ A conforming implementation **MUST**:
 - Present a `globalThis` containing only ECMAScript intrinsics. Host APIs (`fetch`, `setTimeout`, `console`, `process`, `require`, etc.) **MUST NOT** be present unless the caller installed them via `options.globals`.
 - Install `options.globals` identifiers at **module scope** only — they **MUST NOT** appear on `globalThis` or be enumerable via `Object.keys(globalThis)`.
 - Freshly construct the sandbox's intrinsic prototypes; mutating `Object.prototype`, `Array.prototype`, or any other intrinsic inside the sandbox **MUST** have zero effect on the host.
-- Reject `eval`, `new Function(source)`, `SharedArrayBuffer`, `Atomics`, and URL/relative dynamic imports.
+- Reject `eval`, `new Function(source)`, `SharedArrayBuffer`, `Atomics`, and URL dynamic imports. Relative dynamic imports may resolve only when the target is supplied through `options.modules`.
 
 ### 13.2 Module Resolution
 
-- Bare specifiers resolve **only** from `options.imports`. Unknown specifiers, relative specifiers (`./`, `../`), and URL specifiers (`https://…`) **MUST** fail linkage and settle with `status: 'link_error'`.
+- Bare specifiers resolve **only** from `options.imports`. Relative specifiers resolve **only** from `options.modules`. Unknown specifiers and URL specifiers (`https://…`) **MUST** fail linkage and settle with `status: 'link_error'`.
 - Each `options.imports[specifier]` entry is a synthetic module whose namespace is a frozen copy of the host-provided object. The key `default` (when present) becomes that module's default export.
+- Each `options.modules[specifier]` entry is a source-backed ES module evaluated inside the sandbox.
 - `import.meta.url` **MUST** be a synthetic `sandbox:<filename>` URL. Host paths **MUST NOT** be exposed.
 
 ### 13.3 Value Marshaling
@@ -220,16 +223,16 @@ Values cross the sandbox boundary in both directions.
 - **Safety caps (optional)**: runtimes **MAY** apply their own caps (for example, interrupting a pure-JS infinite loop under sustained CPU pressure). When a cap fires, the handle settles with `status: 'terminated'` and a diagnosable `error.message` — the same channel as caller-initiated termination.
 - The spec does **not** require a wall-clock timeout. Runtimes **MUST NOT** invent one silently; callers impose deadlines by calling `handle.terminate()`.
 
-### 13.5 Default Export Resolution
+### 13.5 Configured Export Resolution
 
-After module evaluation, the runtime **MUST** resolve the default export in this order:
+After module evaluation, the runtime **MUST** resolve the export selected by `options.execute` in this order:
 
-1. Read `module.namespace.default`.
-2. If it is a function, call it with no arguments inside the sandbox. The return value is the new candidate for step 3.
+1. Read `module.namespace[execute.fn]`, where `execute.fn` defaults to `'default'`.
+2. If it is a function, call it with `execute.args` inside the sandbox. The return value is the new candidate for step 3.
 3. If the current candidate is a thenable, await it. Repeat until the value is not a thenable.
-4. Marshal the final value into `CodeExecutionResult.value`.
+4. Marshal the final value into `CodeExecutionResult.result`.
 
-An uncaught throw from the default-export function (or a rejection from its returned promise) **MUST** settle with `status: 'error'`.
+If the selected export is missing, the runtime **MUST** settle with `status: 'link_error'`. If the selected export is not a function and `execute.args` is non-empty, the runtime **MUST** settle with `status: 'error'`. An uncaught throw from the selected-export function (or a rejection from its returned promise) **MUST** settle with `status: 'error'`.
 
 ### 13.6 TypeScript Erasure
 
@@ -239,7 +242,7 @@ When `options.language === 'typescript'` (the default), the runtime **MUST** str
 
 - The sandbox has its own microtask queue. `Promise`, `await`, and (at runtime discretion) `queueMicrotask` behave normally.
 - `setTimeout` / `setInterval` are **not** exposed unless the caller bridges them via `options.globals`.
-- Top-level `await` is supported. A module "completes" once its top-level evaluation promise settles and the default-export resolution ([§13.5](#135-default-export-resolution)) finishes.
+- Top-level `await` is supported. A module "completes" once its top-level evaluation promise settles and the configured-export resolution ([§13.5](#135-configured-export-resolution)) finishes.
 
 ### 13.8 Implementation Approaches (Non-Normative)
 
@@ -256,14 +259,14 @@ A runtime that implements code execution **MUST**:
 
 1. Expose `ThreadState.runCode(source, options?)` returning a `CodeExecution` handle.
 2. Accept TypeScript source by default and evaluate it as an ES module.
-3. Resolve bare-specifier imports **only** from `options.imports` and fail linkage on relative, URL, or unknown specifiers.
+3. Resolve bare-specifier imports **only** from `options.imports`, relative imports **only** from `options.modules`, and fail linkage on URL or unknown specifiers.
 4. Install `options.globals` at module scope but **not** on `globalThis`.
 5. Present an isolated `globalThis` with only ECMAScript intrinsics.
-6. Reject `eval`, `new Function(source)`, `SharedArrayBuffer`, `Atomics`, and URL/relative dynamic imports.
+6. Reject `eval`, `new Function(source)`, `SharedArrayBuffer`, `Atomics`, and URL dynamic imports.
 7. Enforce `options.memoryLimitBytes` when the engine supports heap accounting; settle with `status: 'memory'` on overrun.
 8. Settle the handle with `status: 'terminated'` within 50 ms of `handle.terminate()`.
 9. Marshal values across the boundary by structured clone / callable proxy, with no shared references.
-10. Resolve the default export per [§13.5](#135-default-export-resolution).
+10. Resolve the configured export per [§13.5](#135-configured-export-resolution).
 11. Return `CodeExecutionResult` with the exact status codes defined in the [caller-facing spec](/0.1.0/specification/threads/code-execution#41-status-values).
 12. Create a fresh isolate per call; leak no state between calls.
 

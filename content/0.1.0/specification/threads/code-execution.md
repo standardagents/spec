@@ -1,6 +1,6 @@
 # Code Execution
 
-Code execution lets an agent run JavaScript or TypeScript source on demand inside an isolated sandbox. The sandbox has **no global access** to its host — every capability (`fs`, `fetch`, `console`, custom business logic) is explicitly bridged in through `imports` and `globals`. Results flow back via an explicit `default export` or through bridged "report" callbacks.
+Code execution lets an agent run JavaScript or TypeScript source on demand inside an isolated sandbox. The sandbox has **no global access** to its host — every capability (`fs`, `fetch`, `console`, custom business logic) is explicitly bridged in through `imports` and `globals`. Results flow back via the export selected by `options.execute` or through bridged "report" callbacks.
 
 This page is the caller-facing contract: how to invoke `runCode`, what options it accepts, what shape the result has, and the **limitations** agent authors need to know when writing code that will run inside the sandbox. For the runtime-side mechanics (isolate setup, enforcement, implementation approaches), see [Runtime §13 Code Execution Runtime](/0.1.0/infrastructure/runtime#13-code-execution-runtime).
 
@@ -11,6 +11,7 @@ When you call `state.runCode(source, options)`:
 - The source runs as an ES module in a fresh sandbox with no host capabilities.
 - Anything you pass through `options.imports` is resolvable as a bare-specifier import inside the sandbox.
 - Anything you pass through `options.globals` is resolvable as a free identifier inside the sandbox.
+- `options.execute` chooses which module export to run and which arguments to pass. It defaults to `{ fn: 'default', args: [] }`.
 - The call returns a [`CodeExecution` handle](#22-codeexecution-handle) — awaitable, terminatable, with a live `reports` view.
 - The spec does not mandate a wall-clock timeout; callers impose their own by calling `handle.terminate()`.
 
@@ -32,7 +33,7 @@ runCode(
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `source` | `string` | JavaScript or TypeScript source text. Treated as an ECMAScript module. |
-| `options` | `CodeExecutionOptions` | Imports, globals, memory cap, and language hints. |
+| `options` | `CodeExecutionOptions` | Export selection, imports, globals, memory cap, and language hints. |
 
 ### 2.2 CodeExecution Handle
 
@@ -74,9 +75,12 @@ const run = state.runCode(
       report({ topic: 'username', message });
     }
 
-    export default { scanned: true };
+    export async function scan() {
+      return { scanned: true };
+    }
   `,
   {
+    execute: { fn: 'scan', args: [] },
     imports: {
       fs: {
         readFile: async (path: string) => state.readFile(path),
@@ -97,7 +101,7 @@ const run = state.runCode(
 const result = await run;
 
 if (result.status === 'success') {
-  // result.value is the resolved default export: { scanned: true }
+  // result.result is the resolved scan() return value: { scanned: true }
 }
 ```
 
@@ -105,7 +109,9 @@ if (result.status === 'success') {
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `execute` | `{ fn?: string; args?: unknown[] }` | `{ fn: 'default', args: [] }` | Export to execute and arguments to pass if the export is a function. Use `fn: 'default'` for the default export. |
 | `imports` | `Record<string, Record<string, unknown>>` | `{}` | Map of module specifier → named exports exposed to the sandbox. Resolves bare-specifier imports only. |
+| `modules` | `Record<string, string>` | `{}` | Additional relative ES modules available to the sandbox, keyed by relative specifier such as `'./helpers.js'`. |
 | `globals` | `Record<string, unknown>` | `{}` | Map of identifier → value installed on the sandbox's module scope. |
 | `language` | `'javascript' \| 'typescript'` | `'typescript'` | Source language. TypeScript source is stripped of types before evaluation; no type checking is performed. |
 | `memoryLimitBytes` | `number` | runtime-defined | Maximum sandbox heap in bytes. Exceeding this settles the handle with `status: 'memory'`. |
@@ -116,7 +122,37 @@ Unknown keys on `options` are rejected.
 
 Deadlines are **not** an option. The caller implements their own budget by calling `handle.terminate()` ([§2.2](#22-codeexecution-handle)).
 
-### 3.1 Imports
+### 3.1 Execute
+
+`execute` selects the module export that becomes `CodeExecutionResult.result`.
+
+```typescript
+const run = state.runCode(
+  `
+    export function increment(n: number): number {
+      return n + 1;
+    }
+
+    export default function fallback() {
+      return 123;
+    }
+  `,
+  {
+    execute: { fn: 'increment', args: [100] },
+  },
+);
+```
+
+Rules:
+
+- When `execute` is omitted, the runtime behaves as if `{ fn: 'default', args: [] }` was supplied.
+- `fn` names the export to execute. Use `'default'` for the default export.
+- If the selected export is a function, the runtime calls it with `args` inside the sandbox and awaits any returned thenable.
+- If the selected export is not a function, `args` MUST be omitted or empty and the export value itself becomes the result.
+- Missing selected exports fail the run with `status: 'link_error'`.
+- `args` use the same marshaling rules as other sandbox boundary values.
+
+### 3.2 Imports
 
 `imports` maps a bare specifier to an object of named exports.
 
@@ -150,7 +186,32 @@ Rules:
 - Importing an unknown specifier fails linkage.
 - Named-export mismatches (`import { x }` where `x` is missing) fail linkage.
 
-### 3.2 Globals
+### 3.3 Modules
+
+`modules` provides local relative ES modules to the sandbox.
+
+```typescript
+const run = state.runCode(
+  `
+    import { add } from './math.js';
+    export const result = add(1, 2);
+  `,
+  {
+    execute: { fn: 'result' },
+    modules: {
+      './math.js': 'export const add = (a, b) => a + b;',
+    },
+  },
+);
+```
+
+Rules:
+
+- Keys MUST be relative specifiers such as `'./helpers.js'` or `'./lib/math.js'`.
+- Values are JavaScript or TypeScript module source and are evaluated inside the same sandbox.
+- `modules` are not host filesystem reads and do not grant package, URL, CDN, or `node_modules` access.
+
+### 3.4 Globals
 
 `globals` installs identifiers at module scope. They are **not** installed on `globalThis`.
 
@@ -171,7 +232,7 @@ globalThis.console;             // undefined — globals are not on globalThis
 
 This distinction matters for the [limitations](#6-limitations) — sandbox code cannot enumerate bridged capabilities via `Object.keys(globalThis)`.
 
-### 3.3 Bridged Value Marshaling
+### 3.5 Bridged Value Marshaling
 
 Values cross the sandbox boundary in both directions (host → sandbox via `imports`/`globals`, sandbox → host via call arguments and return values).
 
@@ -193,7 +254,7 @@ Asynchronous bridges are supported: a bridged function may return a `Promise`, a
 ```typescript
 interface CodeExecutionResult {
   status: 'success' | 'error' | 'memory' | 'terminated' | 'link_error';
-  value?: unknown;
+  result?: unknown;
   reports: unknown[];
   logs: CodeExecutionLog[];
   error?: CodeExecutionError;
@@ -205,7 +266,7 @@ interface CodeExecutionResult {
 | Field | Type | Description |
 |-------|------|-------------|
 | `status` | enum | Outcome classification. See [§4.1](#41-status-values). |
-| `value` | `unknown` | Resolved default export, after awaiting top-level promises and optionally calling the default-export function. Omitted on non-success outcomes. |
+| `result` | `unknown` | Resolved selected export, after optionally calling it with `execute.args` and awaiting top-level promises. Omitted on non-success outcomes. |
 | `reports` | `unknown[]` | Values emitted through the `report` bridge, in call order. Empty array if unused. |
 | `logs` | `CodeExecutionLog[]` | Captured `console.*` calls when the runtime installs a capturing `console`. Empty when the caller supplies its own. |
 | `error` | `CodeExecutionError` | Present iff `status` is not `'success'`. |
@@ -216,7 +277,7 @@ interface CodeExecutionResult {
 
 | Status | Meaning |
 |--------|---------|
-| `success` | Module evaluated; default export (or `undefined`) resolved. |
+| `success` | Module evaluated; selected export resolved. |
 | `error` | Uncaught runtime error inside the sandbox. |
 | `memory` | `memoryLimitBytes` exceeded. |
 | `terminated` | Caller called `handle.terminate()`, or the runtime's own safety cap fired. `error.message` distinguishes the two (including any `reason` the caller passed). |
@@ -231,6 +292,8 @@ interface CodeExecutionError {
   stack?: string;
   /** Module specifier that failed to link, when applicable. */
   specifier?: string;
+  /** Source filename associated with line and column, when available. */
+  filename?: string;
   /** 1-based line in source, when available. */
   line?: number;
   /** 1-based column in source, when available. */
@@ -256,33 +319,42 @@ Only populated when the runtime installs a capturing `console` (typically when t
 
 The sandbox has **two** channels for returning data. They coexist and can both be used in the same run.
 
-### 5.1 Default Export
+### 5.1 Configured Export
 
-The canonical success value is the module's default export:
+The canonical success result is the module export selected by `options.execute`. By default this is the module's default export:
 
 ```typescript
 export default { summary: 'ok', matches: 3 };
 ```
 
-After module evaluation, the runtime resolves the default export as follows:
+After module evaluation, the runtime resolves the configured export as follows:
 
-1. Read `module.namespace.default`.
-2. If it is a function (including an async function), **call it with no arguments** inside the sandbox. The result of that call is then processed by step 3.
+1. Read `module.namespace[execute.fn]`, where `execute.fn` defaults to `'default'`.
+2. If it is a function (including an async function), **call it with `execute.args`** inside the sandbox. The result of that call is then processed by step 3.
 3. If the current candidate is a `Promise` (or thenable), **await it**. Repeat this step until the value is no longer a thenable.
-4. Marshal the final value ([§3.3](#33-bridged-value-marshaling)) into `CodeExecutionResult.value`.
+4. Marshal the final value into `CodeExecutionResult.result`.
 
 All four of these produce the same surface for callers:
 
 ```typescript
-export default 42;                          // value === 42
-export default async () => 42;              // value === 42
-export default () => Promise.resolve(42);   // value === 42
-export default Promise.resolve(42);         // value === 42
+export default 42;                          // result === 42
+export default async () => 42;              // result === 42
+export default () => Promise.resolve(42);   // result === 42
+export default Promise.resolve(42);         // result === 42
 ```
 
-A module with no default export produces `value: undefined` and `status: 'success'` — this is legal.
+Named exports are selected with `execute.fn`:
 
-If the default-export function throws (or its returned promise rejects), the run settles with `status: 'error'` and the thrown value in `error.message` — identical to any other uncaught runtime error.
+```typescript
+export function increment(n: number) {
+  return n + 1;
+}
+
+// state.runCode(source, { execute: { fn: 'increment', args: [100] } })
+// result === 101
+```
+
+If the selected export is missing, the run settles with `status: 'link_error'`. If the selected export is not a function and `execute.args` is non-empty, the run settles with `status: 'error'`. If the selected export function throws (or its returned promise rejects), the run settles with `status: 'error'` and the thrown value in `error.message` — identical to any other uncaught runtime error.
 
 ### 5.2 Bridge Reports
 
@@ -302,7 +374,7 @@ Every `report(x)` call runs the host sink synchronously (or returns its promise)
 
 When `options.report` is supplied, the runtime installs a built-in `report` global that forwards values to it, and pushes each reported value into `CodeExecutionResult.reports` in call order.
 
-Use whichever channel fits: default export for "this code computes one answer"; reports for "this code scans and flags N things."
+Use whichever channel fits: configured export for "this code computes one answer"; reports for "this code scans and flags N things."
 
 ## 6. Limitations
 
@@ -322,12 +394,12 @@ Inside the sandbox:
 
 - `eval` is absent or throws.
 - `Function`, `AsyncFunction`, and `GeneratorFunction` constructors throw when called with source strings.
-- Dynamic `import(...)` only resolves specifiers present in `options.imports`; URL or relative imports reject.
+- Dynamic `import(...)` only resolves specifiers present in `options.imports` or `options.modules`; URL imports reject.
 
 ### 6.3 No Shared Memory With the Host
 
 - No `SharedArrayBuffer`, no `Atomics`, no postMessage-style channels.
-- Bridged values cross the boundary by **deep clone** ([§3.3](#33-bridged-value-marshaling)). A sandbox mutation of a received object does not affect the host-side source object.
+- Bridged values cross the boundary by **deep clone** ([§3.5](#35-bridged-value-marshaling)). A sandbox mutation of a received object does not affect the host-side source object.
 
 ### 6.4 No Runtime-Imposed Deadline
 
@@ -368,9 +440,9 @@ When `language` is `'javascript'`, the source is parsed as standard ECMAScript m
 ## 8. Module Semantics
 
 - Source is evaluated as an **ES module**. `import`, `export`, and top-level `await` are available.
-- There is exactly one module per `runCode` call — the "main" module.
+- There is one entry module per `runCode` call plus any caller-supplied `options.modules`.
 - `imports` entries are synthetic modules: their namespace is a frozen copy of the host-provided object.
-- Circular imports are not possible because only the main module has source; synthetic modules have no imports.
+- `modules` entries are source-backed ES modules available by relative specifier.
 - `import.meta` exposes only `{ url: string }` where `url` is a synthetic `sandbox:<filename>` URL. Host paths are not exposed.
 
 ## 9. Interaction With Thread State
@@ -398,14 +470,14 @@ Bridged functions run on the host side and can await thread operations, schedule
 ### 10.1 Single-Value Computation
 
 ```typescript
-const { value } = await state.runCode(
+const { result } = await state.runCode(
   `
     const n = input.reduce((a, b) => a + b, 0);
     export default n;
   `,
   { globals: { input: [1, 2, 3] } },
 );
-// value === 6
+// result === 6
 ```
 
 ### 10.2 Flagging Multiple Items
@@ -465,7 +537,7 @@ export default defineTool({
     const result = await run;
     clearTimeout(deadline);
     return result.status === 'success'
-      ? { status: 'success', result: JSON.stringify(result.value) }
+      ? { status: 'success', result: JSON.stringify(result.result) }
       : { status: 'error', error: result.error?.message ?? 'run failed' };
   },
 });
@@ -484,7 +556,12 @@ export default defineTool({
 
 ```typescript
 interface CodeExecutionOptions {
+  execute?: {
+    fn?: string;
+    args?: unknown[];
+  };
   imports?: Record<string, Record<string, unknown>>;
+  modules?: Record<string, string>;
   globals?: Record<string, unknown>;
   language?: 'javascript' | 'typescript';
   memoryLimitBytes?: number;
@@ -500,7 +577,7 @@ interface CodeExecution extends PromiseLike<CodeExecutionResult> {
 
 interface CodeExecutionResult {
   status: 'success' | 'error' | 'memory' | 'terminated' | 'link_error';
-  value?: unknown;
+  result?: unknown;
   reports: unknown[];
   logs: CodeExecutionLog[];
   error?: CodeExecutionError;
@@ -519,6 +596,7 @@ interface CodeExecutionError {
   message: string;
   stack?: string;
   specifier?: string;
+  filename?: string;
   line?: number;
   column?: number;
 }

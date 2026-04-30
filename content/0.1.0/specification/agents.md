@@ -169,6 +169,8 @@ For resumable instances, runtimes expose built-in lifecycle tools:
 - `subagent_create`
 - `subagent_message`
 
+`subagent_create` **MUST** require a non-empty `name` argument for the spawned child instance.
+
 Non-resumable subagents behave like direct tool calls (no persistent addressing).
 
 When `maxInstances` is reached, new creation attempts **SHOULD** return a tool error explaining the cap and suggesting messaging an existing instance.

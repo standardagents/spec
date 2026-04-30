@@ -345,6 +345,9 @@ interface SubpromptConfig<T extends string = string> {
 
 /**
  * Configuration for invoking a dual_ai agent as a subagent tool.
+ *
+ * Runtime-injected `subagent_create` tools for resumable subagents must require
+ * a non-empty `name` argument for the spawned child instance.
  */
 interface SubagentToolConfig<T extends string = string> {
   name: T;

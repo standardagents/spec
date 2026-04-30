@@ -2,7 +2,7 @@
 
 A hook is an interception point in the agent execution lifecycle. Hooks enable logging, validation, transformation, and side effects at specific moments during execution — without modifying core agent logic.
 
-Hook handlers receive a [`ThreadState`](/0.1.0/specification/threads) with [`state.execution`](/0.1.0/specification/threads/execution-state) populated — step counts, the active dual-side, and the abort signal are all available for inspection and flow control.
+Hook handlers receive a [`ThreadState`](/0.1.0/specification/threads). Hooks that run during active execution also receive [`state.execution`](/0.1.0/specification/threads/execution-state) with step counts, active dual-side, and abort signal context.
 
 ## 1. Hook Definition
 
@@ -14,6 +14,9 @@ The specification defines the following hooks:
 
 | Hook | Trigger Point | Purpose |
 |------|---------------|---------|
+| `after_thread_created` | After thread creation, before execution | Initialize thread state |
+| `after_subagent_created` | On parent after child thread creation | Track or initialize child relationships |
+| `after_system_message` | After system message render | Transform the request system message |
 | `filter_messages` | Before LLM context assembly | Filter/transform message history |
 | `prefilter_llm_history` | After context assembly | Final adjustments before LLM request |
 | `before_create_message` | Before message insert | Transform message before storage |
@@ -367,6 +370,18 @@ interface HookSignatures<
   ToolCall = HookToolCall,
   ToolResult = HookToolResult,
 > {
+  after_thread_created: (state: State) => Promise<void>;
+
+  after_subagent_created: (
+    state: State,
+    childState: State
+  ) => Promise<void>;
+
+  after_system_message: (
+    state: State,
+    systemMessage: string
+  ) => string | Promise<string | null | undefined> | null | undefined;
+
   filter_messages: (state: State, messages: Message[]) => Promise<Message[]>;
 
   prefilter_llm_history: (
