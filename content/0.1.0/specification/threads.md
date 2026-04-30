@@ -102,7 +102,8 @@ The methods directory below is grouped by topic. Topics with their own page link
 | `getAgentNames()` | `string[]` | List available agents |
 | `getModelNames()` | `string[]` | List available models |
 | `env(propertyName)` | `Promise<string>` | Resolve environment variable using thread/user/instance/agent/prompt precedence |
-| `setEnv(propertyName, value)` | `Promise<void>` | Set a thread environment variable and propagate to active descendants |
+| `envType(propertyName)` | `Promise<'text' \| 'secret'>` | Resolve display/redaction classification for an environment value |
+| `setEnv(propertyName, value, options?)` | `Promise<void>` | Set a thread environment variable, optionally choosing `text` or `secret`, and propagate to active descendants |
 
 **Tool Invocation** — see [§3 Tool Invocation](#3-tool-invocation)
 
@@ -173,6 +174,8 @@ const models = state.getModelNames();
 ```typescript
 const apiKey = await state.env('GOOGLE_API_KEY');
 await state.setEnv('TOPDOWN_APPROVAL_GATE', 'open');
+await state.setEnv('PUBLIC_LABEL', 'QA', { type: 'text' });
+await state.setEnv('API_TOKEN', 'secret-token', { type: 'secret' });
 ```
 
 `env(propertyName)` resolves in this order:
@@ -182,7 +185,9 @@ await state.setEnv('TOPDOWN_APPROVAL_GATE', 'open');
 4. Agent definition defaults (`agent.env`)
 5. Prompt definition defaults (`prompt.env`)
 
-`setEnv(propertyName, value)` writes to thread storage and propagates recursively to active descendants. During propagation, descendants must filter out inherited values for variable names marked `scoped` in that descendant's agent graph. Terminated descendants are skipped.
+`envType(propertyName)` returns the display/redaction classification for a resolved environment value. Unknown or non-thread sources default to `secret`. Values marked `secret` should be redacted from tool output and logs; values marked `text` may be displayed.
+
+`setEnv(propertyName, value, options?)` writes to thread storage and propagates recursively to active descendants. Pass `{ type: 'text' }` or `{ type: 'secret' }` to choose the display/redaction classification. Omitting `type` preserves any existing classification for that key, or defaults a new key to `secret`. During propagation, descendants must filter out inherited values for variable names marked `scoped` in that descendant's agent graph. Terminated descendants are skipped.
 
 Thread, user, and instance environment values should be encrypted at rest when the runtime supports encrypted storage.
 
@@ -347,7 +352,7 @@ const prefs = await state.getValue<{ theme: string; locale: string }>('preferenc
 |---------|-------|-------------|--------------|
 | `context` | Single execution | Ephemeral | Sharing state between tool calls in one execution |
 | `getValue` / `setValue` | Thread | Durable | Small structured state scoped to the thread |
-| `env` / `setEnv` | Thread → user → instance → agent → prompt | Durable (encrypted at rest when supported) | Configuration and secrets with layered resolution |
+| `env` / `envType` / `setEnv` | Thread → user → instance → agent → prompt | Durable (encrypted at rest when supported) | Configuration and secrets with layered resolution and display/redaction metadata |
 | File system | Thread | Durable | Large or binary payloads |
 
 Runtime semantics and conformance requirements for the durable key-value store live in [Runtime §15](/0.1.0/infrastructure/runtime#15-durable-key-value-store).
@@ -522,7 +527,12 @@ interface ThreadState {
   getAgentNames(): string[];
   getModelNames(): string[];
   env(propertyName: string): Promise<string>;
-  setEnv(propertyName: string, value: string): Promise<void>;
+  envType(propertyName: string): Promise<'text' | 'secret'>;
+  setEnv(
+    propertyName: string,
+    value: string,
+    options?: { type?: 'text' | 'secret' }
+  ): Promise<void>;
   notifyParent(content: string): Promise<void>;
   setStatus(status: string): Promise<void>;
 
