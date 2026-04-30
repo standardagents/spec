@@ -9,23 +9,46 @@ For the rest of the `ThreadState` surface, see [Threads](/0.1.0/specification/th
 ```typescript
 import { defineThreadEndpoint } from '@standardagents/spec';
 
-export default defineThreadEndpoint(async (req, state) => {
+export default defineThreadEndpoint(async (req, state, params) => {
   const { messages, total } = await state.getMessages({ limit: 10 });
   return Response.json({
     threadId: state.threadId,
     messageCount: total,
+    params,
   });
 });
 ```
 
-## 2. Packed Endpoint Routing
+## 2. File-Based Routing
 
-When thread endpoints are loaded from packed packages, runtimes should mount them under a package namespace to avoid route collisions between packages and local endpoints.
-
-Example mount pattern:
+Thread endpoints are file-based. Runtimes mount endpoint files beneath the requested thread ID:
 
 ```text
-/api/packages/{packageId}/threads/{threadId}/...
+{runtime_prefix}/{threadId}/{endpoint_path}
+```
+
+The runtime chooses the prefix. The endpoint path is derived from the endpoint file path using these rules:
+
+| File path | Method | Endpoint path |
+|-----------|--------|---------------|
+| `foo.ts` | GET | `/foo` |
+| `bar.post.ts` | POST | `/bar` |
+| `index.ts` | GET | `/` |
+| `foobar/index.ts` | GET | `/foobar` |
+| `foobar/other.ts` | GET | `/foobar/other` |
+| `foobar/[id].ts` | GET | `/foobar/{id}` |
+| `foobar/[*].ts` | GET | `/foobar/{*}` |
+
+Files without a method suffix are GET endpoints. A method suffix is the final filename segment before `.ts`; runtimes MUST support at least `.get.ts`, `.post.ts`, `.put.ts`, `.patch.ts`, and `.delete.ts`. Method suffix matching is case-insensitive.
+
+`index.ts` maps to the containing directory path. Static routes take precedence over dynamic routes. Dynamic routes take precedence over catch-all routes.
+
+A dynamic segment is written `[name]` and captures exactly one path segment into `params.name`. A catch-all segment is written `[*]` and captures zero or more remaining path segments into `params['*']`. The catch-all value includes `/` separators when the match spans multiple segments.
+
+Packed thread endpoints use the same route namespace as local thread endpoints. They are still addressed beneath the runtime's thread ID prefix, not beneath a package-specific URL prefix:
+
+```text
+{runtime_prefix}/{threadId}/{endpoint_path}
 ```
 
 ## 3. Handler Signature
@@ -36,6 +59,7 @@ Thread endpoint handlers receive:
 |-----------|------|-------------|
 | `req` | `Request` | The incoming HTTP request |
 | `state` | `ThreadState` | Thread state for the requested thread |
+| `params` | `Record<string, string>` | Route parameters captured from dynamic or catch-all endpoint path segments |
 
 The handler **MUST** return a `Response` object.
 

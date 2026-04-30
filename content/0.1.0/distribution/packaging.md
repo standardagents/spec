@@ -219,10 +219,10 @@ Runtimes discover packed agents by:
 
 Packed thread endpoints are exported under `threadEndpoints` using endpoint keys like `status.get` or `admin/sync.post`.
 
-Runtimes should mount these under a package namespace to avoid collisions, for example:
+Runtimes mount packed thread endpoints beneath the same thread ID prefix used for local thread endpoints. Packed endpoints do not introduce a package-specific URL prefix.
 
 ```text
-/api/packages/{packageId}/threads/{threadId}/...
+{runtime_prefix}/{threadId}/{endpoint_path}
 ```
 
 ## Type Definitions
