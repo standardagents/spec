@@ -181,8 +181,8 @@ imports: { greeter: { default: (name) => `hi, ${name}` } }
 
 Rules:
 
-- Only **bare specifiers** are resolvable (`'fs'`, `'supervisor'`, `'@scope/pkg'`). Relative (`'./x'`) and URL (`'https://…'`) specifiers fail at module link time.
-- Specifiers are not resolved from any host package resolver, node_modules, CDN, or virtual module registry — only from `options.imports`.
+- Only **bare specifiers** are resolvable from `options.imports` (`'fs'`, `'supervisor'`, `'@scope/pkg'`). Relative specifiers resolve from `options.modules`; URL (`'https://…'`) specifiers fail at module link time.
+- Specifiers are not resolved from any host package resolver, node_modules, CDN, or virtual module registry — only from `options.imports` or `options.modules`.
 - Importing an unknown specifier fails linkage.
 - Named-export mismatches (`import { x }` where `x` is missing) fail linkage.
 
@@ -207,7 +207,9 @@ const run = state.runCode(
 
 Rules:
 
-- Keys MUST be relative specifiers such as `'./helpers.js'` or `'./lib/math.js'`.
+- Keys MUST be relative specifiers from the module graph root, such as `'./helpers.js'` or `'./lib/math.js'`.
+- Entry source imports resolve from `filename` when one is supplied.
+- Entry and module source MAY import sibling or parent modules with `./` and `../` specifiers when those imports resolve within the supplied module graph.
 - Values are JavaScript or TypeScript module source and are evaluated inside the same sandbox.
 - `modules` are not host filesystem reads and do not grant package, URL, CDN, or `node_modules` access.
 

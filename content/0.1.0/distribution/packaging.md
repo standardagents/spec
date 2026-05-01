@@ -225,6 +225,8 @@ Runtimes mount packed thread endpoints beneath the same thread ID prefix used fo
 {runtime_prefix}/{threadId}/{endpoint_path}
 ```
 
+Requests beneath the thread endpoint prefix that do not match any local or packed thread endpoint route MUST return HTTP 404.
+
 ## Type Definitions
 
 Packed agents include TypeScript definitions for type-safe consumption:

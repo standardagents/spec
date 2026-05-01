@@ -51,6 +51,8 @@ Packed thread endpoints use the same route namespace as local thread endpoints. 
 {runtime_prefix}/{threadId}/{endpoint_path}
 ```
 
+Requests beneath the thread endpoint prefix that do not match any local or packed thread endpoint route MUST return HTTP 404.
+
 ## 3. Handler Signature
 
 Thread endpoint handlers receive:
@@ -60,6 +62,8 @@ Thread endpoint handlers receive:
 | `req` | `Request` | The incoming HTTP request |
 | `state` | `ThreadState` | Thread state for the requested thread |
 | `params` | `Record<string, string>` | Route parameters captured from dynamic or catch-all endpoint path segments |
+
+The supplied `ThreadState` includes the standard thread surface, including `runCode`.
 
 The handler **MUST** return a `Response` object.
 
@@ -85,6 +89,7 @@ Thread endpoints automatically handle common errors:
 |-----------|----------|
 | Thread not found | 404: `{ error: "Thread not found: {threadId}" }` |
 | Missing thread ID | 400: `{ error: "Thread ID required" }` |
+| No matching thread endpoint route under the thread endpoint prefix | 404 |
 
 ## 6. Examples
 
