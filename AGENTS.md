@@ -116,7 +116,7 @@ Subagent behavior is documented on the [Agents](content/0.1.0/specification/agen
 
 - `specification/agents.md` — agent definition, `sessionStop`/`sessionFail`/`sessionStatus`, and the full Subagents section (lifecycle, invocation modes, parent ↔ child communication)
 - `specification/tools.md` — `SubagentToolConfig` type and lifecycle tools (`subagent_create`, `subagent_message`)
-- `specification/threads.md` — thread hierarchy, queue, termination; subagent-specific `notifyParent` / `setStatus`
+- `specification/threads.md` — thread hierarchy, queue, termination; subagent-specific `notifyParent` / `setStatus` / `stopSession`
 - `infrastructure/runtime.md` — execution/copying semantics
 
 When subagent behavior changes, update each of these together.

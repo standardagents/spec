@@ -53,6 +53,8 @@ state.execution.stop();
 fetch(url, { signal: state.execution.abortSignal });
 ```
 
+`state.execution.stop()` stops the current execution loop. It does not by itself satisfy a subagent/session terminal boundary. To terminally end the active agent session, use [`state.stopSession()`](/0.1.0/specification/threads#9-subagent-hierarchy-communication-and-termination).
+
 ## 4. TypeScript Reference
 
 ```typescript

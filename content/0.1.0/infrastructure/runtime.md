@@ -146,12 +146,17 @@ When child reports completion/failure:
 When `parentCommunication` is `explicit`, tools/hooks may still escalate by calling:
 - `state.notifyParent(content)`
 - `state.setStatus(status)`
+- `state.stopSession({ result, notifyParent, status })`
+
+If the thread has no parent, `notifyParent()` does not queue anything externally; `setStatus()` is a no-op without a parent registry entry. Clients may render the originating tool call or log entry as outbound parent communication.
 
 Attachment copying is required for correctness; linked paths from the source thread are not valid in the destination thread.
 
 ### 8.3 Status Updates
 
 `sessionStatus` updates child status in the parent registry without terminating child execution.
+
+`state.stopSession()` marks the active session terminal without requiring a `sessionStop` tool call. Implementations should treat this as a successful terminal child run for blocking and non-blocking subagent lifecycle handling. The optional `notifyParent` and `status` fields perform the same parent-message and registry-status effects as `notifyParent()` and `setStatus()`.
 
 ## 9. Queue and Delivery Semantics
 

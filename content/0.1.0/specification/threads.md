@@ -89,7 +89,8 @@ The methods directory below is grouped by topic. Topics with their own page link
 | `getChildThread(referenceId)` | `Promise<ThreadState \| null>` | Resolve child thread by subagent reference |
 | `getParentThread()` | `Promise<ThreadState \| null>` | Resolve parent thread for this thread |
 | `notifyParent(content)` | `Promise<void>` | Queue a silent message to this thread's parent |
-| `setStatus(status)` | `Promise<void>` | Update this thread's status in the parent registry |
+| `setStatus(status)` | `Promise<void>` | Update this thread's status in the parent registry when present |
+| `stopSession(options?)` | `Promise<void>` | Terminally stop the active agent session; optional `notifyParent` and `status` trigger those parent side effects |
 
 **Resource Loading** — see [§2 Resource Loading](#2-resource-loading)
 
@@ -418,7 +419,16 @@ Children can push information up the hierarchy without waiting for completion:
 ```typescript
 await state.notifyParent('halfway through the batch');
 await state.setStatus('running');
+await state.stopSession({
+  result: 'waiting for input',
+  notifyParent: 'Please answer the clarification question',
+  status: 'waiting for clarification',
+});
 ```
+
+`stopSession()` is distinct from `state.execution.stop()`: it marks the active agent session as terminal for lifecycle/subagent purposes. By default it only stops the session; `notifyParent` and `status` are optional side effects.
+
+If a child has no parent thread, `notifyParent()` does not queue anything externally; `setStatus()` similarly becomes a no-op when there is no parent registry entry. Clients can still render the originating tool call or log entry as outbound parent communication.
 
 ## 10. Runtime Context (Non-Portable)
 
@@ -535,6 +545,11 @@ interface ThreadState {
   ): Promise<void>;
   notifyParent(content: string): Promise<void>;
   setStatus(status: string): Promise<void>;
+  stopSession(options?: {
+    result?: string;
+    notifyParent?: string;
+    status?: string;
+  }): Promise<void>;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Tool Invocation

@@ -101,7 +101,7 @@ Behavioral summary:
 - `immediate.nameEnv` / `immediate.descriptionEnv`: the only per-instance env values that a runtime may expose to an internal bootstrap model when deriving initial child args.
 - `immediate.scopedEnv`: per-instance env values copied into the child thread; these remain runtime-only.
 - `optional: 'FLAG_NAME'`: branch is enabled only when that environment flag resolves to `true`, `1`, or `yes` (case-insensitive).
-- `resumable.parentCommunication`: `implicit` auto-queues child completion to the parent; `explicit` requires tools/hooks to call runtime thread APIs such as `state.notifyParent()`.
+- `resumable.parentCommunication`: `implicit` auto-queues child completion to the parent; `explicit` requires tools/hooks to call runtime thread APIs such as `state.notifyParent()` or `state.stopSession()`.
 
 Security rule:
 - runtimes must not expose `immediate.scopedEnv` values to the model unless the same env name is explicitly designated by `nameEnv` or `descriptionEnv`.
