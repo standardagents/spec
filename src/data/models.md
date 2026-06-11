@@ -18,7 +18,8 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 
 - First-party list prices are used where available.
 - Open-weight and aggregator-distributed models use representative public API pricing.
-- GLM prices use the listed OpenRouter rates for `z-ai/glm-5.1`, `z-ai/glm-4.7`, and `z-ai/glm-4.7-flash`.
+- GLM prices use the listed OpenRouter rates for `z-ai/glm-5.1` and `z-ai/glm-4.7-flash`.
+- Nemotron prices use the listed OpenRouter rates for `nvidia/nemotron-3-ultra-550b-a55b` and `nvidia/nemotron-3-super-120b-a12b`.
 - `conversation` estimates how natural, coherent, and useful the model feels in multi-turn chat, separate from raw reasoning or coding strength.
 - `imageGeneration` measures native image-output capability, not just image understanding.
 
@@ -158,24 +159,24 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 			"summary": "Long-horizon text model tuned for extended autonomous tasks, with strong coding and agent performance at relatively low cost."
 		},
 		{
-			"name": "GLM 4.7",
-			"bestFor": "Cheap general use, pretty descent reasoning. Does a good job at tool discernment, struggles with instruction following and making well formatted tool calls (needs a fallback).",
-			"price": "0.39 / 1.75",
+			"name": "NVIDIA Nemotron 3 Ultra 550B A55B",
+			"bestFor": "Frontier open reasoning and coordinator/orchestration work at a value price. Strong tool discernment across large tool sets.",
+			"price": "0.50 / 2.50",
 			"scores": {
-				"reasoning": 3,
-				"coding": 2,
-				"toolUse": 2,
-				"instructionFollowing": 2,
-				"longContext": 2,
+				"reasoning": 4,
+				"coding": 3,
+				"toolUse": 4,
+				"instructionFollowing": 3,
+				"longContext": 4,
 				"vision": 0,
 				"imageGeneration": 0,
-				"structuredOutput": 2,
-				"speed": 3,
-				"costEfficiency": 4,
-				"reliability": 2,
-				"conversation": 2
+				"structuredOutput": 3,
+				"speed": 2,
+				"costEfficiency": 3,
+				"reliability": 3,
+				"conversation": 3
 			},
-			"summary": "Mid-tier text model with balanced coding, reasoning, and instruction performance plus strong cost efficiency."
+			"summary": "Open frontier reasoning and orchestration MoE (55B active of 550B) with a 1M context window, built for multi-agent coordination, tool calling, and structured output at a fraction of closed frontier pricing."
 		},
 		{
 			"name": "GLM 4.7 Flash",
