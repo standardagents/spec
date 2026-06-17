@@ -119,6 +119,8 @@ These tools are runtime-injected and scoped to what is currently enabled and ava
 
 `subagent_create` MUST require a non-empty `name` argument for the spawned child instance. Runtimes SHOULD persist this as a human-readable child thread display name, for example a `name:<value>` thread tag.
 
+`subagent_create` also accepts a structured `arguments` object carrying the invocation arguments dictated by the receiving agent's `side_a` `requiredSchema`. Runtimes MUST validate it against that schema, persist the validated arguments for the life of the child thread, and hydrate them into both sides' prompt interpolation on every activation (see [Agents §7.8](/0.1.0/specification/agents#78-persistent-invocation-arguments)). When required arguments are missing, runtimes MUST return a structured `subagent_arguments_required` error instead of spawning the child.
+
 If `subagent_create` cannot proceed because required scoped variables are missing, runtimes should return a structured bootstrap error (for example `subagent_env_required`) including a request ID and a temporary variables endpoint:
 
 - `GET /threads/{parent_thread_id}/variables/{request_id}`

@@ -175,7 +175,19 @@ Non-resumable subagents behave like direct tool calls (no persistent addressing)
 
 When `maxInstances` is reached, new creation attempts **SHOULD** return a tool error explaining the cap and suggesting messaging an existing instance.
 
-### 7.8 Scoped Variable Bootstrap
+### 7.8 Persistent Invocation Arguments
+
+The *receiving* agent — through the `requiredSchema` of its `side_a` prompt — solely dictates the invocation arguments a subagent accepts. Required schema fields are mandatory; optional fields are merely suggested. The invoking parent supplies them when calling the subagent tool, or via a structured `arguments` object on `subagent_create`.
+
+Unlike a plain tool call, these arguments are **not** ephemeral:
+
+- runtimes **MUST** persist the validated arguments for the life of the child thread.
+- runtimes **MUST** hydrate them into prompt interpolation for **both** `side_a` and `side_b` on every activation — the initial invocation and every later resume — so a system prompt can reference spawn-time context (for example a stylist subagent that needs the user's gender, sizes, and style preferences) for as long as the thread lives.
+- if required arguments are missing, runtimes **MUST** reject creation with a structured `subagent_arguments_required` error rather than spawning the child.
+
+This lets the receiving side declare what it needs once and rely on those values throughout the conversation, instead of only seeing them in the first message.
+
+### 7.9 Scoped Variable Bootstrap
 
 If `subagent_create` is called but required scoped variables for that child graph are missing, runtimes **SHOULD** return a structured error (e.g. `subagent_env_required`) and expose a temporary bootstrap endpoint:
 
@@ -187,7 +199,7 @@ Expected behavior:
 - `GET` returns required/missing variable names.
 - `POST` stores the provided values and immediately boots the deferred subagent using the original creation payload.
 
-### 7.9 Session Lifecycle Bindings on Child Sides
+### 7.10 Session Lifecycle Bindings on Child Sides
 
 Child completion, failure, and status are defined on each side's `SideConfig`:
 
@@ -197,7 +209,7 @@ Child completion, failure, and status are defined on each side's `SideConfig`:
 
 Each supports the string and object forms from [§4](#4-sessiontoolbinding). Mapped properties are the canonical payload for child → parent communication.
 
-### 7.10 Parent ↔ Child Communication
+### 7.11 Parent ↔ Child Communication
 
 #### Parent → Child
 
@@ -206,7 +218,7 @@ Parent communication occurs via:
 - initial invocation mapping (`initUserMessageProperty`, `initAttachmentsProperty`)
 - resumable messaging (`subagent_message`)
 
-Attachment paths **MUST** be copied from the parent filesystem to the child filesystem before queuing ([§7.12](#712-attachment-copying)).
+Attachment paths **MUST** be copied from the parent filesystem to the child filesystem before queuing ([§7.13](#713-attachment-copying)).
 
 #### Child → Parent: Completion
 
@@ -246,7 +258,7 @@ When `resumable.parentCommunication` is `explicit`, runtimes **MUST NOT** auto-q
 
 See [Threads](/0.1.0/specification/threads#9-subagent-hierarchy-communication-and-termination) for the host-side surface.
 
-### 7.11 Child Registry
+### 7.12 Child Registry
 
 Resumable instances are tracked in `ThreadState.children`:
 
@@ -268,7 +280,7 @@ interface SubagentRegistryEntry {
 
 When children exist, parent context **SHOULD** include a registry system message so the orchestrator can reason about active instances.
 
-### 7.12 Attachment Copying
+### 7.13 Attachment Copying
 
 Subagent communication that crosses thread boundaries **MUST** copy filesystem references:
 
@@ -277,7 +289,7 @@ Subagent communication that crosses thread boundaries **MUST** copy filesystem r
 
 The destination thread **MUST** receive destination-local attachment paths.
 
-### 7.13 Queue and Termination
+### 7.14 Queue and Termination
 
 These are properties of the underlying thread, not of subagents specifically. See [Threads](/0.1.0/specification/threads) for the full queue and termination semantics:
 

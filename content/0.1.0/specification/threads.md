@@ -192,7 +192,7 @@ await state.setEnv('API_TOKEN', 'secret-token', { type: 'secret' });
 
 Thread, user, and instance environment values should be encrypted at rest when the runtime supports encrypted storage.
 
-For resumable subagent creation, runtimes may require missing scoped variables to be provided through a pending request flow before boot can continue. See [Agents §7.8](/0.1.0/specification/agents#78-scoped-variable-bootstrap).
+For resumable subagent creation, runtimes may require missing scoped variables to be provided through a pending request flow before boot can continue. See [Agents §7.9](/0.1.0/specification/agents#79-scoped-variable-bootstrap).
 
 ## 3. Tool Invocation
 
