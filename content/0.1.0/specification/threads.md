@@ -40,7 +40,8 @@ Handoffs enable workflows where specialized agents handle different parts of a c
 | `createdAt` | `number` | Creation timestamp in microseconds (readonly) |
 | `children` | `SubagentRegistryEntry[]` | Resumable child subagent registry (readonly) |
 | `terminated` | `number \| null` | Termination timestamp in microseconds, or null when active (readonly) |
-| `context` | `Record<string, unknown>` | Per-execution key-value storage. See [Context Storage](#6-context-storage) |
+| `arguments` | `Record<string, unknown>` | Arguments supplied when this thread was created or invoked. Resumable subagent initial arguments appear here. See [Thread Arguments](#61-thread-arguments) |
+| `context` | `Record<string, unknown>` | Mutable per-execution scratch storage. See [Context Storage](#62-per-execution-context) |
 | `execution` | `ExecutionState \| null` | Execution state during active execution, null at rest. See [Execution State](/0.1.0/specification/threads/execution-state) |
 | `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context (non-portable). See [Runtime Context](#10-runtime-context-non-portable) |
 
@@ -296,11 +297,39 @@ Events are delivered via WebSocket to any connected clients.
 - Event data **MUST** be JSON-serializable
 - Events **SHOULD NOT** contain sensitive information
 
-## 6. Context Storage
+## 6. Thread Arguments and Context Storage
 
-### 6.1 Per-Execution Context
+### 6.1 Thread Arguments
 
-The `context` property provides temporary storage:
+`arguments` is the read-only argument object supplied when the thread was
+created or invoked.
+
+For resumable subagent threads, runtimes **MUST** restore the creation-time
+`subagent_create.arguments` object into `ThreadState.arguments` on every run and
+when exposing the child through endpoints, hooks, effects, or other
+`ThreadState` access. For `dual_ai` child threads, both sides see the same
+argument object:
+
+```typescript
+const initialArgs = state.arguments;
+const shirtSize = state.arguments.shirt_size;
+```
+
+Runtimes should keep the durable copy with child thread metadata/properties.
+They should also expose top-level argument keys to prompt variable interpolation,
+for whichever child side is currently rendering, including included prompts,
+without requiring callers to put those values in `state.context`.
+
+### 6.2 Per-Execution Context
+
+The `context` property is mutable execution-scoped scratch storage for values
+that should be shared while the current agent run is being assembled and
+executed. It is used for:
+
+- sharing derived values between tools, hooks, effects, and runtime lifecycle code during one execution
+- runtime-internal coordination data that should not become a thread argument
+
+For example:
 
 ```typescript
 state.context.userData = { id: 123, name: 'Alice' };
@@ -309,12 +338,19 @@ state.context.userData = { id: 123, name: 'Alice' };
 const user = state.context.userData;
 ```
 
-### 6.2 Context Limitations
+Runtimes may seed `context` at execution start with runtime coordination data.
+User code may mutate it during execution, and later
+participants in that same execution see those mutations.
+
+Invocation or creation arguments belong in [`arguments`](#61-thread-arguments),
+not in `context`.
+
+### 6.3 Context Limitations
 
 | Aspect | Behavior |
 |--------|----------|
 | **Scope** | Single execution only |
-| **Persistence** | Lost after execution ends |
+| **Persistence** | Mutations are lost after execution ends |
 | **Type** | `Record<string, unknown>` |
 | **Size** | No enforced limit |
 
@@ -351,7 +387,8 @@ const prefs = await state.getValue<{ theme: string; locale: string }>('preferenc
 
 | Surface | Scope | Persistence | Intended Use |
 |---------|-------|-------------|--------------|
-| `context` | Single execution | Ephemeral | Sharing state between tool calls in one execution |
+| `arguments` | Thread invocation | Durable when backed by thread metadata/properties | Creation/invocation arguments exposed to thread code and prompt interpolation |
+| `context` | Single execution | Ephemeral | Mutable scratch state shared during one execution |
 | `getValue` / `setValue` | Thread | Durable | Small structured state scoped to the thread |
 | `env` / `envType` / `setEnv` | Thread → user → instance → agent → prompt | Durable (encrypted at rest when supported) | Configuration and secrets with layered resolution and display/redaction metadata |
 | File system | Thread | Durable | Large or binary payloads |
@@ -391,12 +428,15 @@ interface SubagentRegistryEntry {
   resumable?: boolean;
   blocking?: boolean;
   threadName?: string;
+  initialArguments?: Record<string, unknown>;
   spawnGroupId?: string;
   createdAt?: number;
   status: string;
   parentCommunication?: 'implicit' | 'explicit';
 }
 ```
+
+`initialArguments` stores the structured values supplied at child creation. The registry copy is parent-visible metadata; the durable child-side source should live with the child thread's own metadata/properties and be exposed to both child sides as `ThreadState.arguments` and prompt interpolation variables.
 
 See [Agents §7](/0.1.0/specification/agents#7-subagents) for the full lifecycle, communication modes, and cross-thread semantics.
 
@@ -514,6 +554,7 @@ interface ThreadState {
   readonly createdAt: number;
   readonly children: SubagentRegistryEntry[];
   readonly terminated: number | null;
+  readonly arguments: Record<string, unknown>;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Messages — see /threads/messages

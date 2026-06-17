@@ -115,6 +115,8 @@ Subagent tool configuration can map args to:
 
 For runtime lifecycle creation, `subagent_create` must receive a non-empty `name` argument and runtimes should persist that name for child thread display.
 
+For resumable lifecycle creation, `subagent_create.arguments` should be validated against the prompt schema of the child side selected by `resumable.receives_messages`. Runtimes must persist those initial arguments with the child thread's metadata/properties and expose them to both child sides on future executions through `ThreadState.arguments` and the prompt render flow: top-level argument keys are available to prompt variable interpolation for whichever side is currently rendering, including included prompts.
+
 When `immediate` uses the object form, runtimes may perform an internal bootstrap-model pass before enqueuing the child call. In that flow:
 - only `nameEnv` and `descriptionEnv` are model-visible
 - `scopedEnv` values must remain encrypted at rest and runtime-only during transfer

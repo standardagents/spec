@@ -119,6 +119,8 @@ These tools are runtime-injected and scoped to what is currently enabled and ava
 
 `subagent_create` MUST require a non-empty `name` argument for the spawned child instance. Runtimes SHOULD persist this as a human-readable child thread display name, for example a `name:<value>` thread tag.
 
+`subagent_create` SHOULD expose an `arguments` object whose schema comes from the child side that receives parent messages. Runtimes MUST persist those initial arguments with the child thread and make them available to both child sides for later turns through `ThreadState.arguments` and prompt variable interpolation.
+
 If `subagent_create` cannot proceed because required scoped variables are missing, runtimes should return a structured bootstrap error (for example `subagent_env_required`) including a request ID and a temporary variables endpoint:
 
 - `GET /threads/{parent_thread_id}/variables/{request_id}`

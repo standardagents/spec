@@ -171,6 +171,8 @@ For resumable instances, runtimes expose built-in lifecycle tools:
 
 `subagent_create` **MUST** require a non-empty `name` argument for the spawned child instance.
 
+`subagent_create` **SHOULD** also accept an `arguments` object shaped by the prompt schema of the child side that receives parent messages (`resumable.receives_messages`). Runtimes **MUST** persist those initial arguments for the lifetime of the child thread and make them available to both child sides through `ThreadState.arguments` and prompt variable interpolation, including future resumptions.
+
 Non-resumable subagents behave like direct tool calls (no persistent addressing).
 
 When `maxInstances` is reached, new creation attempts **SHOULD** return a tool error explaining the cap and suggesting messaging an existing instance.
@@ -259,6 +261,7 @@ interface SubagentRegistryEntry {
   resumable?: boolean;
   blocking?: boolean;
   threadName?: string;
+  initialArguments?: Record<string, unknown>;
   spawnGroupId?: string;
   createdAt?: number;
   status: string;
