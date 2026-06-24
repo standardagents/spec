@@ -136,7 +136,33 @@ When tool-driven subagent communication crosses thread boundaries:
 
 Returned attachment references must always be valid for the receiving thread filesystem.
 
-## 8. Conformance Notes
+## 8. Progress Reporting
+
+A function tool **MAY** declare a `progressArgument` naming an argument whose value is a short, human-readable description of what the tool call is doing — for example `fixing index.html`.
+
+```typescript
+defineTool({
+  description: 'Write a file to the workspace',
+  progressArgument: 'description',
+  args: z.object({
+    description: z.string().describe('e.g. "writing index.html"'),
+    path: z.string(),
+    content: z.string(),
+  }),
+  execute: async (state, args) => {
+    return { status: 'success', result: '...' };
+  },
+});
+```
+
+Semantics:
+- `progressArgument` controls when the [`tool_call_started`](/0.1.0/specification/hooks#51-tool_call_started) hook and the matching `tool_call_started` thread event fire.
+- When set, the runtime **SHOULD** wait until *just this argument* has finished streaming from the model — not the whole tool call — and surface its value as `progress`. This lets a UI show what a tool is about to do before a large argument (such as a file's `content`) finishes generating.
+- When unset, `tool_call_started` fires as soon as the tool call appears in the model stream: its name is known, but its arguments **MAY** still be incomplete and `progress` is `undefined`.
+- The named argument **SHOULD** be declared early in the `args` schema and kept short so it completes quickly.
+- If the model never emits the named argument, `tool_call_started` still fires once the tool call finishes, with `progress` undefined.
+
+## 9. Conformance Notes
 
 Implementations **MUST**:
 

@@ -24,8 +24,10 @@ The specification defines the following hooks:
 | `before_update_message` | Before message update | Transform update data |
 | `after_update_message` | After message update | Side effects after update |
 | `before_store_tool_result` | Before tool result storage | Transform tool results |
+| `tool_call_started` | When a tool call starts streaming | Observe tool calls before they execute |
 | `after_tool_call_success` | After successful tool call | Post-process success results |
 | `after_tool_call_failure` | After failed tool call | Handle/recover from errors |
+| `tool_call_done` | After tool execution (success or failure) | Observe every completed tool call |
 
 ### 1.2 Hook Definition
 
@@ -255,7 +257,26 @@ Called after a message is successfully updated.
 
 ## 5. Tool Execution Hooks
 
-### 5.1 before_store_tool_result
+### 5.1 tool_call_started
+
+Called when a tool call **starts** — before the tool executes, while the model may still be generating the rest of the call. Fires exactly once per tool call. This hook is observational: its return value is ignored.
+
+**Signature:**
+```typescript
+(state: ThreadState, toolCall: HookToolCall, progress?: string) => Promise<void>
+```
+
+**Timing:**
+- When the tool declares a [`progressArgument`](/0.1.0/specification/tools#8-progress-reporting), the hook fires as soon as *just that argument* has finished streaming (not the whole call), passing its value as `progress`. This lets a UI show what the tool is about to do — for example `fixing index.html` — before a large argument such as `content` finishes generating.
+- When the tool does **not** declare a `progressArgument`, the hook fires as soon as the tool call appears in the stream. Its name is known, but `toolCall.function.arguments` **MAY** be an incomplete JSON fragment (or empty), and `progress` is `undefined`.
+
+**Behavior:**
+- Implementations **MUST** call this hook exactly once per tool call.
+- The return value **MUST** be ignored; the hook cannot modify the tool call.
+- Runtimes **SHOULD** also broadcast a matching `tool_call_started` thread event to connected clients with `{ id, name, progress }` at the same moment.
+- Use for surfacing tool activity in a UI, logging, or progress telemetry.
+
+### 5.2 before_store_tool_result
 
 Called before a tool result is stored in the database.
 
@@ -269,7 +290,7 @@ Called before a tool result is stored in the database.
 - Add metadata to tool results
 - Transform result format
 
-### 5.2 after_tool_call_success
+### 5.3 after_tool_call_success
 
 Called after a tool executes successfully. Can return modified result or null for original.
 
@@ -283,7 +304,7 @@ Called after a tool executes successfully. Can return modified result or null fo
 - If hook returns a result, it replaces the original
 - Use for logging, metrics, or result post-processing
 
-### 5.3 after_tool_call_failure
+### 5.4 after_tool_call_failure
 
 Called after a tool execution fails. Can return modified error or null for original.
 
@@ -298,6 +319,22 @@ Called after a tool execution fails. Can return modified error or null for origi
 - Error message transformation
 
 Hooks accessing external services **MUST** handle failures gracefully.
+
+### 5.5 tool_call_done
+
+Called when a tool call is **done** — after it has executed, with its result, regardless of success or failure. Fires once per tool call. This hook is observational: its return value is ignored.
+
+**Signature:**
+```typescript
+(state: ThreadState, toolCall: HookToolCall, toolResult: HookToolResult) => Promise<void>
+```
+
+**Behavior:**
+- Implementations **MUST** call this hook once per tool call, whether it succeeded or failed.
+- The return value **MUST** be ignored; the hook cannot modify the result.
+- This complements `after_tool_call_success` / `after_tool_call_failure`, which can additionally *modify* the stored result; `tool_call_done` is a single unified observation point that always fires.
+- Runtimes **SHOULD** also broadcast a matching `tool_call_done` thread event to connected clients with `{ id, name, status }` at the same moment.
+- Use for unified tool telemetry, metrics, or closing out UI progress indicators.
 
 ## 6. Type Definitions
 
@@ -424,6 +461,18 @@ interface HookSignatures<
     toolCall: ToolCall,
     toolResult: ToolResult
   ) => Promise<ToolResult | null>;
+
+  tool_call_started: (
+    state: State,
+    toolCall: ToolCall,
+    progress?: string
+  ) => Promise<void>;
+
+  tool_call_done: (
+    state: State,
+    toolCall: ToolCall,
+    toolResult: ToolResult
+  ) => Promise<void>;
 }
 
 /**
@@ -500,7 +549,44 @@ export default defineHook({
 });
 ```
 
-### 8.3 Error Alerting
+### 8.3 Surfacing Tool Progress
+
+```typescript
+import { defineHook } from '@standardagents/spec';
+
+export default defineHook({
+  hook: 'tool_call_started',
+  id: 'log_tool_start',
+  execute: async (state, toolCall, progress) => {
+    // `progress` is the value of the tool's declared progressArgument,
+    // available before the rest of the call finishes streaming.
+    console.log(`▸ ${toolCall.function.name}${progress ? `: ${progress}` : ''}`);
+  },
+});
+```
+
+### 8.4 Unified Tool Telemetry
+
+```typescript
+import { defineHook } from '@standardagents/spec';
+
+export default defineHook({
+  hook: 'tool_call_done',
+  id: 'record_tool_completion',
+  execute: async (state, toolCall, result) => {
+    // Always fires once a tool finishes, whether it succeeded or failed.
+    console.log({
+      event: 'tool_done',
+      threadId: state.threadId,
+      tool: toolCall.function.name,
+      status: result.status,
+      timestamp: Date.now(),
+    });
+  },
+});
+```
+
+### 8.5 Error Alerting
 
 ```typescript
 import { defineHook } from '@standardagents/spec';
@@ -522,7 +608,7 @@ export default defineHook({
 });
 ```
 
-### 8.4 Adding Metadata to Messages
+### 8.6 Adding Metadata to Messages
 
 ```typescript
 import { defineHook } from '@standardagents/spec';
@@ -543,7 +629,7 @@ export default defineHook({
 });
 ```
 
-### 8.5 Sanitizing Sensitive Data
+### 8.7 Sanitizing Sensitive Data
 
 ```typescript
 import { defineHook } from '@standardagents/spec';
