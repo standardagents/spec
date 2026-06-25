@@ -14,8 +14,11 @@ interface Provider {
   supportsModel?(modelId: string): boolean;
   getTools?(modelId?: string): Record<string, ToolDefinition>;
   getModels?(filter?: string): Promise<ProviderModelInfo[]>;
+  getModelsPage?(query?: ProviderModelsQuery): Promise<ProviderModelsPage>;
   getModelCapabilities?(modelId: string): Promise<ModelCapabilities | null>;
   getIcon?(modelId?: string): string | undefined;
+  inspectRequest?(request: ProviderRequest): Promise<InspectedRequest>;
+  getResponseMetadata?(summary: ResponseSummary, signal?: AbortSignal): Promise<Record<string, unknown> | null>;
 }
 ```
 
@@ -28,8 +31,10 @@ interface Provider {
 | `supportsModel` | Optional. Returns true if provider can handle the model. |
 | `getTools` | Optional. Returns provider-embedded tools available for the model. |
 | `getModels` | Optional. Lists available models from the provider. |
+| `getModelsPage` | Optional. Lists available models with pagination/search metadata. |
 | `getModelCapabilities` | Optional. Returns capabilities for a specific model. |
 | `getIcon` | Optional. Returns icon for the provider or a specific model. |
+| `inspectRequest` | Optional. Returns a provider-native preview of a Standard Agents request. |
 | `getResponseMetadata` | Optional. Fetches additional metadata after response completes (async). |
 
 ### 1.2 Provider Factory
@@ -37,14 +42,143 @@ interface Provider {
 Provider packages export a factory function that creates provider instances:
 
 ```typescript
-type ProviderFactory = (config: ProviderConfig) => Provider;
+type ProviderFactory = (config: ProviderFactoryConfig) => Provider;
 
-interface ProviderConfig {
+interface ProviderFactoryConfig {
   apiKey: string;
   baseUrl?: string;
   timeout?: number;
+  [key: string]: unknown;
 }
 ```
+
+### 1.3 Provider Extension Factories
+
+A provider extension is a named provider factory created from a base provider factory. Extensions allow compatible APIs to expose a distinct provider identity, endpoint, credential source, model list, icons, pricing, tools, or request behavior.
+
+A provider extension MUST declare a `baseProvider`. Models that import the base provider and models that import the extension remain separate provider choices.
+
+```typescript
+import { defineModel, defineProvider, providerEnv } from '@standardagents/spec';
+import { openai } from '@standardagents/openai';
+
+const openaiCompatible = defineProvider({
+  name: 'openai_compatible',
+  label: 'OpenAI-compatible endpoint',
+  baseProvider: openai,
+  config: {
+    apiKey: providerEnv('EXAMPLE_PROVIDER_API_KEY', {
+      valueType: 'secret',
+      required: true,
+      description: 'API key for the compatible endpoint.',
+    }),
+    baseUrl: providerEnv('EXAMPLE_PROVIDER_BASE_URL', {
+      valueType: 'url',
+      default: 'https://api.example.com/v1',
+      description: 'OpenAI-compatible API base URL.',
+    }),
+  },
+});
+
+export default defineModel({
+  name: 'example_chat',
+  provider: openaiCompatible,
+  model: 'example-chat',
+});
+```
+
+#### Config Slots
+
+Base providers declare connection-level configuration slots on the provider factory. These slots are the provider's override locations.
+
+```typescript
+openai.configSlots = {
+  apiKey: {
+    type: 'secret',
+    required: true,
+    defaultEnv: 'OPENAI_API_KEY',
+    overridable: true,
+    description: 'OpenAI API key used to authenticate provider requests.',
+  },
+  baseUrl: {
+    type: 'url',
+    required: false,
+    default: 'https://api.openai.com/v1',
+    overridable: true,
+    description: 'OpenAI-compatible API base URL.',
+  },
+  timeout: {
+    type: 'number',
+    required: false,
+    default: 30000,
+    overridable: true,
+    description: 'Provider request timeout in milliseconds.',
+  },
+};
+```
+
+Provider config is for connection-level values: API keys, base URLs, regions, account IDs, timeouts, and similar values used to construct the provider instance. Per-model request behavior still belongs in `providerOptions` on the model, prompt, or runtime request.
+
+For each slot:
+
+1. If the extension defines `config[slotName]`, that value source supplies the value.
+2. If the extension does not define the slot, the base provider slot is resolved from its `defaultEnv` when present.
+3. If no environment value is present, the base provider slot `default` is used when present.
+4. If a required slot has no value, the implementation reports the slot as a missing provider variable.
+
+Therefore, an OpenAI-compatible extension that only overrides `baseUrl` still uses `OPENAI_API_KEY`. To use its own key, it MUST also override `apiKey` with a value source such as `providerEnv('EXAMPLE_PROVIDER_API_KEY', { valueType: 'secret' })`.
+
+Provider config value sources are:
+
+| Source | Description |
+|--------|-------------|
+| `providerEnv(name, options)` | Environment variable source with UI/runtime metadata such as `valueType`, `required`, `default`, and `description`. |
+| `providerValue(value)` | Supplies a literal value. |
+| `providerConst(value)` | Alias for `providerValue(value)`. |
+
+#### Method Overrides
+
+Provider extensions can override any provider hook. Each override receives a context object plus `next()`, where `next()` calls the base provider implementation. An override MUST call `next()` to compose with the base provider. If it does not call `next()`, it replaces that behavior.
+
+```typescript
+export default defineProvider({
+  name: 'openai_compatible',
+  label: 'OpenAI-compatible endpoint',
+  baseProvider: openai,
+  config: {
+    apiKey: providerEnv('EXAMPLE_PROVIDER_API_KEY', { valueType: 'secret', required: true }),
+    baseUrl: providerEnv('EXAMPLE_PROVIDER_BASE_URL', {
+      valueType: 'url',
+      default: 'https://api.example.com/v1',
+    }),
+  },
+  overrides: {
+    getIcon({ modelId }, next) {
+      if (modelId?.startsWith('example-')) return '/icons/example-provider.svg';
+      return next();
+    },
+    async getModels({ config, filter }) {
+      const response = await fetch(`${config.baseUrl}/models`, {
+        headers: { Authorization: `Bearer ${config.apiKey}` },
+      });
+      const models = await response.json();
+      return filter ? models.data.filter((model) => model.id.includes(filter)) : models.data;
+    },
+  },
+});
+```
+
+The override context always includes:
+
+| Field | Description |
+|-------|-------------|
+| `providerName` | The extension provider name. |
+| `config` | The resolved config passed to the base provider factory. |
+| `baseProvider` | The provider instance created by `baseProvider(config)`. |
+
+Overrideable methods are `generate`, `stream`, `supportsModel`, `getModels`, `getModelsPage`, `getModelCapabilities`, `getTools`, `getIcon`, `inspectRequest`, and `getResponseMetadata`.
+
+`supportsModel` and `getIcon` are synchronous. Implementations SHOULD use `getModels` or `getModelsPage` for asynchronous model discovery.
 
 ## 2. Request Format
 
@@ -472,8 +606,10 @@ interface Provider {
   supportsModel?(modelId: string): boolean;
   getTools?(modelId?: string): Record<string, ToolDefinition>;
   getModels?(filter?: string): Promise<ProviderModelInfo[]>;
+  getModelsPage?(query?: ProviderModelsQuery): Promise<ProviderModelsPage>;
   getModelCapabilities?(modelId: string): Promise<ModelCapabilities | null>;
   getIcon?(modelId?: string): string | undefined;
+  inspectRequest?(request: ProviderRequest): Promise<InspectedRequest>;
   getResponseMetadata?(summary: ResponseSummary, signal?: AbortSignal): Promise<Record<string, unknown> | null>;
 }
 
@@ -485,13 +621,101 @@ interface ResponseSummary {
   usage: { promptTokens: number; completionTokens: number; totalTokens: number };
 }
 
-// Factory type
-type ProviderFactory = (config: ProviderConfig) => Provider;
+// Factory types
+type ProviderFactory = ProviderFactoryWithOptions;
 
-interface ProviderConfig {
+interface ProviderFactoryWithOptions<TOptions = unknown> {
+  (config: ProviderFactoryConfig): Provider;
+  providerOptions?: TOptions;
+  configSlots?: ProviderConfigSlots;
+  providerDefinition?: ProviderDefinition;
+}
+
+interface ProviderFactoryConfig {
   apiKey: string;
   baseUrl?: string;
   timeout?: number;
+  [key: string]: unknown;
+}
+
+type ProviderConfigSlots = Record<string, ProviderConfigSlot>;
+type ProviderConfigValueType = 'text' | 'secret' | 'url' | 'number' | 'boolean';
+
+interface ProviderConfigSlot<T = unknown> {
+  type: ProviderConfigValueType;
+  required?: boolean;
+  default?: T;
+  defaultEnv?: string;
+  overridable?: boolean;
+  description?: string;
+}
+
+type ProviderConfigValueSource<T = unknown> =
+  | { type: 'const'; value: T }
+  | {
+      type: 'env';
+      name: string;
+      valueType?: ProviderConfigValueType;
+      required?: boolean;
+      default?: T;
+      description?: string;
+    };
+
+function providerEnv<T = string>(
+  name: string,
+  options?: Omit<Extract<ProviderConfigValueSource<T>, { type: 'env' }>, 'type' | 'name'>
+): ProviderConfigValueSource<T>;
+
+function providerValue<T>(value: T): ProviderConfigValueSource<T>;
+const providerConst: typeof providerValue;
+
+function defineProvider<N extends string, Base extends ProviderFactoryWithOptions>(
+  definition: ProviderDefinition<N, Base>
+): ProviderFactoryWithOptions;
+
+interface ProviderDefinition<
+  N extends string = string,
+  Base extends ProviderFactoryWithOptions = ProviderFactoryWithOptions
+> {
+  name: N;
+  label?: string;
+  baseProvider: Base;
+  config?: Partial<Record<keyof ProviderFactoryConfig | string, ProviderConfigValueSource>>;
+  overrides?: ProviderMethodOverrides;
+}
+
+interface ProviderOverrideContext {
+  providerName: string;
+  config: ProviderFactoryConfig;
+  baseProvider: Provider;
+}
+
+type MaybePromise<T> = T | Promise<T>;
+
+type ProviderOverride<Context, Result> = (
+  context: ProviderOverrideContext & Context,
+  next: () => MaybePromise<Result>
+) => MaybePromise<Result>;
+
+type ProviderSyncOverride<Context, Result> = (
+  context: ProviderOverrideContext & Context,
+  next: () => Result
+) => Result;
+
+interface ProviderMethodOverrides {
+  generate?: ProviderOverride<{ request: ProviderRequest }, ProviderResponse>;
+  stream?: ProviderOverride<{ request: ProviderRequest }, AsyncIterable<ProviderStreamChunk>>;
+  supportsModel?: ProviderSyncOverride<{ modelId: string }, boolean>;
+  getModels?: ProviderOverride<{ filter?: string }, ProviderModelInfo[]>;
+  getModelsPage?: ProviderOverride<{ query?: ProviderModelsQuery }, ProviderModelsPage>;
+  getModelCapabilities?: ProviderOverride<{ modelId: string }, ModelCapabilities | null>;
+  getTools?: ProviderOverride<{ modelId?: string }, Record<string, ToolDefinition>>;
+  getIcon?: ProviderSyncOverride<{ modelId?: string }, string | undefined>;
+  inspectRequest?: ProviderOverride<{ request: ProviderRequest }, InspectedRequest>;
+  getResponseMetadata?: ProviderOverride<{
+    summary: ResponseSummary;
+    signal?: AbortSignal;
+  }, Record<string, unknown> | null>;
 }
 
 // Request
