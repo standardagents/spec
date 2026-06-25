@@ -75,7 +75,38 @@ await state.rmdirFile('/documents');
 await state.unlinkFile('/data/config.json');
 ```
 
-## 5. Search Operations
+## 5. Moving and Renaming
+
+`moveFile` relocates a file or directory to a new path, and `renameFile`
+changes an entry's name while keeping it in the same directory. Both return
+the moved entry's `FileRecord` at its new path.
+
+```typescript
+// Move a file to a different directory
+await state.moveFile('/drafts/post.md', '/published/post.md');
+
+// Move an entire directory — the whole subtree moves with it
+await state.moveFile('/tmp/work', '/archive/2024/work');
+
+// Rename in place (newName must not contain path separators)
+await state.renameFile('/notes/draft.txt', 'final.txt');
+```
+
+Both operations apply to files and directories. Moving a directory relocates
+its entire subtree, preserving the relative layout of its contents.
+
+Constraints:
+
+1. **Source must exist.** Moving a missing path throws.
+2. **Destination must be free.** `moveFile` does not overwrite; if the
+   destination path (or a subtree rooted at it) already exists, it throws.
+   Delete or move the existing entry first.
+3. **No moving a directory into itself.** A directory cannot be moved to its
+   own path or to one of its descendants (e.g. `/a` → `/a/b`).
+4. **`renameFile` names are bare.** `newName` must not contain `/`; use
+   `moveFile` to change an entry's directory.
+
+## 6. Search Operations
 
 ```typescript
 // Search file contents
@@ -92,7 +123,7 @@ const { paths } = await state.findFiles('**/*.json');
 console.log('JSON files:', paths);
 ```
 
-## 6. File Statistics
+## 7. File Statistics
 
 ```typescript
 const stats = await state.getFileStats();
@@ -101,7 +132,7 @@ console.log(`Directories: ${stats.directoryCount}`);
 console.log(`Total size: ${stats.totalSize} bytes`);
 ```
 
-## 7. Image Thumbnails
+## 8. Image Thumbnails
 
 ```typescript
 const thumbnail = await state.getFileThumbnail('/images/photo.jpg');
@@ -110,11 +141,11 @@ if (thumbnail) {
 }
 ```
 
-## 8. Streaming Files
+## 9. Streaming Files
 
 For large files, `readFileStream` provides memory-efficient access by yielding data in chunks.
 
-### 8.1 Method
+### 9.1 Method
 
 ```typescript
 readFileStream(
@@ -123,13 +154,13 @@ readFileStream(
 ): Promise<AsyncIterable<FileChunk> | null>
 ```
 
-### 8.2 Options
+### 9.2 Options
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `signal` | `AbortSignal` | Optional abort signal for cancellation |
 
-### 8.3 FileChunk
+### 9.3 FileChunk
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -138,7 +169,7 @@ readFileStream(
 | `totalChunks` | `number` | Total number of chunks |
 | `isLast` | `boolean` | Whether this is the final chunk |
 
-### 8.4 Behavior
+### 9.4 Behavior
 
 1. **File Not Found**: Returns `null` if the file does not exist.
 2. **External Files**: Returns `null` for files whose `storage` identifier references an external system (object storage, a remote URL, etc.). External files must be fetched using their storage location.
@@ -147,7 +178,7 @@ readFileStream(
 5. **Ordering Guarantee**: Chunks are always yielded in sequential order. Implementations **MUST NOT** yield chunks out of order.
 6. **Abort Signal**: When triggered, the stream stops yielding new chunks. Already-yielded chunks remain valid.
 
-### 8.5 Example: Processing Large File
+### 9.5 Example: Processing Large File
 
 ```typescript
 const stream = await state.readFileStream('/uploads/video.mp4');
@@ -161,7 +192,7 @@ for await (const chunk of stream) {
 }
 ```
 
-### 8.6 Example: HTTP Streaming Response
+### 9.6 Example: HTTP Streaming Response
 
 ```typescript
 const stream = await state.readFileStream('/uploads/large-file.bin');
