@@ -366,6 +366,7 @@ interface SubagentToolConfig<T extends string = string> {
     maxInstances?: number;
     parentCommunication?: 'implicit' | 'explicit';
   };
+  parentCommunication?: 'implicit' | 'explicit';
 }
 
 /**

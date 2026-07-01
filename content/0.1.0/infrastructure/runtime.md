@@ -95,7 +95,10 @@ For resumable subagents, runtimes should expose built-in lifecycle tools:
 - `subagent_message`
 
 Creation attempts beyond `maxInstances` **MUST** return tool errors with actionable guidance.
-If `parentCommunication` is `explicit`, runtimes should not auto-queue child completion/failure to the parent.
+
+### 7.2.1 Parent Communication Modes
+
+The effective `parentCommunication` mode applies to **all** subagents, not just resumable ones: `resumable.parentCommunication` when set, otherwise the top-level `SubagentToolConfig.parentCommunication`, defaulting to `implicit`. When the effective mode is `explicit`, runtimes **MUST NOT** auto-queue child completion/failure to the parent — and because that queued message is what schedules a parent turn, an `explicit` child's completion does not wake the parent. Runtimes should persist the effective mode on the child registry entry so both the parent-side and child-side completion paths can honor it.
 
 ### 7.3 Optional + Immediate Branches
 

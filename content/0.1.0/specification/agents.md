@@ -142,6 +142,7 @@ The key knobs:
 - `optional` — environment flag gating whether this branch is enabled.
 - `resumable` — persistent child instances addressable via lifecycle tools.
 - `resumable.parentCommunication` — `implicit` (default) auto-queues completion/failure to the parent; `explicit` leaves escalation to tools/hooks.
+- `parentCommunication` (top level) — the same modes for non-resumable subagents; `explicit` suppresses the auto-queued completion so a background child's finish does not wake the parent. `resumable.parentCommunication` takes precedence when both are set. See [§7.11](#711-parent--child-communication).
 
 ### 7.5 Optional Branches
 
@@ -252,11 +253,13 @@ Returned attachments are copied child → parent.
 
 #### Child → Parent: Explicit Escalation
 
-When `resumable.parentCommunication` is `explicit`, runtimes **MUST NOT** auto-queue completion/failure to the parent. Tools or hooks escalate explicitly:
+When the effective `parentCommunication` mode is `explicit`, runtimes **MUST NOT** auto-queue completion/failure to the parent. Tools or hooks escalate explicitly:
 
 - `state.notifyParent(content)`
 - `state.setStatus(status)`
 - `state.stopSession({ result, notifyParent, status })`
+
+The effective mode is resolved as `resumable.parentCommunication` when set, otherwise the top-level `SubagentToolConfig.parentCommunication`, defaulting to `implicit`. The top-level form is how a **non-resumable** background subagent opts out: because the auto-queued completion message is what triggers a parent turn, `explicit` means the child's completion does not wake the parent at all. Such children deliver results through another channel — for example, writing to the parent's thread key-value store — which the parent picks up on its next natural turn (e.g. via a `filter_messages` hook).
 
 See [Threads](/0.1.0/specification/threads#9-subagent-hierarchy-communication-and-termination) for the host-side surface.
 
