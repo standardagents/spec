@@ -100,12 +100,13 @@ Creation attempts beyond `maxInstances` **MUST** return tool errors with actiona
 
 The effective `parentCommunication` mode applies to **all** subagents, not just resumable ones: `resumable.parentCommunication` when set, otherwise the top-level `SubagentToolConfig.parentCommunication`, defaulting to `implicit`. When the effective mode is `explicit`, runtimes **MUST NOT** auto-queue child completion/failure to the parent — and because that queued message is what schedules a parent turn, an `explicit` child's completion does not wake the parent. Runtimes should persist the effective mode on the child registry entry so both the parent-side and child-side completion paths can honor it.
 
-### 7.3 Optional + Immediate Branches
+### 7.3 Optional + Immediate + Hidden Branches
 
 Runtimes should evaluate subagent tool flags before exposing/executing them:
 - `optional`: only enabled when the referenced environment flag resolves to `true`, `1`, or `yes` (case-insensitive)
 - `immediate`: execute before the first model step when the prompt becomes active
 - `immediate` object form: treat `nameEnv` and `descriptionEnv` as safe bootstrap hints and `scopedEnv` as runtime-only transfer data
+- `hidden`: the relationship stays declared and spawnable by runtime code (`invokeTool`/`queueTool` from hooks and tools), but the tool **MUST NOT** appear in any LLM request's tool list — for infrastructure children (e.g. background context compaction) the model must never invoke itself
 
 Immediate execution should be recursive across activated child prompts.
 

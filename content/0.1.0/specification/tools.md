@@ -91,6 +91,7 @@ interface SubagentToolConfig {
     parentCommunication?: 'implicit' | 'explicit';
   };
   parentCommunication?: 'implicit' | 'explicit';
+  hidden?: boolean;
 }
 ```
 
@@ -104,6 +105,7 @@ Behavioral summary:
 - `optional: 'FLAG_NAME'`: branch is enabled only when that environment flag resolves to `true`, `1`, or `yes` (case-insensitive).
 - `resumable.parentCommunication`: `implicit` auto-queues child completion to the parent; `explicit` requires tools/hooks to call runtime thread APIs such as `state.notifyParent()` or `state.stopSession()`.
 - top-level `parentCommunication`: the same modes for **non-resumable** subagents. `implicit` (default) auto-queues the child's completion to the parent, which triggers a parent turn; `explicit` suppresses the auto-queued completion entirely so the parent is not woken — for background children that deliver results through another channel (for example the parent's thread key-value store) to be picked up on the parent's next natural turn. When both are present, `resumable.parentCommunication` takes precedence.
+- `hidden: true`: the subagent relationship stays declared — runtime code (hooks calling `invokeTool`/`queueTool`) can still spawn the child — but the tool MUST NOT be included in any LLM request's tool list. For infrastructure children the model must never invoke itself (for example a background context-compaction agent).
 
 Security rule:
 - runtimes must not expose `immediate.scopedEnv` values to the model unless the same env name is explicitly designated by `nameEnv` or `descriptionEnv`.

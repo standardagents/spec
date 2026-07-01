@@ -143,6 +143,7 @@ The key knobs:
 - `resumable` — persistent child instances addressable via lifecycle tools.
 - `resumable.parentCommunication` — `implicit` (default) auto-queues completion/failure to the parent; `explicit` leaves escalation to tools/hooks.
 - `parentCommunication` (top level) — the same modes for non-resumable subagents; `explicit` suppresses the auto-queued completion so a background child's finish does not wake the parent. `resumable.parentCommunication` takes precedence when both are set. See [§7.11](#711-parent--child-communication).
+- `hidden` — keep the relationship declared (runtime code can still spawn the child via `invokeTool`/`queueTool`) while excluding the tool from every LLM request, so the model can never call it. For infrastructure children like background context compaction.
 
 ### 7.5 Optional Branches
 

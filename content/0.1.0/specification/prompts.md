@@ -367,6 +367,7 @@ interface SubagentToolConfig<T extends string = string> {
     parentCommunication?: 'implicit' | 'explicit';
   };
   parentCommunication?: 'implicit' | 'explicit';
+  hidden?: boolean;
 }
 
 /**
