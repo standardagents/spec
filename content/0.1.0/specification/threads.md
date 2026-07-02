@@ -135,6 +135,17 @@ The methods directory below is grouped by topic. Topics with their own page link
 | `getValue(key)` | `Promise<T \| null>` | Read a value from the thread's durable key-value store |
 | `setValue(key, value)` | `Promise<void>` | Write a JSON-serializable value; `null`/`undefined` deletes the key |
 
+**Skills** — see [§7.4 Agent Skills](#74-agent-skills)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `skills.list(options?)` | `Promise<SkillMetadata[]>` | Installed skills (enabled only unless `includeDisabled`) |
+| `skills.get(name)` | `Promise<{ metadata, skillMd } \| null>` | A skill's metadata + SKILL.md source |
+| `skills.readFile(name, path)` | `Promise<string \| null>` | One bundled file's text |
+| `skills.install(files)` | `Promise<SkillMetadata>` | Install/replace a skill from its file set |
+| `skills.setEnabled(name, enabled)` | `Promise<boolean>` | Enable/disable an installed skill |
+| `skills.remove(name)` | `Promise<boolean>` | Uninstall a skill |
+
 **Lifecycle** — see [§8 Lifecycle](#8-lifecycle)
 
 | Method | Returns | Description |
@@ -394,6 +405,24 @@ const prefs = await state.getValue<{ theme: string; locale: string }>('preferenc
 | File system | Thread | Durable | Large or binary payloads |
 
 Runtime semantics and conformance requirements for the durable key-value store live in [Runtime §15](/0.1.0/infrastructure/runtime#15-durable-key-value-store).
+
+### 7.4 Agent Skills
+
+`state.skills` exposes the **instance-global** Agent Skills library — the one deliberate exception to per-thread scoping in this section. Skills follow the [Agent Skills](https://agentskills.io) standard: a folder whose root `SKILL.md` opens with YAML frontmatter carrying a required `name` (lowercase kebab-case, ≤64 chars) and `description` (≤1024 chars), optionally accompanied by scripts, references, and assets.
+
+Requirements:
+
+- Skills are stored server-side and installed once for the whole instance; every thread sees the same library. Runtimes **MUST NOT** require client-side storage for skill content.
+- A skill's identity **MUST** come from its `SKILL.md` frontmatter — never from a caller-supplied name — and installs **MUST** validate the frontmatter against the standard.
+- Runtimes **SHOULD** surface skills to agents with progressive disclosure: only `name` + `description` ride in ambient context; the `SKILL.md` body (and bundled files) load on demand when the agent judges the skill applicable.
+- Disabled skills stay installed but **MUST** be hidden from ambient agent context.
+
+```typescript
+const available = await state.skills.list();
+const skill = await state.skills.get('pdf-processing');
+const script = await state.skills.readFile('pdf-processing', 'scripts/extract.py');
+await state.skills.install([{ path: 'SKILL.md', content: '---\nname: commit-style\ndescription: ...\n---\n...' }]);
+```
 
 ## 8. Lifecycle
 
