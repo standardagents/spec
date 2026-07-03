@@ -755,6 +755,16 @@ interface ProviderUsage {
   reasoningTokens?: number;
   cachedTokens?: number;
   cost?: number;
+  /** The actual provider that fulfilled the request (e.g. 'google', 'anthropic') */
+  provider?: string;
+  /** Per-million-token USD unit prices the provider reported for this request's model */
+  pricing?: ProviderUsagePricing;
+}
+
+interface ProviderUsagePricing {
+  inputPerMillion?: number;
+  cachedInputPerMillion?: number;
+  outputPerMillion?: number;
 }
 
 // Messages
