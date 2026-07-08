@@ -294,7 +294,28 @@ providerOptions: {
 }
 ```
 
-### 8.5 Backward Compatibility
+### 8.5 Sampling Parameters
+
+`providerOptions` is the intended home for sampling and generation parameters — `temperature`, `top_p`, `top_k`, `max_tokens`, `min_p`, seeds, and penalty settings. `defineModel` deliberately has no first-class fields for these: the right values are model-family-specific (one model wants `temperature: 0.3` for deterministic tool loops, another's vendor recommends `1.0` and degrades below it), so they belong on the model definition, next to the model they tune. Options set here are merged onto every request made with the model, after the runtime's standard fields, so they also act as overrides.
+
+```typescript
+import { defineModel } from '@standardagents/builder';
+import { novita } from '@standardagents/novita';
+
+export default defineModel({
+  name: 'minimax_m3',
+  provider: novita,
+  model: 'minimax/minimax-m3',
+  // Vendor-recommended sampling rides with the model, not the prompt.
+  providerOptions: { temperature: 1.0, top_p: 0.95, top_k: 40, max_tokens: 32768 },
+});
+```
+
+> Tip: Prefer the model vendor's published sampling recommendations over provider defaults, and record them here explicitly — an unset parameter silently rides whatever the provider defaults to, which can change under you.
+
+Prompt-level `reasoning` (effort, exclusion) remains the per-prompt knob; sampling stays with the model.
+
+### 8.6 Backward Compatibility
 
 - Providers without a schema still work (accept `Record<string, unknown>`)
 - Existing model definitions continue to work without changes
