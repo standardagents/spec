@@ -2,6 +2,26 @@
 
 Standard Agents can be packaged into self-contained npm packages, making them installable and distributable. Each packed agent includes all its dependencies (prompts, tools, models, hooks, effects) in a single module.
 
+## Portability requirements
+
+A packed agent's required behavior must be expressible through surfaces defined
+by this specification. Packed definitions MUST NOT require private runtime
+RPCs, implementation-specific storage schemas or bindings, undocumented
+events, sidecar services that substitute for runtime behavior, or
+`_notPackableRuntimeContext`.
+
+Runtime-specific enhancements MAY be capability-detected and optional, but the
+package's declared agents and required dependencies MUST execute correctly when
+those enhancements are absent. When an agent category needs a new runtime
+primitive, that primitive belongs in the specification and its conformance
+surface rather than in a product-private package/runtime agreement.
+
+Authentication, billing, deployment, and branded client services may remain
+outside an agent package. They MUST NOT be necessary for the installed agent's
+core execution semantics unless the package explicitly declares the external
+service as part of the agent's purpose rather than as a replacement for a
+missing runtime capability.
+
 ## Entry Point Exports
 
 The package entry point exports named registries for each definition type, plus a `__meta` export with package metadata:

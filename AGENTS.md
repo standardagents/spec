@@ -121,6 +121,21 @@ Subagent behavior is documented on the [Agents](content/0.1.0/specification/agen
 
 When subagent behavior changes, update each of these together.
 
+### Packability and Runtime Portability
+
+A packed Standard Agent is an ordinary, shareable package, not a privileged
+client of a particular runtime. Required agent behavior must be expressible
+through the specification and must work without private runtime RPCs, storage
+schemas, bindings, undocumented events, product sidecars that replace runtime
+behavior, or `_notPackableRuntimeContext`.
+
+When a reusable agent needs a missing runtime capability, specify the
+runtime-neutral primitive and its conformance requirements before a product
+depends on an implementation. Keep optional runtime enhancements explicitly
+capability-detected and preserve a conforming baseline when they are absent.
+Update the implementation types/JSDoc, scaffolded project documentation, and
+all affected public specification pages together.
+
 ### Callout Syntax
 
 Use blockquote callouts in markdown:
