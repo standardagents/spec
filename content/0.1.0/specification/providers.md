@@ -48,9 +48,24 @@ interface ProviderFactoryConfig {
   apiKey: string;
   baseUrl?: string;
   timeout?: number;
+  // Extra HTTP headers sent on every request to the provider backend.
+  // HTTP-client provider implementations SHOULD forward these.
+  defaultHeaders?: Record<string, string>;
+  // Transport override. When present, HTTP-based provider implementations MUST
+  // route every request to the provider backend through this `fetch` instead
+  // of the global one. The runtime may inject it for mocking, proxying,
+  // instrumentation, or any other request routing the host environment needs.
+  fetch?: FetchLike;
   [key: string]: unknown;
 }
+
+// A `fetch`-compatible transport function.
+type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 ```
+
+> Note: `fetch` is a generic transport override with no knowledge of what the
+> transport does. It is how a runtime can, for example, route a provider's
+> requests through a custom pipe without the provider package knowing.
 
 ### 1.3 Provider Extension Factories
 
@@ -135,6 +150,21 @@ Provider config value sources are:
 | `providerEnv(name, options)` | Environment variable source with UI/runtime metadata such as `valueType`, `required`, `default`, and `description`. |
 | `providerValue(value)` | Supplies a literal value. |
 | `providerConst(value)` | Alias for `providerValue(value)`. |
+| bare literal | A `string`, `number`, or `boolean` used directly as a constant. |
+| nested map | An object whose leaves are themselves config value sources. |
+
+A config slot MAY also be a **nested map** whose leaves are individual value
+sources, so one slot can combine environment and constant entries. `defaultHeaders`
+uses this form. A leaf that resolves to no value — an unset optional environment
+variable — is omitted from the resolved map rather than sent empty.
+
+```typescript
+defaultHeaders: {
+  'x-account-id': providerEnv('EXAMPLE_ACCOUNT_ID', { valueType: 'secret', required: true }),
+  'x-api-beta': 'responses=experimental',                 // constant literal
+  'x-optional-key': providerEnv('EXAMPLE_OPTIONAL', { required: false }), // omitted when unset
+}
+```
 
 #### Method Overrides
 

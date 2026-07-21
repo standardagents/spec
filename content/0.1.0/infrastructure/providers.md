@@ -71,6 +71,7 @@ Provider config values MAY include:
 - account IDs
 - deployment IDs
 - request timeouts
+- default request headers (`defaultHeaders`)
 
 Base providers expose supported config locations through `configSlots`:
 
@@ -99,6 +100,37 @@ Provider config value sources are:
 | `providerEnv(name, options)` | Environment variable source with metadata for setup UIs and validation. |
 | `providerValue(value)` | Supplies a literal value. |
 | `providerConst(value)` | Alias for `providerValue(value)`. |
+| bare literal (`string` / `number` / `boolean`) | Shorthand for a constant value. |
+| nested map | An object whose leaves are themselves config values. |
+
+A config slot MAY be a **nested map** whose leaves are individual config
+values, letting a single slot combine environment and constant entries. The
+`defaultHeaders` slot uses this form to declare per-request headers, mixing
+secret env values with constant ones. When a leaf resolves to no value — an
+optional environment variable that is unset — that leaf is omitted rather than
+sent as an empty value.
+
+```typescript
+export default defineProvider({
+  name: 'openai_compatible',
+  baseProvider: openai,
+  config: {
+    apiKey: providerEnv('EXAMPLE_PROVIDER_API_KEY', { valueType: 'secret', required: true }),
+    baseUrl: providerEnv('EXAMPLE_PROVIDER_BASE_URL', { valueType: 'url' }),
+    // Sent on every request to the provider backend.
+    defaultHeaders: {
+      'x-account-id': providerEnv('EXAMPLE_ACCOUNT_ID', { valueType: 'secret', required: true }),
+      'x-api-beta': 'responses=experimental',            // constant literal
+      'x-optional-key': providerEnv('EXAMPLE_OPTIONAL', { required: false }), // omitted when unset
+    },
+  },
+});
+```
+
+`defaultHeaders` is a connection-level slot that HTTP-client provider
+implementations SHOULD forward on every request, so a provider extension can
+target an API-compatible backend that requires additional headers (account
+ids, API betas, relay authentication) without overriding a method.
 
 ## Method Overrides
 
@@ -135,6 +167,32 @@ export default defineProvider({
 An override MUST call `next()` to compose with the base provider. If it does not call `next()`, it replaces the base provider behavior.
 
 Overrideable methods are `generate`, `stream`, `supportsModel`, `getModels`, `getModelsPage`, `getModelCapabilities`, `getTools`, `getIcon`, `inspectRequest`, and `getResponseMetadata`.
+
+The request-scoped overrides (`generate`, `stream`, `inspectRequest`,
+`getResponseMetadata`) additionally receive the executing thread's `state` on
+their context when the runtime has one; catalog overrides (`getModels`,
+`getIcon`, etc.) run without a thread and leave it undefined.
+
+## Per-request Transport (`createFetch`)
+
+A provider extension may declare `createFetch` to build a request transport per
+request. The runtime calls it with the executing thread's `state` and uses the
+returned transport as `ProviderFactoryConfig.fetch`. Because the transport can
+close over `state`, an extension declaring `createFetch` is constructed fresh
+per request rather than cached. It is a generic hook — "override the fetch
+mechanism however you want" — with no knowledge of what the transport does.
+
+```typescript
+export default defineProvider({
+  name: 'tunneled_openai',
+  baseProvider: openai,
+  config: {
+    apiKey: providerEnv('EXAMPLE_API_KEY', { valueType: 'secret', required: true }),
+  },
+  // Route every request through a custom transport bound to this request.
+  createFetch: ({ state }) => makeTransport(state),
+});
+```
 
 ## API Key Management
 
