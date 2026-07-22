@@ -35,6 +35,7 @@ const subpageOrder: Record<string, string[]> = {
     'messages',
     'filesystem',
     'code-execution',
+    'runtime-streams',
     'execution-state',
     'endpoints',
   ],

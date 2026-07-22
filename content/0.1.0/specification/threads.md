@@ -7,6 +7,7 @@ This page covers the core ideas: what a thread is, its identity, the `ThreadStat
 - [Messages](/0.1.0/specification/threads/messages) — reading, injecting, queuing, updating, deleting
 - [File System](/0.1.0/specification/threads/filesystem) — per-thread file storage, streaming, search
 - [Code Execution](/0.1.0/specification/threads/code-execution) — isolated JS/TS sandbox via `runCode`
+- [Runtime Streams](/0.1.0/specification/threads/runtime-streams) — optional live byte streams supplied by the execution host
 - [Execution State](/0.1.0/specification/threads/execution-state) — step counts, turn control, cancellation
 - [Thread Endpoints](/0.1.0/specification/threads/endpoints) — HTTP APIs that receive a `ThreadState`
 
@@ -41,6 +42,7 @@ Handoffs enable workflows where specialized agents handle different parts of a c
 | `children` | `SubagentRegistryEntry[]` | Resumable child subagent registry (readonly) |
 | `terminated` | `number \| null` | Termination timestamp in microseconds, or null when active (readonly) |
 | `arguments` | `Record<string, unknown>` | Arguments supplied when this thread was created or invoked. Resumable subagent initial arguments appear here. See [Thread Arguments](#61-thread-arguments) |
+| `runtimeStreams` | `RuntimeStreams \| undefined` | Optional live runtime byte streams. Feature-detect before use. See [Runtime Streams](/0.1.0/specification/threads/runtime-streams) |
 | `context` | `Record<string, unknown>` | Mutable per-execution scratch storage. See [Context Storage](#62-per-execution-context) |
 | `execution` | `ExecutionState \| null` | Execution state during active execution, null at rest. See [Execution State](/0.1.0/specification/threads/execution-state) |
 | `_notPackableRuntimeContext` | `Record<string, unknown> \| undefined` | Runtime-specific context (non-portable). See [Runtime Context](#10-runtime-context-non-portable) |

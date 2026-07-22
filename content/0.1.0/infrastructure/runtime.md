@@ -12,6 +12,10 @@ The runtime **MUST**:
 - enforce configured limits and stop semantics
 - support queued work for idle and active threads
 
+Runtimes may additionally expose [Runtime Streams](/0.1.0/specification/threads/runtime-streams)
+through `ThreadState.runtimeStreams`. This capability is optional and does not
+change conformance for runtimes that omit it.
+
 ## 2. Invocation Triggers
 
 Execution begins when any of the following occurs:
@@ -196,11 +200,19 @@ Runtimes should emit durable logs and lifecycle markers for:
 
 Implementations may persist synthesized status messages in thread history (`metadata.status_kind`) for client grouping.
 
-## 13. Code Execution Runtime
+## 13. Runtime Streams
+
+When implemented, runtime streams are live, non-durable resources authorized
+by the runtime. Capability names and metadata remain opaque to the shared
+runtime layer. Streams must route to the selected execution host, must not
+park, and must terminate when that host disconnects. See the complete
+[Runtime Streams contract](/0.1.0/specification/threads/runtime-streams).
+
+## 14. Code Execution Runtime
 
 This section covers the runtime-side mechanics for implementing `ThreadState.runCode`. The caller-facing contract — signature, options, handle, result shape, usage patterns, and limitations — lives in [Code Execution](/0.1.0/specification/threads/code-execution).
 
-### 13.1 Isolation
+### 14.1 Isolation
 
 A conforming implementation **MUST**:
 
@@ -210,14 +222,14 @@ A conforming implementation **MUST**:
 - Freshly construct the sandbox's intrinsic prototypes; mutating `Object.prototype`, `Array.prototype`, or any other intrinsic inside the sandbox **MUST** have zero effect on the host.
 - Reject `eval`, `new Function(source)`, `SharedArrayBuffer`, `Atomics`, and URL dynamic imports. Relative dynamic imports may resolve only when the target is supplied through `options.modules`.
 
-### 13.2 Module Resolution
+### 14.2 Module Resolution
 
 - Bare specifiers resolve **only** from `options.imports`. Relative specifiers resolve **only** from `options.modules`. Unknown specifiers and URL specifiers (`https://…`) **MUST** fail linkage and settle with `status: 'link_error'`.
 - Each `options.imports[specifier]` entry is a synthetic module whose namespace is a frozen copy of the host-provided object. The key `default` (when present) becomes that module's default export.
 - Each `options.modules[specifier]` entry is a source-backed ES module evaluated inside the sandbox.
 - `import.meta.url` **MUST** be a synthetic `sandbox:<filename>` URL. Host paths **MUST NOT** be exposed.
 
-### 13.3 Value Marshaling
+### 14.3 Value Marshaling
 
 Values cross the sandbox boundary in both directions.
 
@@ -227,14 +239,14 @@ Values cross the sandbox boundary in both directions.
 - Class instances, `WeakMap`, `WeakRef`, and symbols with host identity are **not transferable**. Runtimes **MAY** throw a `SerializationError`.
 - Bridged functions **MUST NOT** expose host `this` or host closure state to the sandbox beyond their explicit arguments.
 
-### 13.4 Resource Enforcement
+### 14.4 Resource Enforcement
 
 - **Memory**: when the engine supports heap accounting, the runtime **MUST** enforce `options.memoryLimitBytes` and settle with `status: 'memory'` on overrun. When `memoryLimitBytes` is omitted, a runtime-defined default applies; the runtime **SHOULD** document it. Implementations **MAY** impose a platform-fixed ceiling that caller values cannot exceed. When a caller requests a limit above that ceiling, runtimes **MUST** either (a) clamp to the ceiling and settle overruns with `status: 'memory'` and an `error.message` naming the effective limit, or (b) reject the call with `status: 'link_error'` naming the cap. Runtimes **MUST** document which behavior they use and the effective ceiling.
 - **Termination**: `handle.terminate()` **MUST** signal the sandbox to stop. The handle **MUST** settle at the next ECMAScript yield point (microtask boundary, async operation, or runtime interrupt) — **SHOULD** be within 50 ms and typically a few. A sandbox running a pure-synchronous tight loop may not reach a yield point; runtimes **MAY** rely on their own safety cap (next bullet) to force settlement. `terminate` is idempotent; subsequent calls are no-ops. When the caller passes `reason`, it surfaces in `result.error.message`.
 - **Safety caps (optional)**: runtimes **MAY** apply their own caps (for example, interrupting a pure-JS infinite loop under sustained CPU pressure). When a cap fires, the handle settles with `status: 'terminated'` and a diagnosable `error.message` — the same channel as caller-initiated termination.
 - The spec does **not** require a wall-clock timeout. Runtimes **MUST NOT** invent one silently; callers impose deadlines by calling `handle.terminate()`.
 
-### 13.5 Configured Export Resolution
+### 14.5 Configured Export Resolution
 
 After module evaluation, the runtime **MUST** resolve the export selected by `options.execute` in this order:
 
@@ -245,17 +257,17 @@ After module evaluation, the runtime **MUST** resolve the export selected by `op
 
 If the selected export is missing, the runtime **MUST** settle with `status: 'link_error'`. If the selected export is not a function and `execute.args` is non-empty, the runtime **MUST** settle with `status: 'error'`. An uncaught throw from the selected-export function (or a rejection from its returned promise) **MUST** settle with `status: 'error'`.
 
-### 13.6 TypeScript Erasure
+### 14.6 TypeScript Erasure
 
 When `options.language === 'typescript'` (the default), the runtime **MUST** strip types before evaluation. Runtimes **SHOULD** use a type-erasure implementation (`sucrase`, `esbuild-transform`, `swc`, or native type-stripping). Runtimes **MUST NOT** invoke a TypeScript type-checker as part of `runCode` — only erasure runs.
 
-### 13.7 Event Loop
+### 14.7 Event Loop
 
 - The sandbox has its own microtask queue. `Promise`, `await`, and (at runtime discretion) `queueMicrotask` behave normally.
 - `setTimeout` / `setInterval` are **not** exposed unless the caller bridges them via `options.globals`.
-- Top-level `await` is supported. A module "completes" once its top-level evaluation promise settles and the configured-export resolution ([§13.5](#135-configured-export-resolution)) finishes.
+- Top-level `await` is supported. A module "completes" once its top-level evaluation promise settles and the configured-export resolution ([§14.5](#145-configured-export-resolution)) finishes.
 
-### 13.8 Implementation Approaches (Non-Normative)
+### 14.8 Implementation Approaches (Non-Normative)
 
 Approaches that satisfy the requirements above:
 
@@ -264,7 +276,7 @@ Approaches that satisfy the requirements above:
 - **V8 isolates via Node's `vm` module** (or equivalent embedder API). Frozen context, `eval` disabled, WebAssembly compilation disabled. `isolate->TerminateExecution()` satisfies `handle.terminate()`.
 - **A second isolate reached over RPC / service binding**, with no bindings of its own and a module transformer at the boundary. Request cancellation satisfies termination.
 
-### 13.9 Conformance Checklist
+### 14.9 Conformance Checklist
 
 A runtime that implements code execution **MUST**:
 
@@ -277,7 +289,7 @@ A runtime that implements code execution **MUST**:
 7. Enforce `options.memoryLimitBytes` when the engine supports heap accounting; settle with `status: 'memory'` on overrun.
 8. Settle the handle with `status: 'terminated'` within 50 ms of `handle.terminate()`.
 9. Marshal values across the boundary by structured clone / callable proxy, with no shared references.
-10. Resolve the configured export per [§13.5](#135-configured-export-resolution).
+10. Resolve the configured export per [§14.5](#145-configured-export-resolution).
 11. Return `CodeExecutionResult` with the exact status codes defined in the [caller-facing spec](/0.1.0/specification/threads/code-execution#41-status-values).
 12. Create a fresh isolate per call; leak no state between calls.
 
