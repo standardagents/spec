@@ -26,7 +26,7 @@ const groupTitles: Record<string, string> = {
 const groupOrder = ['getting-started', 'guides', 'specification', 'infrastructure', 'distribution']
 
 // Explicit page ordering within specification group (primitives -> complex)
-const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'agents', 'threads', 'hooks', 'type-registry']
+const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'agents', 'threads', 'users', 'hooks', 'type-registry']
 
 // Explicit ordering of subpages under a parent slug (per group)
 // Key is "{group}/{parent}", value is the ordered list of child slugs.
