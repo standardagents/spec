@@ -18,6 +18,10 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 
 - First-party list prices are used where available.
 - Open-weight and aggregator-distributed models use representative public API pricing.
+- GPT-5.6 ships in three tiers (Sol / Terra / Luna). Sol requests above 272K input tokens are billed at a higher long-context rate (10.00 / 45.00).
+- Kimi K3 always reasons (`reasoning_effort` locked to max) and reasoning tokens bill as output tokens; cached input is 0.30.
+- Hy3 prices use the listed OpenRouter rate for `tencent/hy3` (first-party Tencent Cloud pricing is ~0.15 / 0.59).
+- MiniMax M3 doubles to 0.60 / 2.40 as a step function when a request's input crosses 512K tokens.
 - GLM prices use the listed OpenRouter rates for `z-ai/glm-5.1` and `z-ai/glm-4.7-flash`.
 - Nemotron prices use the listed OpenRouter rates for `nvidia/nemotron-3-ultra-550b-a55b` and `nvidia/nemotron-3-super-120b-a12b`.
 - `conversation` estimates how natural, coherent, and useful the model feels in multi-turn chat, separate from raw reasoning or coding strength.
@@ -39,44 +43,64 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 {
 	"models": [
 		{
-			"name": "GPT-5.4",
-			"bestFor": "Premium all-around work",
-			"price": "2.50 / 15.00",
+			"name": "GPT-5.6 Sol",
+			"bestFor": "Premium heavy work",
+			"price": "5.00 / 30.00",
 			"scores": {
 				"reasoning": 4,
 				"coding": 4,
 				"toolUse": 4,
 				"instructionFollowing": 4,
-				"longContext": 3,
+				"longContext": 4,
 				"vision": 4,
 				"imageGeneration": 0,
 				"structuredOutput": 4,
 				"speed": 2,
-				"costEfficiency": 2,
+				"costEfficiency": 1,
 				"reliability": 4,
 				"conversation": 3
 			},
-			"summary": "High-capability general model with strong reasoning, coding, tool use, multimodal input, and long-context performance."
+			"summary": "OpenAI's top GPT-5.6 tier: frontier reasoning, coding, and tool use with a ~1M context window (128K max output). Expensive — reserve it for coordinator/heavy work where the quality difference pays for itself; input beyond 272K bills at the long-context rate."
 		},
 		{
-			"name": "GPT-5.4 mini",
-			"bestFor": "High-throughput production",
-			"price": "0.75 / 4.50",
+			"name": "GPT-5.6 Luna",
+			"bestFor": "Lighter agent work — run reasoning on high",
+			"price": "1.00 / 6.00",
 			"scores": {
 				"reasoning": 3,
-				"coding": 2,
+				"coding": 3,
 				"toolUse": 3,
 				"instructionFollowing": 3,
-				"longContext": 2,
-				"vision": 2,
+				"longContext": 3,
+				"vision": 3,
 				"imageGeneration": 0,
-				"structuredOutput": 2,
+				"structuredOutput": 3,
 				"speed": 3,
-				"costEfficiency": 3,
+				"costEfficiency": 4,
 				"reliability": 4,
-				"conversation": 2
+				"conversation": 3
 			},
-			"summary": "Smaller, faster GPT-5.4 variant with strong coding and tool-use performance at materially lower cost."
+			"summary": "Cost-optimized GPT-5.6 tier for routing, extraction, summarization, and discrete subagents. On default effort it is throughput-oriented; set reasoning effort HIGH for agent work — it closes most of the gap to Terra while staying far cheaper (higher effort simply bills more output tokens)."
+		},
+		{
+			"name": "Kimi K3",
+			"bestFor": "Open-source heavy work",
+			"price": "3.00 / 15.00",
+			"scores": {
+				"reasoning": 4,
+				"coding": 4,
+				"toolUse": 4,
+				"instructionFollowing": 3,
+				"longContext": 4,
+				"vision": 3,
+				"imageGeneration": 0,
+				"structuredOutput": 3,
+				"speed": 2,
+				"costEfficiency": 2,
+				"reliability": 3,
+				"conversation": 3
+			},
+			"summary": "Open-weight frontier model (2.8T LatentMoE, 16 of 896 experts active) with native vision and a 1M context window. Leads BrowseComp, MCPMark, SpreadsheetBench 2, and AutomationBench; second on the AA-Briefcase long-horizon benchmark ahead of GPT-5.6 Sol. Always reasons — reasoning tokens bill as output, so budget accordingly."
 		},
 		{
 			"name": "Claude Opus 4.6",
@@ -99,26 +123,6 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 			"summary": "Premium 1M-context model optimized for long-running coding, multi-step agent workflows, and high-reliability execution."
 		},
 		{
-			"name": "Kimi K2.5",
-			"bestFor": "Cheap high-end agent work",
-			"price": "0.60 / 3.00",
-			"scores": {
-				"reasoning": 3,
-				"coding": 2,
-				"toolUse": 2,
-				"instructionFollowing": 3,
-				"longContext": 3,
-				"vision": 3,
-				"imageGeneration": 0,
-				"structuredOutput": 3,
-				"speed": 3,
-				"costEfficiency": 4,
-				"reliability": 3,
-				"conversation": 4
-			},
-			"summary": "256K-context multimodal model with thinking mode, tool calls, JSON mode, and strong price-performance for agent workloads."
-		},
-		{
 			"name": "Gemini 3.1 Pro",
 			"bestFor": "Multimodal pro workflows",
 			"price": "2.00 / 12.00",
@@ -139,6 +143,26 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 			"summary": "High-end multimodal model with strong reasoning, agent tooling, and long-context support, but slower and pricier than Flash-class models."
 		},
 		{
+			"name": "Tencent Hy3",
+			"bestFor": "Cheap long-horizon agents",
+			"price": "0.14 / 0.58",
+			"scores": {
+				"reasoning": 3,
+				"coding": 2,
+				"toolUse": 3,
+				"instructionFollowing": 3,
+				"longContext": 3,
+				"vision": 0,
+				"imageGeneration": 0,
+				"structuredOutput": 3,
+				"speed": 3,
+				"costEfficiency": 4,
+				"reliability": 3,
+				"conversation": 3
+			},
+			"summary": "Apache-licensed 295B MoE (21B active) with a 256K window tuned for long-horizon agent work: multi-turn constraint tracking, coreference over long transcripts, and tool calling that stays stable across scaffoldings. Configurable effort (no-think default, low/high CoT). Weak spot is coding depth — pair it with a coding model."
+		},
+		{
 			"name": "GLM 5.1",
 			"bestFor": "Value long-horizon agents",
 			"price": "0.95 / 3.15",
@@ -156,7 +180,7 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 				"reliability": 3,
 				"conversation": 3
 			},
-			"summary": "Long-horizon text model tuned for extended autonomous tasks, with strong coding and agent performance at relatively low cost."
+			"summary": "Long-horizon text model tuned for extended autonomous tasks, with strong coding and agent performance at relatively low cost. Hy3 undercuts it for pure long-horizon work; GLM keeps the edge when the agent also writes code."
 		},
 		{
 			"name": "NVIDIA Nemotron 3 Ultra 550B A55B",
@@ -199,24 +223,24 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 			"summary": "Lightweight variant focused on speed and low-friction usage rather than high-end reasoning or coding depth."
 		},
 		{
-			"name": "Gemini 2.5 Flash",
-			"bestFor": "Conversation, tool calling, speed.",
-			"price": "0.30 / 2.50",
+			"name": "Gemma 4 31B",
+			"bestFor": "Conversation, tool calling, speed — open weights.",
+			"price": "0.10 / 0.35",
 			"scores": {
-				"reasoning": 2,
+				"reasoning": 3,
 				"coding": 2,
 				"toolUse": 2,
-				"instructionFollowing": 2,
-				"longContext": 4,
+				"instructionFollowing": 3,
+				"longContext": 3,
 				"vision": 3,
 				"imageGeneration": 0,
-				"structuredOutput": 4,
+				"structuredOutput": 3,
 				"speed": 4,
 				"costEfficiency": 4,
 				"reliability": 3,
 				"conversation": 3
 			},
-			"summary": "Fast 1M-context multimodal model with strong cost efficiency, descent tool use, and low latency. Good for simple agents, goes off track with long context."
+			"summary": "Open-weight 256K-context multimodal model with native function calling and a configurable thinking mode. Punches far above its size (89.2 AIME, strong OCR/document/UI understanding) and is cheap enough for broad deployment — the Flash-class slot, deployable on your own hardware."
 		},
 		{
 			"name": "gemini-3-flash-preview",
@@ -299,7 +323,7 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 			"summary": "Large multimodal model with strong reasoning, coding, and visual performance at competitive pricing for its capability class."
 		},
 		{
-			"name": "MiniMax M2.7",
+			"name": "MiniMax M3",
 			"bestFor": "Coding agents on a budget",
 			"price": "0.30 / 1.20",
 			"scores": {
@@ -307,38 +331,37 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 				"coding": 3,
 				"toolUse": 3,
 				"instructionFollowing": 3,
-				"longContext": 3,
-				"vision": 0,
+				"longContext": 4,
+				"vision": 3,
 				"imageGeneration": 0,
 				"structuredOutput": 3,
 				"speed": 3,
-				"costEfficiency": 3,
+				"costEfficiency": 4,
 				"reliability": 3,
 				"conversation": 3
 			},
-			"summary": "Agent-oriented model with strong coding and reasoning performance, moderate latency, and very strong price-performance."
+			"summary": "Agent-oriented model with a 1M context window and text/image/video input, strong coding and tool use, and excellent price-performance. Cache reads are 10% of input; note the whole request bills 2x once input crosses 512K."
 		},
 		{
-			"name": "GPT-OSS-120B",
+			"name": "Qwen3.5 35B A3B",
 			"bestFor": "Cheap deployable open model",
-			"price": "0.039 / 0.190",
+			"price": "0.14 / 1.00",
 			"scores": {
 				"reasoning": 2,
-				"coding": 2,
+				"coding": 3,
 				"toolUse": 2,
-				"instructionFollowing": 2,
+				"instructionFollowing": 3,
 				"longContext": 2,
 				"vision": 0,
 				"imageGeneration": 0,
-				"structuredOutput": 2,
+				"structuredOutput": 3,
 				"speed": 4,
 				"costEfficiency": 4,
 				"reliability": 2,
 				"conversation": 2
 			},
-			"summary": "Low-cost open-weight model with descent structured output and tool-use support, optimized for cheap deployable workloads. Acceptable discernment."
+			"summary": "Sparse open-weight MoE (only 3B active) that is very fast and cheap to serve — including on local hardware. Surprisingly strong coding for its activation size; keep tool sets small and prompts explicit, as discernment thins out with breadth."
 		}
 	]
 }
 ```
-
