@@ -88,10 +88,21 @@ src/
 
 ### React Islands
 
-Only `Header.tsx` uses client-side React (`client:load` directive) for:
-- Mobile menu toggle
-- Version dropdown
-- Theme toggle (calls `window.toggleTheme()`)
+The client-side React islands are:
+
+- `Header.tsx` (`client:load`) for the mobile menu, version dropdown, and theme
+  toggle.
+- `InviteGate.tsx` (`client:load`) for Spec early-access validation.
+
+The production gate on `standardagentspec.org` accepts only Spec site-access codes from
+`https://agents.standardagentbuilder.com/api/site-access/:code`. Standard Code
+keys and Standard Agents Platform signup invites are separate products and do
+not unlock the Spec. The unified admin's **Spec** action silently assigns a code
+to a waitlist email, while **Mint Spec** creates unassigned codes for manual
+handoff. Successful codes are stored in `localStorage` as `sab_spec_invite`.
+Platform invitation emails include the separate Spec code and link here with
+that code in the `?invite=` query parameter, which `InviteGate.tsx` validates
+before storing it.
 
 All other components are static Astro components rendered at build time.
 
