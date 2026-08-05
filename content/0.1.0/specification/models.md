@@ -294,6 +294,18 @@ providerOptions: {
 }
 ```
 
+**DeepInfra** (`@standardagents/deepinfra`):
+```typescript
+providerOptions: {
+  reasoning_effort: 'none' | 'low' | 'medium' | 'high',
+  service_tier: 'default' | 'priority' | 'flex',
+  prompt_cache_key: string,
+  seed: number,
+  top_k: number,
+  min_p: number,
+}
+```
+
 ### 8.5 Sampling Parameters
 
 `providerOptions` is the intended home for sampling and generation parameters — `temperature`, `top_p`, `top_k`, `max_tokens`, `min_p`, seeds, and penalty settings. `defineModel` deliberately has no first-class fields for these: the right values are model-family-specific (one model wants `temperature: 0.3` for deterministic tool loops, another's vendor recommends `1.0` and degrades below it), so they belong on the model definition, next to the model they tune. Options set here are merged onto every request made with the model, after the runtime's standard fields, so they also act as overrides.
@@ -463,4 +475,3 @@ export default defineModel({
 ```
 
 Provider tools are built-in capabilities embedded in the provider (e.g., OpenAI's web search, file search, code interpreter). See the [Providers specification](/0.1.0/specification/providers#9-provider-tools) for how providers expose tools.
-
