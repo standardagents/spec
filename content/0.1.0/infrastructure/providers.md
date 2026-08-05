@@ -11,6 +11,7 @@ The specification does not require a fixed provider list. Implementations MAY sh
 - Google
 - OpenRouter
 - Cerebras
+- DeepInfra
 - Cloudflare
 - Groq
 - xAI
