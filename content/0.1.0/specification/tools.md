@@ -118,8 +118,11 @@ For resumable subagents, runtimes provide built-in lifecycle tools:
 
 - `subagent_create`
 - `subagent_message`
+- `subagents`
 
 These tools are runtime-injected and scoped to what is currently enabled and available for that prompt/thread state.
+
+`subagents` is the pull-based child visibility surface: it takes no arguments and returns the model-visible registry snapshot — reference id, name, status, working-status text, and initial arguments — as a tool result on demand. When this query tool is available, runtimes MUST NOT additionally inject an ambient registry system message into request context: a registry block that mutates between requests invalidates provider prefix caches and reads as out-of-dialogue state to agentic-tuned models. Child completions still arrive as messages. Injected tool descriptions SHOULD direct the model to call `subagents` before `subagent_create` so existing instances are reused rather than duplicated.
 
 `subagent_create` MUST require a non-empty `name` argument for the spawned child instance. Runtimes SHOULD persist this as a human-readable child thread display name, for example a `name:<value>` thread tag.
 

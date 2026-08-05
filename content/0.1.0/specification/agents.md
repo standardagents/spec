@@ -285,7 +285,7 @@ interface SubagentRegistryEntry {
 }
 ```
 
-When children exist, parent context **SHOULD** include a registry system message so the orchestrator can reason about active instances.
+Child visibility is pull-based: when resumable configs exist, runtimes inject the `subagents` query tool (see [Tools §6](/0.1.0/specification/tools#6-resumable-lifecycle-tools)) and **MUST NOT** additionally inject an ambient registry system message — the orchestrator reasons about active instances by calling the tool, and completions arrive as messages. Runtimes without the query tool MAY fall back to a registry system message so the orchestrator can still see active instances.
 
 ### 7.13 Attachment Copying
 
