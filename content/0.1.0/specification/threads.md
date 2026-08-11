@@ -151,9 +151,9 @@ The methods directory below is grouped by topic. Topics with their own page link
 | `skills.list(options?)` | `Promise<SkillMetadata[]>` | Installed skills (enabled only unless `includeDisabled`) |
 | `skills.get(name)` | `Promise<{ metadata, skillMd } \| null>` | A skill's metadata + SKILL.md source |
 | `skills.readFile(name, path)` | `Promise<string \| null>` | One bundled file's text |
-| `skills.install(files)` | `Promise<SkillMetadata>` | Install/replace a skill from its file set |
-| `skills.setEnabled(name, enabled)` | `Promise<boolean>` | Enable/disable an installed skill |
-| `skills.remove(name)` | `Promise<boolean>` | Uninstall a skill |
+| `skills.install(files)` | `Promise<SkillMetadata>` | Install/replace a skill; requires mutation authorization |
+| `skills.setEnabled(name, enabled)` | `Promise<boolean>` | Enable/disable a skill; requires mutation authorization |
+| `skills.remove(name)` | `Promise<boolean>` | Uninstall a skill; requires mutation authorization |
 
 **Lifecycle** — see [§8 Lifecycle](#8-lifecycle)
 
@@ -435,6 +435,7 @@ Requirements:
 
 - Skills are stored server-side and installed once for the whole instance; every thread sees the same library. Runtimes **MUST NOT** require client-side storage for skill content.
 - A skill's identity **MUST** come from its `SKILL.md` frontmatter — never from a caller-supplied name — and installs **MUST** validate the frontmatter against the standard.
+- Runtimes **MUST** authorize instance-global mutations. Multi-tenant runtimes **MUST NOT** allow ordinary tenant agent code to install, replace, enable, disable, or remove shared skills; an administrative or equivalently trusted principal is required.
 - Runtimes **SHOULD** surface skills to agents with progressive disclosure: only `name` + `description` ride in ambient context; the `SKILL.md` body (and bundled files) load on demand when the agent judges the skill applicable.
 - Disabled skills stay installed but **MUST** be hidden from ambient agent context.
 
