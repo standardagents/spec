@@ -105,7 +105,8 @@ The methods directory below is grouped by topic. Topics with their own page link
 | `getPromptNames()` | `string[]` | List available prompts |
 | `getAgentNames()` | `string[]` | List available agents |
 | `getModelNames()` | `string[]` | List available models |
-| `env(propertyName)` | `Promise<string>` | Resolve environment variable using thread/user/instance/agent/prompt precedence |
+| `env(propertyName)` | `Promise<string>` | Resolve environment variable using thread/agent/prompt/user/instance precedence |
+| `instanceEnv?(propertyName)` | `Promise<string \| undefined>` | Optionally resolve only the runtime-instance value for security-sensitive trust anchors |
 | `envType(propertyName)` | `Promise<'text' \| 'secret'>` | Resolve display/redaction classification for an environment value |
 | `setEnv(propertyName, value, options?)` | `Promise<void>` | Set a thread environment variable, optionally choosing `text` or `secret`, and propagate to active descendants |
 
@@ -194,6 +195,9 @@ const models = state.getModelNames();
 
 ```typescript
 const apiKey = await state.env('GOOGLE_API_KEY');
+if (!state.instanceEnv) throw new Error('Instance env is required');
+const trustedServiceUrl = await state.instanceEnv('TRUSTED_SERVICE_URL');
+if (!trustedServiceUrl) throw new Error('Trusted service URL is required');
 await state.setEnv('TOPDOWN_APPROVAL_GATE', 'open');
 await state.setEnv('PUBLIC_LABEL', 'QA', { type: 'text' });
 await state.setEnv('API_TOKEN', 'secret-token', { type: 'secret' });
@@ -201,10 +205,19 @@ await state.setEnv('API_TOKEN', 'secret-token', { type: 'secret' });
 
 `env(propertyName)` resolves in this order:
 1. Thread environment variables
-2. User-account environment variables
-3. Runtime instance environment variables
-4. Agent definition defaults (`agent.env`)
-5. Prompt definition defaults (`prompt.env`)
+2. Agent definition defaults (`agent.env`)
+3. Prompt definition defaults (`prompt.env`)
+4. User-account environment variables
+5. Runtime instance environment variables
+
+The optional `instanceEnv(propertyName)` capability reads exclusively from the
+runtime instance. It must not consider thread, agent, prompt, or user values.
+It returns `undefined` when the key is not configured and rejects when the
+runtime cannot read its instance environment.
+Use it when a value establishes a trust boundary, such as a service endpoint
+and the credential sent to that endpoint. Consumers that require this boundary
+must feature-detect the method and fail closed if the capability is unavailable
+or the required instance value is missing.
 
 `envType(propertyName)` returns the display/redaction classification for a resolved environment value. Unknown or non-thread sources default to `secret`. Values marked `secret` should be redacted from tool output and logs; values marked `text` may be displayed.
 
@@ -615,6 +628,7 @@ interface ThreadState {
   getAgentNames(): string[];
   getModelNames(): string[];
   env(propertyName: string): Promise<string>;
+  instanceEnv?(propertyName: string): Promise<string | undefined>;
   envType(propertyName: string): Promise<'text' | 'secret'>;
   setEnv(
     propertyName: string,
