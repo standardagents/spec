@@ -135,8 +135,9 @@ interface UserHandle extends UserIdentity {
 ```
 
 1. `call(endpoint, payload)` MUST invoke the named user endpoint for the thread's user under the §2.1 guarantee, and MUST NOT require the runtime to address itself over the network.
-2. `call()` MUST reject for user-less threads.
-3. The additions to the `state.user()` return value are additive; the identity fields are unchanged.
+2. `endpoint` is a path relative to the user's packaged endpoint namespace. A runtime MUST reject dot segments (`.` or `..`), including percent-encoded or backslash variants, and MUST NOT allow URL normalization to address a route outside that namespace.
+3. `call()` MUST reject for user-less threads.
+4. The additions to the `state.user()` return value are additive; the identity fields are unchanged.
 
 ## 6. Credential Grants
 
