@@ -62,12 +62,49 @@ Thread endpoint handlers receive:
 | `req` | `Request` | The incoming HTTP request |
 | `state` | `ThreadState` | Thread state for the requested thread |
 | `params` | `Record<string, string>` | Route parameters captured from dynamic or catch-all endpoint path segments |
+| `auth` | `ThreadEndpointAuth` | The request's authentication context (see [Access and Authentication](#4-access-and-authentication)) |
 
-The supplied `ThreadState` includes the standard thread surface, including `runCode`.
+The supplied `ThreadState` includes the standard thread surface, including `runCode`. Handlers that do not consume trailing parameters may omit them.
 
 The handler **MUST** return a `Response` object.
 
-## 4. Endpoint Context
+## 4. Access and Authentication
+
+Every endpoint has an access level, declared at definition time:
+
+```typescript
+import { defineThreadEndpoint } from '@standardagents/spec';
+
+export default defineThreadEndpoint(
+  async (req, state, params, auth) => {
+    return Response.json({
+      threadId: state.threadId,
+      authorized: auth.threadAccess,
+    });
+  },
+  { access: 'public' }
+);
+```
+
+| Access level | Requirements |
+|--------------|-------------|
+| `authenticated` (default) | The runtime **MUST** authenticate the request and enforce its thread access policy before invoking the handler. Requests that fail authentication or authorization **MUST** be rejected without invoking the handler. |
+| `public` | The runtime **MUST** invoke the handler regardless of the request's authentication state. The runtime **MUST** still attempt caller resolution: a request presenting credentials the runtime can verify is attributed to that caller; any other request is treated as anonymous rather than rejected. |
+
+When no access level is declared, the access level is `authenticated`. The declaration is attached to the handler itself, so packed thread endpoints carry their access level with them and are subject to the same requirements as local thread endpoints.
+
+The fourth handler argument is the authentication context:
+
+| Property | Type | Requirements |
+|----------|------|-------------|
+| `caller` | `ThreadUser \| null` | **MUST** be the authenticated identity when the request presented credentials the runtime verified, and `null` otherwise. For an endpoint whose access level is `authenticated`, `caller` is always non-null. |
+| `threadAccess` | `boolean` | **MUST** be `true` if and only if the runtime's thread access policy grants the resolved caller access to the requested thread. **MUST** be `false` when `caller` is `null`. For an endpoint whose access level is `authenticated`, `threadAccess` is always `true`. |
+
+`caller` uses the same `ThreadUser` identity shape as `state.user()` — identity fields only, never credentials. Note that `caller` identifies who is making the request, while `state.userId` identifies who owns the thread; the two frequently differ.
+
+The mechanism by which a runtime authenticates requests (sessions, API keys, or otherwise) is implementation-defined. This specification defines only the identity contract observable by endpoint code.
+
+## 5. Endpoint Context
 
 When accessing a thread via an endpoint, `state.execution` is always `null` because the thread is not actively executing:
 
@@ -81,7 +118,7 @@ export default defineThreadEndpoint(async (req, state) => {
 });
 ```
 
-## 5. Error Handling
+## 6. Error Handling
 
 Thread endpoints automatically handle common errors:
 
@@ -91,7 +128,7 @@ Thread endpoints automatically handle common errors:
 | Missing thread ID | 400: `{ error: "Thread ID required" }` |
 | No matching thread endpoint route under the thread endpoint prefix | 404 |
 
-## 6. Examples
+## 7. Examples
 
 **Get Thread Messages:**
 ```typescript
