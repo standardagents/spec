@@ -27,7 +27,7 @@ if (state.execution) {
 | `sideBStepCount` | `number` | Side B steps |
 | `stopped` | `boolean` | Execution stopped |
 | `stoppedBy` | `'a' \| 'b' \| undefined` | Who stopped |
-| `messageHistory` | `Message[]` | Current history |
+| `messageHistory` | `Message[]` | Live chronological persisted execution history, including silent messages |
 | `abortSignal` | `AbortSignal` | Cancellation signal |
 | `promptPath` | `string[]` | Path from root to current prompt |
 
@@ -39,6 +39,16 @@ The `promptPath` property tracks the current position in the prompt hierarchy:
 - After handoff: `['new_agent_prompt']`
 
 This allows tools and hooks to understand their execution context depth.
+
+### 2.2 Live execution history
+
+`execution.messageHistory` **MUST** represent live chronological persisted execution history.
+
+- A successful [`injectMessage()`](/0.1.0/specification/threads/messages#3-injecting-messages) **MUST** make that record observable on `execution.messageHistory` to later tools and hooks in the same execution.
+- Silent messages **MUST** remain on `execution.messageHistory`.
+- Synthetic or transformed messages produced by `filter_messages` or `prefilter_llm_history` **MUST** remain confined to the model-context projection. They **MUST NOT** replace `execution.messageHistory`.
+
+The provider request is assembled from a separate snapshot. See [Runtime §4](/0.1.0/infrastructure/runtime#4-context-assembly).
 
 ## 3. Controlling Execution
 
@@ -66,7 +76,7 @@ interface ExecutionState {
   readonly sideBStepCount: number;
   readonly stopped: boolean;
   readonly stoppedBy?: 'a' | 'b';
-  readonly messageHistory: Message[];
+  readonly messageHistory: Message[]; // live persisted execution history
   readonly abortSignal: AbortSignal;
   readonly promptPath: string[];
   forceTurn(side: 'a' | 'b'): void;

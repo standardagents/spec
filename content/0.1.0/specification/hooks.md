@@ -16,9 +16,9 @@ The specification defines the following hooks:
 |------|---------------|---------|
 | `after_thread_created` | After thread creation, before execution | Initialize thread state |
 | `after_subagent_created` | On parent after child thread creation | Track or initialize child relationships |
-| `after_system_message` | After system message render | Transform the request system message |
-| `filter_messages` | Before LLM context assembly | Filter/transform message history |
-| `prefilter_llm_history` | After context assembly | Final adjustments before LLM request |
+| `after_system_message` | After system message render, before the history snapshot | Transform the request system message |
+| `filter_messages` | Once per model-context assembly, on a stable history snapshot | Filter or transform persisted history for the provider request |
+| `prefilter_llm_history` | After provider-message transformation, before dispatch | Final adjustments to the provider request |
 | `before_create_message` | Before message insert | Transform message before storage |
 | `after_create_message` | After message insert | Side effects after storage |
 | `before_update_message` | Before message update | Transform update data |
@@ -70,6 +70,9 @@ Hooks are **scoped** to prompts and agents rather than running globally. This al
 1. **Prompt-level hooks** — If the active prompt declares a `hooks` array, only those hooks run
 2. **Agent-level hooks** — If the prompt has no `hooks` property, the agent's `hooks` array is used
 3. **No hooks** — If neither prompt nor agent declares hooks, no hooks run
+
+At-rest operations have no active prompt. They resolve lifecycle hooks from the
+thread's agent-level `hooks` array.
 
 ```typescript
 // Prompt with explicit hooks
@@ -137,22 +140,46 @@ defineHook({
 });
 ```
 
-## 3. Message Filtering Hooks
+## 3. Context Projection Hooks
 
-### 3.1 filter_messages
+These hooks build the temporary model-context projection. They do not replace live execution history. See [Runtime §4](/0.1.0/infrastructure/runtime#4-context-assembly).
 
-Called before messages are assembled into LLM context. Receives raw message data from storage.
+### 3.1 after_system_message
+
+Called after the system prompt is interpolated and before the runtime takes the history snapshot.
+
+**Signature:**
+```typescript
+(state: ThreadState, systemMessage: string) => string | Promise<string | null | undefined> | null | undefined
+```
+
+**Behavior:**
+- Implementations **MUST** invoke this hook after system-prompt interpolation and before the history snapshot.
+- A returned string **MUST** replace the rendered system message for the current request.
+- `null` or `undefined` **MUST** leave the current system message unchanged.
+- A message injected here is persisted before the snapshot. It **MUST** be eligible for the current assembly and **MUST** pass through `filter_messages`.
+
+### 3.2 filter_messages
+
+Called once per model-context assembly on a stable snapshot of eligible persisted history.
 
 **Signature:**
 ```typescript
 (state: ThreadState, messages: HookMessage[]) => Promise<HookMessage[]>
 ```
 
+**Behavior:**
+- Implementations **MUST** take a stable snapshot of eligible persisted history and invoke this hook exactly once on that snapshot.
+- The snapshot **MUST** include silent messages.
+- The returned array **MUST** become the persisted-history input for provider-message transformation.
+- Synthetic or transformed messages returned here **MUST** remain confined to the context projection. They **MUST NOT** replace [`execution.messageHistory`](/0.1.0/specification/threads/execution-state#22-live-execution-history).
+- A message injected from this hook **MUST NOT** restart projection. It becomes eligible for the following context assembly.
+
 **Use cases:**
 - Limit conversation history to N most recent messages
 - Filter out system-only messages
 - Remove messages matching certain patterns
-- Inject synthetic messages
+- Inject synthetic messages into the provider projection
 
 **Example:**
 ```typescript
@@ -166,7 +193,7 @@ defineHook({
 });
 ```
 
-### 3.2 prefilter_llm_history
+### 3.3 prefilter_llm_history
 
 Called after messages are transformed into LLM chat format, before the request is sent.
 
@@ -174,6 +201,12 @@ Called after messages are transformed into LLM chat format, before the request i
 ```typescript
 (state: ThreadState, messages: LLMMessage[]) => Promise<LLMMessage[]>
 ```
+
+**Behavior:**
+- Implementations **MUST** invoke this hook after provider-message transformation and before dispatch.
+- The returned array **MUST** be the provider request history.
+- Changes here **MUST** remain confined to the current request. They **MUST NOT** replace live execution history.
+- A message injected from this hook **MUST NOT** restart projection. It becomes eligible for the following context assembly.
 
 **Use cases:**
 - Add dynamic instructions to context
@@ -198,6 +231,23 @@ defineHook({
 });
 ```
 
+### 3.4 History projection and snapshot timing
+
+Live execution history and the model-context projection are separate views.
+
+| View | Source | Includes silent messages | Mutated by |
+|------|--------|--------------------------|------------|
+| `execution.messageHistory` | Persisted execution records | Yes | Successful `injectMessage()` calls during the active execution |
+| Context projection | One snapshot per assembly | Yes, until a hook removes them | `filter_messages`, then `prefilter_llm_history` |
+
+**Requirements:**
+
+- For each model-context assembly, the runtime **MUST** snapshot eligible persisted history and invoke `filter_messages` exactly once on that snapshot.
+- The runtime **MUST** then transform the filtered result into provider messages and invoke `prefilter_llm_history` before dispatch.
+- Messages injected after the snapshot begins **MUST** become eligible for the following context assembly.
+- `injectMessage()` **MUST NOT** recursively restart `filter_messages` or `prefilter_llm_history`.
+- [`injectMessage()`](/0.1.0/specification/threads/messages#3-injecting-messages) still applies `before_create_message` and `after_create_message` when a projection hook persists a message.
+
 ## 4. Message Lifecycle Hooks
 
 ### 4.1 before_create_message
@@ -210,7 +260,7 @@ Called before a message is inserted into storage. Return modified data to transf
 ```
 
 **Behavior:**
-- Implementations **MUST** call this hook before inserting any message
+- Implementations **MUST** call this hook before inserting any message, including every `injectMessage()` path
 - The returned object **MUST** be used for insertion
 - Failures **SHOULD** prevent message creation
 
@@ -224,7 +274,7 @@ Called after a message is successfully inserted. Cannot modify the message.
 ```
 
 **Behavior:**
-- Implementations **MUST** call this hook after successful insertion
+- Implementations **MUST** call this hook after successful insertion, including every `injectMessage()` path
 - Failures **SHOULD NOT** affect the created message
 - Use for logging, analytics, or triggering external systems
 
@@ -351,6 +401,7 @@ interface HookMessage {
   created_at: number;
   parent_id?: string | null;
   depth?: number;
+  silent?: boolean;
 }
 ```
 

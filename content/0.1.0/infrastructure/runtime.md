@@ -48,6 +48,22 @@ Before each model call, runtime context includes:
 - filtered conversation history
 - provider/tool configuration
 
+Each model-context assembly **MUST** proceed in this order:
+
+1. Interpolate the system prompt
+2. Invoke `after_system_message` with the rendered system message
+3. Take a stable snapshot of eligible persisted history
+4. Invoke `filter_messages` exactly once on that snapshot
+5. Transform the filtered result into provider messages
+6. Invoke `prefilter_llm_history`
+7. Dispatch the provider request
+
+The snapshot **MUST** be the set of eligible persisted messages at the moment the runtime starts `filter_messages`. Messages persisted before that moment **MUST** be eligible for the current assembly. Messages injected after that moment **MUST** become eligible for the following assembly.
+
+`injectMessage()` **MUST NOT** restart steps 3–6. Live execution history stays independent of this projection. See [Messages §3](/0.1.0/specification/threads/messages#3-injecting-messages) and [Hooks §3.4](/0.1.0/specification/hooks#34-history-projection-and-snapshot-timing).
+
+Silent messages remain eligible for the snapshot. `silent` affects client presentation only.
+
 For `dual_ai`:
 - own side appears as `assistant`
 - opposite side appears as `user`
