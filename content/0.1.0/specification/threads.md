@@ -429,13 +429,14 @@ Runtime semantics and conformance requirements for the durable key-value store l
 
 ### 7.4 Agent Skills
 
-`state.skills` exposes the **instance-global** Agent Skills library — the one deliberate exception to per-thread scoping in this section. Skills follow the [Agent Skills](https://agentskills.io) standard: a folder whose root `SKILL.md` opens with YAML frontmatter carrying a required `name` (lowercase kebab-case, ≤64 chars) and `description` (≤1024 chars), optionally accompanied by scripts, references, and assets.
+`state.skills` exposes the calling thread owner's Agent Skills library plus any administrator-reviewed skills explicitly shared by the runtime. Skills follow the [Agent Skills](https://agentskills.io) standard: a folder whose root `SKILL.md` opens with YAML frontmatter carrying a required `name` (lowercase kebab-case, ≤64 chars) and `description` (≤1024 chars), optionally accompanied by scripts, references, and assets.
 
 Requirements:
 
-- Skills are stored server-side and installed once for the whole instance; every thread sees the same library. Runtimes **MUST NOT** require client-side storage for skill content.
+- Skills are stored server-side and scoped to the calling principal. A principal's private skills **MUST NOT** be visible to another principal. Runtimes **MAY** add an explicitly shared, administrator-reviewed library and **MUST NOT** require client-side storage for skill content.
+- When an owner-scoped skill and a shared skill have the same name, the owner-scoped skill **MUST** take precedence for that owner.
 - A skill's identity **MUST** come from its `SKILL.md` frontmatter — never from a caller-supplied name — and installs **MUST** validate the frontmatter against the standard.
-- Runtimes **MUST** authorize instance-global mutations. Multi-tenant runtimes **MUST NOT** allow ordinary tenant agent code to install, replace, enable, disable, or remove shared skills; an administrative or equivalently trusted principal is required.
+- Runtimes **MUST** authorize mutations and confine them to the calling principal's scope. Multi-tenant runtimes **MUST NOT** allow ordinary tenant agent code to install, replace, enable, disable, or remove shared skills; an administrative or equivalently trusted principal is required for shared-library changes.
 - Runtimes **SHOULD** surface skills to agents with progressive disclosure: only `name` + `description` ride in ambient context; the `SKILL.md` body (and bundled files) load on demand when the agent judges the skill applicable.
 - Disabled skills stay installed but **MUST** be hidden from ambient agent context.
 
