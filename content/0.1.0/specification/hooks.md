@@ -140,9 +140,9 @@ defineHook({
 });
 ```
 
-## 3. Context Projection Hooks
+## 3. Request Context Hooks
 
-These hooks build the temporary model-context projection. They do not replace live execution history. See [Runtime §4](/0.1.0/infrastructure/runtime#4-context-assembly).
+These hooks build the request context: the temporary copy of history assembled for one model request. They do not replace live execution history. See [Runtime §4](/0.1.0/infrastructure/runtime#4-context-assembly).
 
 ### 3.1 after_system_message
 
@@ -172,14 +172,14 @@ Called once per model-context assembly on a stable snapshot of eligible persiste
 - Implementations **MUST** take a stable snapshot of eligible persisted history and invoke this hook exactly once on that snapshot.
 - The snapshot **MUST** include silent messages.
 - The returned array **MUST** become the persisted-history input for provider-message transformation.
-- Synthetic or transformed messages returned here **MUST** remain confined to the context projection. They **MUST NOT** replace [`execution.messageHistory`](/0.1.0/specification/threads/execution-state#22-live-execution-history).
-- A message injected from this hook **MUST NOT** restart projection. It becomes eligible for the following context assembly.
+- Synthetic or transformed messages returned here **MUST** remain confined to the request context. They **MUST NOT** replace [`execution.messageHistory`](/0.1.0/specification/threads/execution-state#22-live-execution-history).
+- A message injected from this hook **MUST NOT** restart context assembly. It becomes eligible for the following context assembly.
 
 **Use cases:**
 - Limit conversation history to N most recent messages
 - Filter out system-only messages
 - Remove messages matching certain patterns
-- Inject synthetic messages into the provider projection
+- Inject synthetic messages into the request context
 
 **Example:**
 ```typescript
@@ -206,7 +206,7 @@ Called after messages are transformed into LLM chat format, before the request i
 - Implementations **MUST** invoke this hook after provider-message transformation and before dispatch.
 - The returned array **MUST** be the provider request history.
 - Changes here **MUST** remain confined to the current request. They **MUST NOT** replace live execution history.
-- A message injected from this hook **MUST NOT** restart projection. It becomes eligible for the following context assembly.
+- A message injected from this hook **MUST NOT** restart context assembly. It becomes eligible for the following context assembly.
 
 **Use cases:**
 - Add dynamic instructions to context
@@ -231,14 +231,14 @@ defineHook({
 });
 ```
 
-### 3.4 History projection and snapshot timing
+### 3.4 Stored history and the request context
 
-Live execution history and the model-context projection are separate views.
+Live execution history and the request context are separate views.
 
 | View | Source | Includes silent messages | Mutated by |
 |------|--------|--------------------------|------------|
 | `execution.messageHistory` | Persisted execution records | Yes | Successful `injectMessage()` calls during the active execution |
-| Context projection | One snapshot per assembly | Yes, until a hook removes them | `filter_messages`, then `prefilter_llm_history` |
+| Request context | One snapshot per assembly | Yes, until a hook removes them | `filter_messages`, then `prefilter_llm_history` |
 
 **Requirements:**
 
@@ -246,7 +246,7 @@ Live execution history and the model-context projection are separate views.
 - The runtime **MUST** then transform the filtered result into provider messages and invoke `prefilter_llm_history` before dispatch.
 - Messages injected after the snapshot begins **MUST** become eligible for the following context assembly.
 - `injectMessage()` **MUST NOT** recursively restart `filter_messages` or `prefilter_llm_history`.
-- [`injectMessage()`](/0.1.0/specification/threads/messages#3-injecting-messages) still applies `before_create_message` and `after_create_message` when a projection hook persists a message.
+- [`injectMessage()`](/0.1.0/specification/threads/messages#3-injecting-messages) still applies `before_create_message` and `after_create_message` when a request-context hook persists a message.
 
 ## 4. Message Lifecycle Hooks
 

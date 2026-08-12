@@ -19,7 +19,7 @@ This page documents the message record, the APIs for manipulating the list, and 
 | `created_at` | `number` | Creation timestamp |
 | `parent_id` | `string \| null` | Parent message (sub-prompts) |
 | `depth` | `number` | Nesting depth (0 = top-level) |
-| `silent` | `boolean` | Client-presentation flag. Ordinary UI lists hide the message. The message remains eligible for model context and history projection hooks. |
+| `silent` | `boolean` | Client-presentation flag. Ordinary UI lists hide the message. The message remains eligible for model context and request-context hooks. |
 | `metadata` | `Record<string, unknown>` | Custom metadata (may include runtime status markers such as `status_kind`) |
 | `subagent_id` | `string \| null` | Subagent reference UUID associated with the message |
 | `subagent_name` | `string \| null` | Projected child agent name (when available) |
@@ -73,7 +73,7 @@ const message = await state.injectMessage({
 
 - Implementations **MUST** invoke `before_create_message` and `after_create_message` for every successful injection. See [Hooks §4](/0.1.0/specification/hooks#4-message-lifecycle-hooks).
 - The returned promise **MUST** resolve after the message is persisted and available through thread message APIs (`getMessage`, `getMessages`).
-- `injectMessage()` **MUST NOT** recursively restart history projection hooks (`filter_messages`, `prefilter_llm_history`).
+- `injectMessage()` **MUST NOT** recursively restart request-context hooks (`filter_messages`, `prefilter_llm_history`).
 
 ### 3.2 Presentation (`silent`)
 
@@ -81,18 +81,18 @@ const message = await state.injectMessage({
 
 - Clients **MUST** hide silent messages from ordinary message lists unless the caller sets `includeSilent: true`.
 - Silent messages **MUST** remain eligible for model context.
-- Silent messages **MUST** participate in the ordinary history projection hooks.
+- Silent messages **MUST** participate in the ordinary request-context hooks.
 - `silent` **MUST NOT** change persistence, lifecycle hooks, or same-execution visibility.
 
 ### 3.3 Same-execution visibility
 
 During an active execution, a successfully injected message **MUST** become observable to subsequent tools and hooks in that execution.
 
-[`execution.messageHistory`](/0.1.0/specification/threads/execution-state#22-live-execution-history) **MUST** represent live chronological persisted execution history. It **MUST** include silent messages. Synthetic or transformed messages returned by model-context hooks **MUST** remain confined to the context projection.
+[`execution.messageHistory`](/0.1.0/specification/threads/execution-state#22-live-execution-history) **MUST** represent live chronological persisted execution history. It **MUST** include silent messages. Synthetic or transformed messages returned by request-context hooks **MUST** remain confined to the request context.
 
 ### 3.4 Context snapshot assignment
 
-Each model-context assembly takes a stable snapshot of eligible persisted history. See [Runtime §4](/0.1.0/infrastructure/runtime#4-context-assembly) and [Hooks §3.4](/0.1.0/specification/hooks#34-history-projection-and-snapshot-timing).
+Each model-context assembly takes a stable snapshot of eligible persisted history. See [Runtime §4](/0.1.0/infrastructure/runtime#4-context-assembly) and [Hooks §3.4](/0.1.0/specification/hooks#34-stored-history-and-the-request-context).
 
 - Messages persisted before the snapshot **MUST** be eligible for that assembly.
 - Messages injected after the snapshot begins **MUST** become eligible for the following context assembly.
@@ -142,7 +142,7 @@ A conforming runtime **MUST** satisfy these portable scenarios.
 | Inject during active execution | `before_create_message` and `after_create_message` each run once. `getMessage` returns the persisted record. Later tools and hooks in the same execution observe the message on `execution.messageHistory`. |
 | Inject at rest | The same lifecycle hooks run. The message is available through thread message APIs before the next execution starts. |
 | Silent and visible injection | Both records persist. Both appear on `execution.messageHistory`. Both are eligible for the next context snapshot. Ordinary UI queries omit the silent record unless `includeSilent` is true. |
-| `filter_messages` projection | Trimming, compaction, redaction, and synthetic messages affect the provider request. `execution.messageHistory` continues to list the live persisted records. |
-| Inject from `filter_messages` | Lifecycle hooks run. Projection does not restart. The injected message is absent from the current provider request and eligible for the following assembly. |
+| `filter_messages` edits the request context | Trimming, compaction, redaction, and synthetic messages affect the provider request. `execution.messageHistory` continues to list the live persisted records. |
+| Inject from `filter_messages` | Lifecycle hooks run. Context assembly does not restart. The injected message is absent from the current provider request and eligible for the following assembly. |
 | Inject from `prefilter_llm_history` | Same snapshot assignment as injection from `filter_messages`. |
 | Inject from `after_system_message` | The message is persisted before the history snapshot. It is eligible for the current assembly and passes through `filter_messages`. |

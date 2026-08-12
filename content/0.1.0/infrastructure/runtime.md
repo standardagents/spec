@@ -60,7 +60,7 @@ Each model-context assembly **MUST** proceed in this order:
 
 The snapshot **MUST** be the set of eligible persisted messages at the moment the runtime starts `filter_messages`. Messages persisted before that moment **MUST** be eligible for the current assembly. Messages injected after that moment **MUST** become eligible for the following assembly.
 
-`injectMessage()` **MUST NOT** restart steps 3–6. Live execution history stays independent of this projection. See [Messages §3](/0.1.0/specification/threads/messages#3-injecting-messages) and [Hooks §3.4](/0.1.0/specification/hooks#34-history-projection-and-snapshot-timing).
+`injectMessage()` **MUST NOT** restart steps 3–6. Live execution history stays independent of the request context. See [Messages §3](/0.1.0/specification/threads/messages#3-injecting-messages) and [Hooks §3.4](/0.1.0/specification/hooks#34-stored-history-and-the-request-context).
 
 Silent messages remain eligible for the snapshot. `silent` affects client presentation only.
 
