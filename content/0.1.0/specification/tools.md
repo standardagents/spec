@@ -75,6 +75,7 @@ When `dual_ai` agents are used as tools, use `SubagentToolConfig`:
 ```typescript
 interface SubagentToolConfig {
   name: string;
+  agent?: string;
   blocking?: boolean;
   initUserMessageProperty?: string;
   initAttachmentsProperty?: string;
@@ -96,6 +97,8 @@ interface SubagentToolConfig {
 ```
 
 Behavioral summary:
+- `name`: the exposed tool name — the name the model invokes the subagent by. When `agent` is absent, it MUST reference a `dual_ai` agent with `exposeAsTool: true` directly.
+- `agent`: the `dual_ai` agent the tool invokes when it is exposed under a name other than the agent's own. Defaults to `name`. The same agent may be exposed under different tool names by different prompts. Everything model-facing — the tool schema, instance registries, and lifecycle tool references — uses the exposed `name`; runtimes resolve the implementing agent internally as `agent ?? name`.
 - non-resumable: direct tool-call semantics.
 - resumable: runtime lifecycle tooling with persistent references.
 - `immediate: true`: execute as soon as the prompt becomes active, before the first model step.
@@ -125,6 +128,8 @@ These tools are runtime-injected and scoped to what is currently enabled and ava
 `subagents` is the pull-based child visibility surface: it takes no arguments and returns the model-visible registry snapshot — reference id, name, status, working-status text, and initial arguments — as a tool result on demand. When this query tool is available, runtimes MUST NOT additionally inject an ambient registry system message into request context: a registry block that mutates between requests invalidates provider prefix caches and reads as out-of-dialogue state to agentic-tuned models. Child completions still arrive as messages. Injected tool descriptions SHOULD direct the model to call `subagents` before `subagent_create` so existing instances are reused rather than duplicated.
 
 `subagent_create` MUST require a non-empty `name` argument for the spawned child instance. Runtimes SHOULD persist this as a human-readable child thread display name, for example a `name:<value>` thread tag.
+
+Lifecycle tools manage resumable relationships exclusively. Runtimes MUST reject a `subagent_create` invocation that targets a relationship without `resumable` configuration, without creating a child, and the rejection SHOULD direct the model to invoke that tool directly instead. Runtimes SHOULD constrain the injected tool's target argument to the exposed names of the prompt's resumable relationships. All lifecycle tool references use the relationship's exposed tool `name`, never an internal agent identifier that differs from it.
 
 `subagent_create` SHOULD expose a structured `arguments` object whose schema is dictated by the receiving agent's `side_a` `requiredSchema` — the child side that receives parent messages. Runtimes MUST validate it against that schema, persist the validated arguments for the life of the child thread, and make them available to both child sides for later turns (including future resumptions) through `ThreadState.arguments` and prompt variable interpolation on every activation (see [Agents §7.8](/0.1.0/specification/agents#78-persistent-invocation-arguments)). When required arguments are missing, runtimes MUST return a structured `subagent_arguments_required` error instead of spawning the child.
 
