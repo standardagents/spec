@@ -46,7 +46,7 @@ This allows tools and hooks to understand their execution context depth.
 
 - A successful [`injectMessage()`](/0.1.0/specification/threads/messages#3-injecting-messages) **MUST** make that record observable on `execution.messageHistory` to later tools and hooks in the same execution.
 - Silent messages **MUST** remain on `execution.messageHistory`.
-- Synthetic or transformed messages produced by `filter_messages` or `prefilter_llm_history` **MUST** remain confined to the model-context projection. They **MUST NOT** replace `execution.messageHistory`.
+- Synthetic or transformed messages produced by `filter_messages` or `prefilter_llm_history` **MUST** remain confined to the request context. They **MUST NOT** replace `execution.messageHistory`.
 
 The provider request is assembled from a separate snapshot. See [Runtime §4](/0.1.0/infrastructure/runtime#4-context-assembly).
 
