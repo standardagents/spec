@@ -2,7 +2,11 @@
 
 A hook is an interception point in the agent execution lifecycle. Hooks enable logging, validation, transformation, and side effects at specific moments during execution — without modifying core agent logic.
 
-Hook handlers receive a [`ThreadState`](/0.1.0/specification/threads). Hooks that run during active execution also receive [`state.execution`](/0.1.0/specification/threads/execution-state) with step counts, active dual-side, and abort signal context.
+Thread-hook handlers receive a [`ThreadState`](/0.1.0/specification/threads)
+and execution provenance. Hooks that run during active execution also receive
+[`state.execution`](/0.1.0/specification/threads/execution-state) with step
+counts, active dual-side, and abort signal context. User-scope hooks receive
+`UserState` and are not eligible for parent composition.
 
 ## 1. Hook Definition
 
@@ -63,13 +67,31 @@ export default defineHook({
 
 ### 1.3 Hook Scoping
 
-Hooks are **scoped** to prompts and agents rather than running globally. This allows different prompts to use different hooks.
+Thread hooks are **scoped** to the active parent composition rather than running
+globally. This allows a prompt to select its own hooks while an added child can
+bring the parent-side integration behavior it requires.
 
-**Resolution priority:**
+**Resolution and execution order for each hook type:**
 
-1. **Prompt-level hooks** — If the active prompt declares a `hooks` array, only those hooks run
-2. **Agent-level hooks** — If the prompt has no `hooks` property, the agent's `hooks` array is used
-3. **No hooks** — If neither prompt nor agent declares hooks, no hooks run
+1. **Child before hooks** — `before_parent` requirements from enabled direct
+   child relationships, in prompt tool order and child declaration order
+2. **Prompt-level hooks** — A non-empty active prompt `hooks` array is the
+   parent's base set
+3. **Agent-level hooks** — If the prompt has no hooks, the agent's `hooks` array
+   is the parent's fallback base set
+4. **Child after hooks** — `after_parent` requirements (the default stage), in
+   the same stable relationship/declaration order
+
+If none of these sources declares a matching hook, no hook runs. Downloaded or
+installed packages are not global hook sources. A child contributes hooks only
+when its exposed `dual_ai` entry agent is present as an enabled direct tool
+relationship on the active prompt. Disabled optional children contribute none;
+hidden enabled children still contribute hooks because `hidden` controls only
+model visibility.
+
+Child hook IDs resolve in the child's package namespace and execute with the
+parent's `ThreadState`. A missing, invalid, unloadable, or user-scoped required
+hook **MUST** fail composition closed. See [Agents §7.15](/0.1.0/specification/agents#715-required-parent-hooks).
 
 At-rest operations have no active prompt. They resolve lifecycle hooks from the
 thread's agent-level `hooks` array.
@@ -96,7 +118,10 @@ See the [Prompts](/0.1.0/specification/prompts) and [Agents](/0.1.0/specificatio
 
 ### 2.1 ThreadState Parameter
 
-All hooks receive a `ThreadState` instance as their first parameter. See the [Threads](/0.1.0/specification/threads) specification for the complete interface.
+All thread hooks receive a `ThreadState` instance as their first parameter and
+a `HookExecutionContext` as their final parameter. See the
+[Threads](/0.1.0/specification/threads) specification for the complete state
+interface.
 
 Key properties available during hook execution:
 
@@ -139,6 +164,33 @@ defineHook({
   },
 });
 ```
+
+### 2.4 Execution Provenance
+
+The final context argument identifies why the hook is active:
+
+```typescript
+type HookExecutionSource =
+  | { kind: 'prompt'; promptName: string }
+  | { kind: 'agent'; agentName: string }
+  | {
+      kind: 'child';
+      relationshipName: string;
+      agentName: string;
+      package?: PackageSignature;
+    };
+
+interface HookExecutionContext {
+  source: HookExecutionSource;
+}
+```
+
+`relationshipName` is the exposed `SubagentToolConfig.name`; `agentName` is the
+resolved implementing agent (`agent ?? name`). Package provenance, when
+present, **MUST** identify the namespace from which the child hook was loaded.
+Prompt and agent hooks receive their corresponding prompt/agent source. This
+context is deterministic runtime metadata and must not be inferred from mutable
+thread data.
 
 ## 3. Request Context Hooks
 
@@ -449,7 +501,7 @@ interface LLMMessage {
 ```typescript
 /**
  * Hook signatures for all available hooks.
- * All hooks receive ThreadState as their first parameter.
+ * All thread hooks receive ThreadState first and execution context last.
  * See the Threads specification for the ThreadState interface.
  */
 interface HookSignatures<
@@ -458,71 +510,93 @@ interface HookSignatures<
   ToolCall = HookToolCall,
   ToolResult = HookToolResult,
 > {
-  after_thread_created: (state: State) => Promise<void>;
+  after_thread_created: (
+    state: State,
+    context: HookExecutionContext
+  ) => Promise<void>;
 
   after_subagent_created: (
     state: State,
-    childState: State
+    childState: State,
+    context: HookExecutionContext
   ) => Promise<void>;
 
   after_system_message: (
     state: State,
-    systemMessage: string
+    systemMessage: string,
+    context: HookExecutionContext
   ) => string | Promise<string | null | undefined> | null | undefined;
 
-  filter_messages: (state: State, messages: Message[]) => Promise<Message[]>;
+  filter_messages: (
+    state: State,
+    messages: Message[],
+    context: HookExecutionContext
+  ) => Promise<Message[]>;
 
   prefilter_llm_history: (
     state: State,
-    messages: LLMMessage[]
+    messages: LLMMessage[],
+    context: HookExecutionContext
   ) => Promise<LLMMessage[]>;
 
   before_create_message: (
     state: State,
-    message: Record<string, unknown>
+    message: Record<string, unknown>,
+    context: HookExecutionContext
   ) => Promise<Record<string, unknown>>;
 
   after_create_message: (
     state: State,
-    message: Record<string, unknown>
+    message: Record<string, unknown>,
+    context: HookExecutionContext
   ) => Promise<void>;
 
   before_update_message: (
     state: State,
     messageId: string,
-    updates: Record<string, unknown>
+    updates: Record<string, unknown>,
+    context: HookExecutionContext
   ) => Promise<Record<string, unknown>>;
 
-  after_update_message: (state: State, message: Message) => Promise<void>;
+  after_update_message: (
+    state: State,
+    message: Message,
+    context: HookExecutionContext
+  ) => Promise<void>;
 
   before_store_tool_result: (
     state: State,
     toolCall: Record<string, unknown>,
-    toolResult: Record<string, unknown>
+    toolResult: Record<string, unknown>,
+    context: HookExecutionContext
   ) => Promise<Record<string, unknown>>;
 
   after_tool_call_success: (
     state: State,
     toolCall: ToolCall,
-    toolResult: ToolResult
+    toolResult: ToolResult,
+    context: HookExecutionContext
   ) => Promise<ToolResult | null>;
 
   after_tool_call_failure: (
     state: State,
     toolCall: ToolCall,
-    toolResult: ToolResult
+    toolResult: ToolResult,
+    context: HookExecutionContext
   ) => Promise<ToolResult | null>;
 
   tool_call_started: (
     state: State,
     toolCall: ToolCall,
-    progress?: string
+    progress: string | undefined,
+    context: HookExecutionContext
   ) => Promise<void>;
 
   tool_call_done: (
     state: State,
     toolCall: ToolCall,
-    toolResult: ToolResult
+    toolResult: ToolResult,
+    context: HookExecutionContext
   ) => Promise<void>;
 }
 
