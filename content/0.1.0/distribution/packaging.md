@@ -127,7 +127,7 @@ interface PackedExports {
   prompts: Record<string, DefinitionLoader<PromptDefinition>>;
   tools: Record<string, DefinitionLoader<ToolDefinition>>;
   models: Record<string, DefinitionLoader<ModelDefinition>>;
-  hooks: Record<string, DefinitionLoader<HookDefinitionResult>>;
+  hooks: Record<string, DefinitionLoader<HookDefinitionResult<HookName>>>;
   effects?: Record<string, DefinitionLoader<EffectDefinition<any, any>>>;
   threadEndpoints?: Record<string, DefinitionLoader<MarkedThreadEndpoint | Controller>>;
   __meta: PackedMeta;
@@ -168,6 +168,9 @@ The `standardagent` field marks this as a Standard Agent package. Its sub-fields
 - `entryAgents` declares callable entry agents.
 - `effects` (optional) lists packed effect names.
 - `threadEndpoints` (optional) lists packed thread endpoint keys.
+- `parentHooks` (optional) duplicates required parent-hook disclosures keyed by
+  entry agent so a marketplace or installer can show composition effects
+  without importing executable package code.
 
 The `keywords` array **MUST** include `"standardagent"` for discovery.
 
@@ -187,8 +190,17 @@ export interface PackedMeta {
   packedAt: number;
   /** Optional description */
   description?: string;
+  /** Required parent-hook disclosures keyed by entry agent */
+  parentHooks?: Record<string, ParentHookRequirement[]>;
 }
 ```
+
+Packers **MUST** include every hook referenced by an entry agent's
+`parentHooks`, even when no prompt or agent `hooks` array references it, and
+**MUST** reproduce those declarations in both `__meta.parentHooks` and
+`package.json.standardagent.parentHooks`. Hook code remains inert after package
+installation; the declarations activate only when a host composes the entry
+agent into an enabled direct child relationship.
 
 ## Namespace Isolation
 

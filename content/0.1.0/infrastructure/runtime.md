@@ -114,6 +114,24 @@ Runtimes should evaluate subagent tool flags before exposing/executing them:
 
 Immediate execution should be recursive across activated child prompts.
 
+### 7.3.1 Required Parent-Hook Composition
+
+For each active prompt, runtimes **MUST** resolve the complete thread-hook set
+from the prompt's enabled direct `dual_ai` relationships before a hook position
+runs. Resolution is declarative and does not require the child thread to have
+been spawned. Installed packages that are not added to a prompt contribute
+nothing.
+
+Child requirements load from the implementing child's package namespace and
+execute against the parent thread. Resolution **MUST** fail closed if a required
+hook cannot be loaded or is user-scoped. The same composition applies to every
+thread hook position, including `after_thread_created`; runtimes must not
+special-case a subset of hook types.
+
+Within one hook position, runtimes **MUST** run child `before_parent` hooks in
+prompt tool order and declaration order, then the parent's effective prompt-or-
+agent hook set, then child `after_parent` hooks in the same stable order.
+
 ### 7.4 Initial Payload Mapping
 
 Subagent tool configuration can map args to:

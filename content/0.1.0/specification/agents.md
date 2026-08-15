@@ -32,6 +32,7 @@ A **subagent** is not a separate concept — it is a `dual_ai` agent invoked by 
 | `toolDescription` | `string` | - | Callable description |
 | `env` | `Record<string, string>` | - | Agent-level default variable values |
 | `hooks` | `string[]` | - | Fallback hook IDs |
+| `parentHooks` | `ParentHookRequirement[]` | - | Required hooks automatically contributed to a direct parent composition |
 
 `AgentDefinition` also accepts optional packaging metadata — `packageName`, `version`, `author`, `license` — consumed only when the agent is packed for distribution. See [Packaging](/0.1.0/distribution/packaging).
 
@@ -302,6 +303,59 @@ These are properties of the underlying thread, not of subagents specifically. Se
 
 - queued messages are durable and ordered; injected before the next model step when executing, otherwise forcing the next turn.
 - `terminate()` is a soft shutdown that aborts in-flight execution, rejects new execution/queued-message entry, and updates parent registry status to `terminated` when applicable.
+
+### 7.15 Required Parent Hooks
+
+An exposed `dual_ai` child MAY declare thread-scoped hooks that are required for
+the child relationship to work correctly:
+
+```typescript
+interface ParentHookRequirement {
+  hook: string;
+  reason: string;
+  stage?: 'before_parent' | 'after_parent';
+}
+
+defineAgent({
+  name: 'gmail_agent',
+  type: 'dual_ai',
+  exposeAsTool: true,
+  parentHooks: [{
+    hook: 'gmail_context',
+    reason: 'Makes newly synchronized Gmail context visible to the coordinator.',
+    stage: 'before_parent',
+  }],
+  // ...
+});
+```
+
+Downloading or installing a package is inert. Adding its entry agent to an
+enabled parent prompt tool relationship is the composition act and **MUST**
+activate every `parentHooks` requirement automatically. A second accept-list is
+not required: composition UIs **MUST** disclose the hook ID, reason, and stage
+before the relationship is added or enabled.
+
+The following rules are normative:
+
+- Only `dual_ai` agents with `exposeAsTool: true` MAY declare `parentHooks`.
+- Requirements apply only to direct parent relationships; they do not propagate
+  transitively through the child graph.
+- `optional` relationships contribute hooks only while their flag is enabled.
+  `hidden: true` affects model visibility, not composition, so hidden enabled
+  relationships still contribute their required hooks.
+- Each requirement names a thread-scoped hook in the child's own package
+  namespace. User-scoped hooks cannot be required on a parent.
+- The hook receives the parent's `ThreadState`, not the child thread's state,
+  and remains active for the lifetime of the enabled relationship.
+- Missing, invalid, or unloadable required hooks **MUST** fail composition
+  closed. Runtimes must not silently run a partially installed child.
+- Duplicate hook IDs within one child's `parentHooks` declaration are invalid.
+
+Required parent hooks are part of the child's public behavioral contract, not
+an installer side effect. Optional child features that would change this
+contract require a separately configured child definition; absence from a
+required list does not mean “best effort.” Ordering and provenance are defined
+in [Hooks §1.3](/0.1.0/specification/hooks#13-hook-scoping).
 
 ## 8. Example
 
