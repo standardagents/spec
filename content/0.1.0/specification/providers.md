@@ -387,17 +387,36 @@ type ProviderStreamChunk =
 Providers throw typed errors for error conditions.
 
 ```typescript
+type ErrorOrigin =
+  | `provider:${string}`
+  | 'platform-router'
+  | 'runtime'
+  | `tool:${string}`
+  | `hook:${string}`;
+
 class ProviderError extends Error {
   constructor(
     message: string,
     public code: 'rate_limit' | 'invalid_request' | 'auth_error' | 'server_error' | 'timeout' | 'unknown',
     public statusCode?: number,
-    public retryAfter?: number
+    public retryAfter?: number,
+    options?: {
+      cause?: unknown;
+      origin?: ErrorOrigin;
+      upstream?: string;
+    }
   ) {
     super(message);
   }
 }
 ```
+
+Provider packages SHOULD set `origin: 'provider:<id>'` when they rethrow an
+upstream failure. Wrapped or delegated endpoints SHOULD also set `upstream` to
+the backend that actually handled the request. Runtimes use these fields for
+logs and operator interfaces; attribution MUST NOT require parsing the human
+error message. When a provider omits them, the runtime MAY attribute the known
+request boundary (direct provider or hosted router).
 
 ### 7.1 Error Codes
 
@@ -853,9 +872,18 @@ type ProviderStreamChunk =
   | { type: 'error'; error: string; code?: string };
 
 // Errors
+type ErrorOrigin =
+  | `provider:${string}`
+  | 'platform-router'
+  | 'runtime'
+  | `tool:${string}`
+  | `hook:${string}`;
+
 class ProviderError extends Error {
   code: 'rate_limit' | 'invalid_request' | 'auth_error' | 'server_error' | 'timeout' | 'unknown';
   statusCode?: number;
   retryAfter?: number;
+  origin?: ErrorOrigin;
+  upstream?: string;
 }
 ```
