@@ -15,7 +15,7 @@ interface Props {
 }
 
 // Get versions from the content at build time - these are passed as props
-const versions = ['0.1.0'] // Will be updated when more versions exist
+const versions = ['0.2.0', '0.1.0']
 
 function SunIcon({ className }: { className?: string }) {
   return (

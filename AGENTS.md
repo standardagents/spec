@@ -28,16 +28,21 @@ Markdown files in `content/` are loaded via Astro's Content Layer API. Version f
 
 ```
 content/
-└── 0.1.0/
+├── 0.1.0/            # published and immutable — do not edit
+└── 0.2.0/            # current version ("sides are backings")
     ├── getting-started/
-    │   └── overview.md
+    │   ├── overview.md
+    │   ├── examples.md
+    │   └── changelog.md
     ├── specification/
     │   ├── providers.md
     │   ├── models.md
     │   ├── tools.md
     │   ├── effects.md
     │   ├── prompts.md
+    │   ├── handlers.md      # new in 0.2.0
     │   ├── agents.md
+    │   ├── subagents.md     # new in 0.2.0
     │   ├── threads.md
     │   ├── threads/
     │   │   ├── messages.md
@@ -53,6 +58,10 @@ content/
     └── distribution/
         └── packaging.md
 ```
+
+Older version folders are archived, immutable content. Edit only the current
+version's folder; the version selector and `llms.txt` derive the latest
+version automatically from the folder names.
 
 ### Source Structure
 
@@ -123,11 +132,14 @@ Navigation order is controlled by the `NAV_ORDER` constant in `src/lib/content.t
 
 ### Subagent Documentation Scope
 
-Subagent behavior is documented on the [Agents](content/0.1.0/specification/agents.md) page (a subagent is a `dual_ai` agent used as a tool from a parent thread). Supporting docs:
+As of 0.2.0, subagent behavior lives on the dedicated
+[Subagents](content/0.2.0/specification/subagents.md) page (a subagent is any
+agent composed as a child via a side-declared relationship). Supporting docs:
 
-- `specification/agents.md` — agent definition, `sessionStop`/`sessionFail`/`sessionStatus`, and the full Subagents section (lifecycle, invocation modes, parent ↔ child communication)
-- `specification/tools.md` — `SubagentToolConfig` type and lifecycle tools (`subagent_create`, `subagent_message`)
-- `specification/threads.md` — thread hierarchy, queue, termination; subagent-specific `notifyParent` / `setStatus` / `stopSession`
+- `specification/agents.md` — sides/backings, definition-time errors, human-in-the-loop composition, `parentHooks`
+- `specification/subagents.md` — `SubagentRelationship`, ownership, lifecycle doctrine, lifecycle tools (`subagents`, `subagent_create`, `subagent_message`)
+- `specification/handlers.md` — handler-backed sides and their child access
+- `specification/threads.md` — thread hierarchy, queue, termination; `notifyParent` / `setStatus` / `stopSession`
 - `infrastructure/runtime.md` — execution/copying semantics
 
 When subagent behavior changes, update each of these together.

@@ -26,7 +26,10 @@ const groupTitles: Record<string, string> = {
 const groupOrder = ['getting-started', 'guides', 'specification', 'infrastructure', 'distribution']
 
 // Explicit page ordering within specification group (primitives -> complex)
-const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'agents', 'threads', 'users', 'hooks', 'type-registry']
+const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'handlers', 'agents', 'subagents', 'threads', 'users', 'hooks', 'type-registry']
+
+// Explicit page ordering within the getting-started group ('overview' always sorts first)
+const gettingStartedOrder = ['overview', 'examples', 'changelog']
 
 // Explicit ordering of subpages under a parent slug (per group)
 // Key is "{group}/{parent}", value is the ordered list of child slugs.
@@ -194,9 +197,12 @@ export async function getNavigation(version: string): Promise<NavGroup[]> {
       if (a.slug === 'overview') return -1
       if (b.slug === 'overview') return 1
 
-      if (group === 'specification') {
-        const aIndex = specOrder.indexOf(a.slug)
-        const bIndex = specOrder.indexOf(b.slug)
+      const explicitOrder = group === 'specification' ? specOrder
+        : group === 'getting-started' ? gettingStartedOrder
+        : null
+      if (explicitOrder) {
+        const aIndex = explicitOrder.indexOf(a.slug)
+        const bIndex = explicitOrder.indexOf(b.slug)
         if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
         if (aIndex !== -1) return -1
         if (bIndex !== -1) return 1

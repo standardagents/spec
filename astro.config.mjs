@@ -8,6 +8,12 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      allowedHosts: ['macbookserver.tail13bd39.ts.net'],
+    },
+    preview: {
+      allowedHosts: ['macbookserver.tail13bd39.ts.net'],
+    },
   },
   markdown: {
     remarkPlugins: ['remark-gfm'],
