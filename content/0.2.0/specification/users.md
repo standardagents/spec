@@ -38,6 +38,7 @@ interface UserState {
     Promise<{ entries: { key: string; value: unknown; updated_at: number }[]; total: number }>
 
   env(name: string): Promise<string>
+  instanceEnv?(name: string): Promise<string | undefined>
 
   emit(event: string, data?: unknown): void
 
@@ -63,6 +64,25 @@ interface UserState {
 1. `thread()` MUST reject for threads not belonging to the user.
 2. Operations on the resolved `ThreadState` execute in the thread scope; the §2.1 guarantee does not extend across them.
 3. A runtime MUST fail — not deadlock — a reentrant user-scope invocation (`state.user().call()`) made from code reached through `thread()` within the same user execution.
+
+### 2.3 Environment
+
+`env(name)` resolves in this order, the tail of the [thread order](/0.2.0/specification/threads):
+
+1. User-account environment variables
+2. Runtime instance environment variables
+
+It rejects when neither defines the name. A value configured once for the
+instance is therefore visible to user endpoints and user hooks as it is to
+threads, and a user-account value overrides it for that user.
+
+The optional `instanceEnv(name)` capability reads exclusively from the runtime
+instance. It must not consider user values. It returns `undefined` when the key
+is not configured and rejects when the runtime cannot read its instance
+environment. Use it when a value establishes a trust boundary, such as a
+service endpoint and the credential sent to that endpoint. Consumers that
+require this boundary must feature-detect the method and fail closed if the
+capability is unavailable or the required instance value is missing.
 
 ## 3. User Endpoints
 
