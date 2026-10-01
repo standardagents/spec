@@ -142,7 +142,7 @@ The methods directory below is grouped by topic. Topics with their own page link
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `user()` | `Promise<ThreadUser \| null>` | Profile of the thread's user (identity fields only — id, username, role, permissions, email, display_name, avatar_url; never credentials). `null` for user-less threads. |
+| `user()` | `Promise<ThreadUser \| null>` | Profile of the thread's user (identity fields only — id, username, role, roles, permissions, email, display_name, avatar_url; never credentials). `roles` optionally contains opaque application roles from the trusted identity authority; see [Users](/0.2.0/specification/users#application-roles). `null` for user-less threads. |
 
 **Skills** — see [§7.4 Agent Skills](#74-agent-skills)
 

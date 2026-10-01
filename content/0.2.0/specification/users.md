@@ -19,9 +19,28 @@ interface UserIdentity {
   display_name?: string | null
   avatar_url?: string | null
   role?: string | null
+  roles?: string[]
   permissions?: string[] | null
 }
 ```
+
+### Application roles
+
+`roles` is an optional list of opaque, case-sensitive application role strings
+supplied by the runtime's trusted identity authority. It is distinct from the
+runtime-defined `role` and `permissions` fields. An absent or empty list grants
+no application roles. No role string implies a built-in runtime privilege, and
+the specification defines no wildcard expansion or role hierarchy.
+
+Applications may adopt names such as `reports:read` or `releases:canary` and
+check them before protected operations. A name ending in `:*` has meaning only
+when application code explicitly implements that convention. Clients and
+user-writable values MUST NOT be accepted as the source of authoritative roles.
+A runtime that supplies roles MUST expose them through `UserState.identity()`
+and the identity returned by `ThreadState.user()`. Runtimes MUST document their
+authorization freshness boundary; an identity may be a snapshot within one
+request or execution. Applications should authorize each protected request or
+execution instead of persisting a previously granted decision indefinitely.
 
 ## 2. UserState
 
