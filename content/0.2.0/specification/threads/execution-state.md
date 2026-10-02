@@ -69,7 +69,73 @@ fetch(url, { signal: state.execution.abortSignal });
 
 `state.execution.stop()` stops the current execution loop. It does not by itself satisfy a subagent/session terminal boundary. To terminally end the active agent session, use [`state.stopSession()`](/0.2.0/specification/threads#9-subagent-hierarchy-communication-and-termination).
 
-## 4. TypeScript Reference
+## 4. Run Status
+
+`ThreadState.execution` describes a run from inside it. The **run status**
+describes the thread from outside: whether an execution is in flight, and how
+the last one ended. It is available everywhere `ThreadState` is, and to
+clients without polling.
+
+```typescript
+type ThreadRunState = 'idle' | 'running' | 'failed';
+
+interface ThreadStatus {
+  state: ThreadRunState;
+  since: number;          // microseconds since epoch, like created_at
+  reason?: string | null; // raw stop reason code of the last transition out of running
+}
+
+const status = await state.status();
+```
+
+### 4.1 States
+
+| State | Meaning |
+|-------|---------|
+| `idle` | No execution is running and the last run did not fail — or the thread has never run (`since` is `0`, `reason` is `null`). |
+| `running` | An execution is in flight. `reason` is `null`. |
+| `failed` | The last run ended in an error. |
+
+The run status describes **execution, not turn ownership**. A run that ends by
+handing the turn to a human-backed side settles as `idle`; its `reason` (for
+example `awaiting_human`, `stop_on_response`, or `stop_tool`) carries the
+detail. The subagent registry keeps its own `awaiting_human` status for
+children (see [Subagents](/0.2.0/specification/subagents)).
+
+### 4.2 Reasons
+
+`reason` is the run's stop reason code. Runtimes **SHOULD** use these codes
+where they apply and **MAY** add others; clients **MUST** treat unknown codes
+as opaque.
+
+| Settles as | Codes |
+|------------|-------|
+| `idle` | `stop_on_response`, `stop_tool`, `awaiting_human`, `forced_human_turn`, `hook_blocked`, `aborted`, `aborted_by_user`, `session_stop`, `state_stop_session`, `max_total_steps`, `max_side_steps`, `max_session_turns`, `handler_idle` |
+| `failed` | `step_error`, `repeated_tool_error`, `session_fail`, `fatal_error`, `execution_lost` |
+
+### 4.3 Requirements
+
+- Runtimes **MUST** set `running` when any execution of the thread starts and **MUST** settle it (`idle` or `failed`) when that execution ends, including when it throws.
+- Runtimes **MUST** persist the status with the thread so it survives restarts.
+- Runtimes **MUST NOT** leave a thread `running` once its executor is gone (eviction, deploy, crash). A lost execution settles to `failed` with reason `execution_lost`; a later recovery run sets `running` again.
+- `since` **MUST** change only when `state` or `reason` changes.
+- `status()` is unrelated to `setStatus(label)`, which writes a label into this thread's entry in its parent's subagent registry.
+
+### 4.4 Client delivery
+
+Run status is push-only. Runtimes that expose a thread message stream
+**MUST** send a status frame immediately after accepting each stream
+connection (a snapshot) and again on every change:
+
+```json
+{ "type": "thread_status", "status": { "state": "running", "since": 1727870000000000, "reason": null } }
+```
+
+A reconnecting client resynchronizes from the snapshot; clients **SHOULD NOT**
+poll for run status. Runtimes with a thread read endpoint **SHOULD** include
+the same `status` object in it.
+
+## 5. TypeScript Reference
 
 ```typescript
 interface ExecutionState {

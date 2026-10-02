@@ -138,6 +138,13 @@ The methods directory below is grouped by topic. Topics with their own page link
 | `getValue(key)` | `Promise<T \| null>` | Read a value from the thread's durable key-value store |
 | `setValue(key, value)` | `Promise<void>` | Write a JSON-serializable value; `null`/`undefined` deletes the key |
 
+**Run status & application logs** — see [Execution State §4](/0.2.0/specification/threads/execution-state#4-run-status) and [§7.5 Application Logs](#75-application-logs)
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `status()` | `Promise<ThreadStatus>` | Authoritative run status: `idle`, `running`, or `failed`, with `since` and the last stop `reason` |
+| `log(entry)` | `Promise<void>` | Record an application log entry; never creates a message or starts execution |
+
 **User identity**
 
 | Method | Returns | Description |
@@ -446,6 +453,27 @@ const script = await state.skills.readFile('pdf-processing', 'scripts/extract.py
 await state.skills.install([{ path: 'SKILL.md', content: '---\nname: commit-style\ndescription: ...\n---\n...' }]);
 ```
 
+### 7.5 Application Logs
+
+`log()` records an application log entry on the thread, next to the runtime's
+own execution logs (model requests, tool and handler executions).
+
+```typescript
+interface ThreadLogEntry {
+  name: string;                                    // short event name, e.g. 'cache.miss'
+  message?: string;                                // human-readable detail
+  level?: 'debug' | 'info' | 'warn' | 'error';     // default 'info'
+  data?: Record<string, unknown>;                  // JSON-serializable detail
+}
+
+await state.log({ name: 'cache.miss', level: 'debug', data: { key } });
+```
+
+- `log()` **MUST NOT** create a message and **MUST NOT** start, wake, or otherwise affect execution or the [run status](/0.2.0/specification/threads/execution-state#4-run-status).
+- `log()` is available wherever `ThreadState` is: tools, hooks, effects, handlers, and endpoints.
+- Runtimes **MUST** bound entries and **MUST** truncate oversized fields with a visible marker rather than reject the entry: `name` to 120 characters, `message` to 4 KiB, and the JSON encoding of `data` to 16 KiB. Size alone **MUST NOT** make `log()` throw.
+- Runtimes **SHOULD** deliver entries to live log subscribers and include them wherever they expose thread logs.
+
 ## 8. Lifecycle
 
 `terminate()` is a soft shutdown:
@@ -674,6 +702,8 @@ interface ThreadState {
   // ─────────────────────────────────────────────────────────────────────────
   getValue<T = unknown>(key: string): Promise<T | null>;
   setValue(key: string, value: unknown): Promise<void>;
+  status(): Promise<ThreadStatus>;
+  log(entry: ThreadLogEntry): Promise<void>;
 
   // ─────────────────────────────────────────────────────────────────────────
   // File System — see /threads/filesystem
