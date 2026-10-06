@@ -32,8 +32,7 @@ content/
 └── 0.2.0/            # current version ("sides are backings")
     ├── getting-started/
     │   ├── overview.md
-    │   ├── examples.md
-    │   └── changelog.md
+    │   └── examples.md
     ├── specification/
     │   ├── providers.md
     │   ├── models.md
@@ -62,6 +61,9 @@ content/
 Older version folders are archived, immutable content. Edit only the current
 version's folder; the version selector and `llms.txt` derive the latest
 version automatically from the folder names.
+
+Do not add per-version changelog pages. Document behavior in the relevant
+specification pages.
 
 ### Source Structure
 

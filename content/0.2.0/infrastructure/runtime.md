@@ -16,6 +16,17 @@ Runtimes may additionally expose [Runtime Streams](/0.2.0/specification/threads/
 through `ThreadState.runtimeStreams`. This capability is optional and does not
 change conformance for runtimes that omit it.
 
+### Decision inference
+
+A runtime exposes `ThreadState.decide()` for independent
+[decision inference](/0.2.0/specification/decisions). It resolves credentials,
+keeps credential destinations under trusted instance/deployment control,
+passes explicit context and typed questions to the decision provider, and logs
+request, response, duration, status, usage, known cost, and errors automatically.
+This operation is available outside active turns and does not implicitly access
+conversation history or start a conversation step. Adding a decision result to
+history requires an explicit normal message API call from application code.
+
 ## 2. Invocation Triggers
 
 Execution begins when any of the following occurs:
