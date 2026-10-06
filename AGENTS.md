@@ -44,6 +44,7 @@ content/
     │   ├── subagents.md     # new in 0.2.0
     │   ├── threads.md
     │   ├── threads/
+    │   │   ├── decisions.md
     │   │   ├── messages.md
     │   │   ├── filesystem.md
     │   │   ├── code-execution.md
@@ -64,6 +65,10 @@ version automatically from the folder names.
 
 Do not add per-version changelog pages. Document behavior in the relevant
 specification pages.
+
+Keep specification contracts provider- and runtime-neutral. Application logging
+is an implementation concern; document AgentBuilder logging and provider-native
+conversion examples in their own package documentation, not this specification.
 
 ### Source Structure
 

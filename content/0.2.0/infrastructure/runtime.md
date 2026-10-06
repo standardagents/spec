@@ -19,10 +19,9 @@ change conformance for runtimes that omit it.
 ### Decision inference
 
 A runtime exposes `ThreadState.decide()` for independent
-[decision inference](/0.2.0/specification/decisions). It resolves credentials,
+[decision inference](/0.2.0/specification/threads/decisions). It resolves credentials,
 keeps credential destinations under trusted instance/deployment control,
-passes explicit context and typed questions to the decision provider, and logs
-request, response, duration, status, usage, known cost, and errors automatically.
+and passes explicit context and typed questions to the decision provider.
 This operation is available outside active turns and does not implicitly access
 conversation history or start a conversation step. Adding a decision result to
 history requires an explicit normal message API call from application code.
@@ -241,13 +240,7 @@ Session end — stop, fail, error, or turn-cap — **MUST NOT** terminate a chil
 
 A single thread **MUST NOT** execute multiple concurrent flows. Cross-thread concurrency is allowed.
 
-## 12. Observability
-
-Runtimes should emit durable logs and lifecycle markers for:
-- model invocations
-- tool calls/results
-- subagent create/message/return/failure/status events
-- execution abort/termination
+## 12. Status Messages
 
 Implementations may persist synthesized status messages in thread history (`metadata.status_kind`) for client grouping.
 

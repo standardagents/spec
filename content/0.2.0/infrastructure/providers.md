@@ -3,7 +3,7 @@
 Providers are the bridge between Standard Agents and LLM APIs. They translate Standard Agents requests into provider-native calls and return responses in the standard format.
 
 Decision inference has an independent
-[decision provider contract](/0.2.0/specification/decisions): a factory creates
+[decision provider contract](/0.2.0/specification/threads/decisions): a factory creates
 an instance with `kind: 'decision'` and `decide()`. Runtimes resolve its
 connection configuration without requiring conversational generation methods.
 TypeSafe AI is an example of this capability.

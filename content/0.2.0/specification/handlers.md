@@ -53,7 +53,6 @@ There are no steps, no tool-choice loop, and no model requests for this side. Co
 
 - `maxSteps`, `stopOnResponse`, `stopTool`, and session bindings are not legal on handler sides — a handler turn has no steps to cap and ends when `execute` returns. Handlers end sessions explicitly via [`state.stopSession()`](/0.2.0/specification/threads#9-subagent-hierarchy-communication-and-termination).
 - When the agent sets `maxSessionTurns`, a handler turn counts toward the exchange cap exactly like a prompt turn — exchange counting is uniform across backings.
-- Runtimes **SHOULD** record handler turns in their execution/request logs so the turn is observable, attributing failures to the runtime origin rather than a provider.
 
 ## 4. Delivery Semantics
 

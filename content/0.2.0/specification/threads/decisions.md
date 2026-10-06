@@ -106,14 +106,12 @@ Providers **MUST** preserve complete distributions, score legends, and available
 confidence. Provider rounding information may be carried in `metadata`; rounded
 probabilities must not be silently renormalized.
 
-## 4. Thread invocation and automatic logs
+## 4. Thread invocation
 
 ```typescript
 interface DecideOptions<Q extends DecisionQuestions = DecisionQuestions>
   extends DecisionRequest<Q> {
   provider: DecisionProviderFactory;
-  name?: string;
-  trigger?: ThreadLogTrigger;
 }
 
 // Available wherever the caller has a ThreadState.
@@ -127,47 +125,18 @@ const result = await state.decide({
       instructions: 'Does the customer request cancellation?',
     },
   },
-  name: 'support.cancellation',
-  trigger: { kind: 'webhook', summary: 'Support ticket received' },
 });
 const needsCancellationReview = result.answers.cancel.probability >= 0.9;
 ```
 
 `decide(state, options)`, exported by `@standardagents/spec`, delegates to
-`state.decide(options)`. AgentBuilder also exports this helper from
-`@standardagents/builder`.
+`state.decide(options)`.
 
 The runtime resolves thread-scoped provider credentials and applicable hosting
 configuration. Runtimes **MUST NOT** let user/thread destination overrides
-redirect inherited credentials. AgentBuilder resolves connection destinations
-from trusted deployment or instance-admin settings while allowing scoped
-credential values. A conforming runtime **MUST** automatically record the operation's request,
-response, duration, status, usage, known cost, and failure information in the
-thread's [application logs](/0.2.0/specification/threads#75-application-logs).
-The default log name is `decision.<provider>`; `name` and `trigger` allow
-application attribution. Credentials **MUST NOT** be included in decision logs.
-Known decision cost counts once toward thread totals; callers should not log it
-again as a second cost-bearing operation.
+redirect inherited credentials.
 
 Calling `decide()` **MUST NOT** implicitly read, add, or change conversation
 messages, execute tools, or start a conversational turn. To include selected
 results in history, the caller explicitly uses `state.injectMessage()` or the
-other normal message APIs. Calling an instantiated provider's `.decide()`
-directly, outside `ThreadState`, has no automatic thread logging.
-
-## 5. Native provider mapping example
-
-TypeSafe AI's Jev API is one implementation of this independent capability:
-
-| Standard Agent field | TypeSafe native field |
-| --- | --- |
-| `context` | `state` |
-| Choice `options` | Choice `criteria` |
-| Score ordered `levels` | Score ordered `criteria` |
-| Boolean type and `criteria` | Noul type and `criteria` |
-| Boolean answer `probability` | Native `noul` value |
-
-One native request evaluates the named questions against shared state. The
-provider retains answer identifiers, structured instructions, probability
-distributions, score legends, and confidence. Provider prices, limits, aliases,
-and credentials are implementation details documented by the provider package.
+other normal message APIs.

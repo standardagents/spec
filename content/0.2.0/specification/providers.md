@@ -2,7 +2,7 @@
 
 Providers translate Standard Agent requests into provider-native formats and
 transform responses back into Standard Agent format. The conversational provider
-interface below serves LLM generation. [Decision providers](/0.2.0/specification/decisions)
+interface below serves LLM generation. [Decision providers](/0.2.0/specification/threads/decisions)
 implement the independent `DecisionProviderInterface` with `kind: 'decision'`
 and `decide()` for typed classification, scoring, and boolean probabilities;
 they do not need conversational `generate()` or `stream()` methods.

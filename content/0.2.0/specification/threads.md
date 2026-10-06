@@ -4,7 +4,7 @@ A thread is an instance of an agent — the runtime execution context where conv
 
 This page covers the core ideas: what a thread is, its identity, the `ThreadState` interface, and the small primitives that live directly on it (resource loading, tool invocation, effects, events, context, runtime context, subagent hierarchy, lifecycle). Larger surfaces have their own pages:
 
-- [Decisions](/0.2.0/specification/decisions) — explicit question evaluation with automatic operation logs
+- [Decisions](/0.2.0/specification/threads/decisions) — explicit context and typed question evaluation
 - [Messages](/0.2.0/specification/threads/messages) — reading, injecting, queuing, updating, deleting
 - [File System](/0.2.0/specification/threads/filesystem) — per-thread file storage, streaming, search
 - [Code Execution](/0.2.0/specification/threads/code-execution) — isolated JS/TS sandbox via `runCode`
@@ -139,18 +139,17 @@ The methods directory below is grouped by topic. Topics with their own page link
 | `getValue(key)` | `Promise<T \| null>` | Read a value from the thread's durable key-value store |
 | `setValue(key, value)` | `Promise<void>` | Write a JSON-serializable value; `null`/`undefined` deletes the key |
 
-**Run status & application logs** — see [Execution State §4](/0.2.0/specification/threads/execution-state#4-run-status) and [§7.5 Application Logs](#75-application-logs)
+**Run status** — see [Execution State §4](/0.2.0/specification/threads/execution-state#4-run-status)
 
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `status()` | `Promise<ThreadStatus>` | Authoritative run status: `idle`, `running`, or `failed`, with `since` and the last stop `reason` |
-| `log(entry)` | `Promise<void>` | Record an application log entry; never creates a message or starts execution |
 
-**Decision inference** — [Decisions →](/0.2.0/specification/decisions)
+**Decision inference** — [Decisions →](/0.2.0/specification/threads/decisions)
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `decide(options)` | `Promise<DecisionResult<Q>>` | Evaluate explicit context and typed questions; automatically log the operation without adding messages |
+| `decide(options)` | `Promise<DecisionResult<Q>>` | Evaluate explicit context and typed questions without adding messages |
 
 **User identity**
 
@@ -460,41 +459,6 @@ const script = await state.skills.readFile('pdf-processing', 'scripts/extract.py
 await state.skills.install([{ path: 'SKILL.md', content: '---\nname: commit-style\ndescription: ...\n---\n...' }]);
 ```
 
-### 7.5 Application Logs
-
-`log()` records an application log entry on the thread, next to the runtime's
-own execution logs (model requests, tool and handler executions).
-
-```typescript
-interface ThreadLogEntry {
-  name: string;                                    // short event name, e.g. 'cache.miss'
-  message?: string;                                // human-readable detail
-  level?: 'debug' | 'info' | 'warn' | 'error';
-  status?: 'success' | 'error' | 'skipped';
-  request?: unknown;
-  response?: unknown;
-  error?: string;
-  duration_ms?: number;
-  cost?: number;                                   // USD, included in thread totals
-  trigger?: { kind: string; id?: string; summary?: string };
-  data?: Record<string, unknown>;                  // JSON-serializable detail
-}
-
-await state.log({ name: 'cache.miss', level: 'debug', data: { key } });
-```
-
-- `log()` **MUST NOT** create a message and **MUST NOT** start, wake, or otherwise affect execution or the [run status](/0.2.0/specification/threads/execution-state#4-run-status).
-- `log()` is available wherever `ThreadState` is: tools, hooks, effects, handlers, and endpoints.
-- Logs **MUST** persist before the first message exists. Such entries have no message association and remain available through thread log readers and cost totals; runtimes must not create a message merely to anchor a log.
-- Runtimes **MUST** bound entries and **MUST** truncate oversized fields with a visible marker rather than reject the entry: `name` to 120 characters, `message` to 4 KiB, and the JSON encoding of `data` to 16 KiB. Operation `request` and `response` JSON are each bounded to 64 KiB, and `error` to 4 KiB; unencodable values receive a marker. Size alone **MUST NOT** make `log()` throw.
-- Runtimes **SHOULD** deliver entries to live log subscribers and include them wherever they expose thread logs.
-
-`state.decide()` uses this operation log surface automatically for decision
-request, response, duration, status, usage, known cost, and errors. A decision
-reads only the context supplied by the caller and never inserts an answer into
-message history. Use the normal message APIs explicitly when that is desired.
-See [Decisions](/0.2.0/specification/decisions) for the complete contract.
-
 ## 8. Lifecycle
 
 `terminate()` is a soft shutdown:
@@ -724,7 +688,6 @@ interface ThreadState {
   getValue<T = unknown>(key: string): Promise<T | null>;
   setValue(key: string, value: unknown): Promise<void>;
   status(): Promise<ThreadStatus>;
-  log(entry: ThreadLogEntry): Promise<void>;
   decide<const Q extends DecisionQuestions>(options: DecideOptions<Q>): Promise<DecisionResult<Q>>;
 
   // ─────────────────────────────────────────────────────────────────────────
