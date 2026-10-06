@@ -2,10 +2,9 @@
 
 A model definition specifies which Large Language Model (LLM) to use for inference and how to connect to it. Models are referenced by name from prompt definitions and serve as the foundation of the agent system.
 
-For explicit classification, scoring, and boolean probabilities, use the
-independent [Decisions](/0.2.0/specification/threads/decisions) surface with
-`state.decide({ provider, model, context, questions })`. Decision providers do
-not back prompts or require a conversational model definition.
+Decision inference is defined separately by
+[Decisions](/0.2.0/specification/threads/decisions). Decision providers do not
+back prompts and do not require a conversational model definition.
 
 ## 1. Model Definition
 

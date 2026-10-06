@@ -35,12 +35,12 @@ const gettingStartedOrder = ['overview', 'examples']
 // Key is "{group}/{parent}", value is the ordered list of child slugs.
 const subpageOrder: Record<string, string[]> = {
   'specification/threads': [
-    'decisions',
     'messages',
     'filesystem',
     'code-execution',
     'runtime-streams',
     'execution-state',
+    'decisions',
     'endpoints',
   ],
 }

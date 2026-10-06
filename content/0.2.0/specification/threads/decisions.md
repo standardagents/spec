@@ -1,18 +1,182 @@
 # Decisions
 
-Decision inference evaluates explicit context against independent typed questions.
-Applications use it for classification, scoring, and boolean probabilities from
-hooks, tools, handlers, or thread endpoints, including outside an active turn.
-It is independent of conversational generation and tool execution.
+A decision evaluates named, typed questions against caller-supplied context.
+`ThreadState.decide()` returns the answers without advancing the conversation.
 
-## 1. Provider contract
+For the rest of the `ThreadState` surface, see [Threads](/0.2.0/specification/threads).
+
+## 1. Thread Interface
+
+```typescript
+interface DecideOptions<Q extends DecisionQuestions = DecisionQuestions>
+  extends DecisionRequest<Q> {
+  provider: DecisionProviderFactory;
+}
+
+interface ThreadState {
+  decide<const Q extends DecisionQuestions>(
+    options: DecideOptions<Q>
+  ): Promise<DecisionResult<Q>>;
+}
+```
+
+The `provider` property identifies the factory used for the invocation. A
+decision does not require a conversational [model definition](/0.2.0/specification/models).
+
+`decide()` **MUST** be available both during active execution and when
+`state.execution` is `null`.
+
+The `decide(state, options)` helper exported by `@standardagents/spec` is
+equivalent to `state.decide(options)`.
+
+## 2. Request Types
+
+```typescript
+type DecisionJson =
+  | string
+  | number
+  | boolean
+  | null
+  | DecisionJson[]
+  | { [key: string]: DecisionJson };
+
+type DecisionContext =
+  | string
+  | DecisionJson[]
+  | { [key: string]: DecisionJson };
+
+interface DecisionRequest<Q extends DecisionQuestions = DecisionQuestions> {
+  model: string;
+  context: DecisionContext;
+  questions: Q;
+  signal?: AbortSignal;
+}
+```
+
+| Property | Semantics |
+|----------|-----------|
+| `model` | Provider model identifier for this invocation. |
+| `context` | Explicit context shared by the questions. Structured values **MUST** retain their JSON structure. |
+| `questions` | Map of question identifiers to question definitions. Each identifier associates a question with its answer. |
+| `signal` | Optional cancellation signal for the request. |
+
+Question definitions are invocation inputs. They are not provider connection
+configuration.
+
+## 3. Question Types
+
+```typescript
+type DecisionQuestion =
+  | {
+      type: 'choice';
+      instructions: DecisionContext;
+      options: Record<string, DecisionContext | null>;
+    }
+  | {
+      type: 'score';
+      instructions: DecisionContext;
+      levels: DecisionContext[];
+    }
+  | {
+      type: 'boolean';
+      instructions: DecisionContext;
+      criteria?: { true?: DecisionContext; false?: DecisionContext };
+    };
+
+type DecisionQuestions = Record<string, DecisionQuestion>;
+```
+
+`instructions` defines the evaluation to perform. Structured instructions,
+option descriptions, levels, and criteria **MUST** retain their JSON structure.
+
+| Type | Semantics |
+|------|-----------|
+| `choice` | Select an outcome from `options`. Each key identifies an outcome; its value describes that outcome. A `null` value supplies no additional description. |
+| `score` | Evaluate against the ordered `levels` rubric. Level indices start at zero; array order defines the scale. |
+| `boolean` | Estimate the probability that the condition in `instructions` is true. Optional `criteria.true` and `criteria.false` describe the two outcomes. |
+
+Providers **MUST** preserve these semantics when translating requests. A
+provider **MUST** reject inputs it cannot represent rather than silently omit
+or reinterpret them. Question-count and context-size limits are
+provider-defined.
+
+## 4. Result Types
+
+```typescript
+interface DecisionChoiceAnswer {
+  type: 'choice';
+  choice: string;
+  probabilities: Record<string, number>;
+  confidence?: number;
+}
+
+interface DecisionScoreAnswer {
+  type: 'score';
+  score: number;
+  probabilities: Record<string, number>;
+  legend: Record<string, DecisionContext>;
+  confidence?: number;
+}
+
+interface DecisionBooleanAnswer {
+  type: 'boolean';
+  probability: number;
+}
+
+type DecisionAnswer =
+  | DecisionChoiceAnswer
+  | DecisionScoreAnswer
+  | DecisionBooleanAnswer;
+
+type DecisionAnswers<Q extends DecisionQuestions> = {
+  [K in keyof Q]: Q[K] extends { type: 'choice' } ? DecisionChoiceAnswer
+    : Q[K] extends { type: 'score' } ? DecisionScoreAnswer
+    : Q[K] extends { type: 'boolean' } ? DecisionBooleanAnswer
+    : DecisionAnswer;
+};
+
+interface DecisionResult<Q extends DecisionQuestions = DecisionQuestions> {
+  model: string;
+  answers: DecisionAnswers<Q>;
+  usage: ProviderUsage;
+  metadata?: Record<string, unknown>;
+}
+```
+
+| Property | Semantics |
+|----------|-----------|
+| `model` | The model that performed the evaluation, including the resolved version when the request uses an alias. |
+| `answers` | Answers keyed by request question identifier, with an answer type corresponding to each question type. |
+| `usage` | Standard `ProviderUsage`: token counts and optional cost and pricing fields. |
+| `metadata` | Optional provider-specific result information. |
+
+### 4.1 Answer Semantics
+
+- `choice` identifies the selected option. Its `probabilities` map associates option identifiers with their probabilities.
+- `score` is the probability-weighted value of the zero-based level indices. It **MAY** be fractional. Its `probabilities` map associates level indices with probabilities, and `legend` associates those indices with rubric descriptions.
+- `probability` on a boolean answer is P(true).
+- Probabilities and `confidence` values are numbers in **[0, 1]**. Confidence is provider-reported and is distinct from an individual outcome probability.
+
+Providers **MUST** preserve complete probability distributions, score legends,
+and available confidence values. Provider rounding information **MAY** be
+included in `metadata`. Rounded probabilities **MUST NOT** be silently
+renormalized.
+
+Providers and runtimes **MUST NOT** coerce a boolean probability to a boolean
+or apply an application threshold. Thresholds and subsequent actions are
+caller-defined.
+
+## 5. Provider Interface
 
 ```typescript
 interface DecisionProviderInterface {
   readonly name: string;
   readonly specificationVersion: '1';
   readonly kind: 'decision';
-  decide<const Q extends DecisionQuestions>(request: DecisionRequest<Q>): Promise<DecisionResult<Q>>;
+
+  decide<const Q extends DecisionQuestions>(
+    request: DecisionRequest<Q>
+  ): Promise<DecisionResult<Q>>;
   getModels?(filter?: string): Promise<ProviderModelInfo[]>;
   getIcon?(modelId?: string): string | undefined;
 }
@@ -23,120 +187,24 @@ interface DecisionProviderFactory {
 }
 ```
 
-A decision provider **MUST** implement `decide()` and declare `kind: 'decision'`.
-It need not implement `generate()` or `stream()`. Its factory receives the
-standard provider connection configuration; questions belong to each request,
-not credential or connection configuration. The same transport override and
-credential isolation rules apply as for [Providers](/0.2.0/specification/providers).
-A prompt's `defineModel` requires a conversational provider; a decision provider
-is invoked through the decision surface.
+A decision provider **MUST** implement `decide()` and declare
+`kind: 'decision'`. Conversational `generate()` and `stream()` methods are
+not required by this interface.
 
-## 2. Request and questions
-
-```typescript
-type DecisionJson = string | number | boolean | null
-  | DecisionJson[] | { [key: string]: DecisionJson };
-type DecisionContext = string | DecisionJson[] | { [key: string]: DecisionJson };
-type DecisionQuestion =
-  | { type: 'choice'; instructions: DecisionContext; options: Record<string, DecisionContext | null> }
-  | { type: 'score'; instructions: DecisionContext; levels: DecisionContext[] }
-  | { type: 'boolean'; instructions: DecisionContext; criteria?: { true?: DecisionContext; false?: DecisionContext } };
-type DecisionQuestions = Record<string, DecisionQuestion>;
-
-interface DecisionRequest<Q extends DecisionQuestions = DecisionQuestions> {
-  model: string;
-  context: DecisionContext;
-  questions: Q;
-  signal?: AbortSignal;
-}
-```
-
-The caller supplies context explicitly as a string, JSON object, or array. A
-runtime **MUST NOT** implicitly assemble context from conversation history.
-Structured context and instructions retain their JSON structure. Each map key
-identifies its corresponding answer; instructions carry the actual question.
-
-Choice options describe the available outcomes; `null` means no additional
-rubric description. Score levels are ordered from index zero upward. Boolean
-criteria may describe the meaning of true and false. Providers **MUST** preserve
-these meanings when translating to a native API and reject unsupported inputs
-rather than silently discard them. Provider-specific count and context limits
-belong in that provider's documentation.
-
-## 3. Result and probability semantics
-
-```typescript
-interface DecisionChoiceAnswer {
-  type: 'choice';
-  choice: string;
-  probabilities: Record<string, number>;
-  confidence?: number;
-}
-interface DecisionScoreAnswer {
-  type: 'score';
-  score: number;
-  probabilities: Record<string, number>;
-  legend: Record<string, DecisionContext>;
-  confidence?: number;
-}
-interface DecisionBooleanAnswer {
-  type: 'boolean';
-  probability: number;
-}
-interface DecisionResult<Q extends DecisionQuestions = DecisionQuestions> {
-  model: string;
-  answers: DecisionAnswers<Q>;
-  usage: ProviderUsage;
-  metadata?: Record<string, unknown>;
-}
-```
-
-`DecisionAnswers<Q>` maps every question identifier to its matching answer type.
-The result's `model` is the actual model that performed the evaluation, including
-the resolved version when the request uses an alias. `usage` uses standard
-`promptTokens`, `completionTokens`, `totalTokens`, and optional USD `cost` and
-unit `pricing` fields.
-
-Probabilities and confidence are numbers in **[0, 1]**. A boolean answer is
-P(true); providers and runtimes **MUST NOT** coerce it to a boolean or impose a
-threshold. Callers choose thresholds and subsequent actions. A score is the
-probability-weighted, zero-based rubric value and may be fractional. Confidence
-is provider-reported and is distinct from any individual option probability.
-Providers **MUST** preserve complete distributions, score legends, and available
-confidence. Provider rounding information may be carried in `metadata`; rounded
-probabilities must not be silently renormalized.
-
-## 4. Thread invocation
-
-```typescript
-interface DecideOptions<Q extends DecisionQuestions = DecisionQuestions>
-  extends DecisionRequest<Q> {
-  provider: DecisionProviderFactory;
-}
-
-// Available wherever the caller has a ThreadState.
-const result = await state.decide({
-  provider: decisionProvider,
-  model: 'decision-model-id',
-  context: { ticket: 'Please cancel my subscription.' },
-  questions: {
-    cancel: {
-      type: 'boolean',
-      instructions: 'Does the customer request cancellation?',
-    },
-  },
-});
-const needsCancellationReview = result.answers.cancel.probability >= 0.9;
-```
-
-`decide(state, options)`, exported by `@standardagents/spec`, delegates to
-`state.decide(options)`.
-
-The runtime resolves thread-scoped provider credentials and applicable hosting
-configuration. Runtimes **MUST NOT** let user/thread destination overrides
+Factories receive standard `ProviderFactoryConfig`. Transport overrides and
+credential isolation follow the [Provider specification](/0.2.0/specification/providers).
+The runtime resolves thread-scoped credentials and provider connection
+configuration. User- or thread-scoped destination overrides **MUST NOT**
 redirect inherited credentials.
 
-Calling `decide()` **MUST NOT** implicitly read, add, or change conversation
-messages, execute tools, or start a conversational turn. To include selected
-results in history, the caller explicitly uses `state.injectMessage()` or the
-other normal message APIs.
+## 6. Conversation Semantics
+
+Invoking `decide()` **MUST NOT** implicitly:
+
+- read conversation messages to assemble context;
+- add, modify, or remove conversation messages;
+- execute tools;
+- start a conversational turn.
+
+Adding an answer to conversation history requires a separate call to a
+[message API](/0.2.0/specification/threads/messages).

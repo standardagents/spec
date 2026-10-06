@@ -4,12 +4,12 @@ A thread is an instance of an agent — the runtime execution context where conv
 
 This page covers the core ideas: what a thread is, its identity, the `ThreadState` interface, and the small primitives that live directly on it (resource loading, tool invocation, effects, events, context, runtime context, subagent hierarchy, lifecycle). Larger surfaces have their own pages:
 
-- [Decisions](/0.2.0/specification/threads/decisions) — explicit context and typed question evaluation
 - [Messages](/0.2.0/specification/threads/messages) — reading, injecting, queuing, updating, deleting
 - [File System](/0.2.0/specification/threads/filesystem) — per-thread file storage, streaming, search
 - [Code Execution](/0.2.0/specification/threads/code-execution) — isolated JS/TS sandbox via `runCode`
 - [Runtime Streams](/0.2.0/specification/threads/runtime-streams) — optional live byte streams supplied by the execution host
 - [Execution State](/0.2.0/specification/threads/execution-state) — step counts, turn control, cancellation
+- [Decisions](/0.2.0/specification/threads/decisions) — explicit context and typed question evaluation
 - [Thread Endpoints](/0.2.0/specification/threads/endpoints) — HTTP APIs that receive a `ThreadState`
 
 ## 1. Thread Definition

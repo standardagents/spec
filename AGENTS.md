@@ -44,11 +44,11 @@ content/
     │   ├── subagents.md     # new in 0.2.0
     │   ├── threads.md
     │   ├── threads/
-    │   │   ├── decisions.md
     │   │   ├── messages.md
     │   │   ├── filesystem.md
     │   │   ├── code-execution.md
     │   │   ├── execution-state.md
+    │   │   ├── decisions.md
     │   │   └── endpoints.md
     │   ├── hooks.md
     │   └── type-registry.md
