@@ -60,6 +60,9 @@ interface UserState {
   instanceEnv?(name: string): Promise<string | undefined>
 
   emit(event: string, data?: unknown): void
+  clients(): Promise<UserRoomConnection[]>
+  send(clientId: string, frame: unknown): Promise<boolean>
+  roomAttachments?: UserRoomAttachments
 
   listThreads(options?: { agentId?: string; limit?: number; offset?: number }):
     Promise<{ threads: { id: string; agent_id: string; tags: string[]; created_at: number }[]; total: number }>
@@ -154,7 +157,7 @@ GET {runtime_prefix}/users/me/stream        (WebSocket upgrade)
 GET {runtime_prefix}/users/{id}/stream      (administrative callers)
 ```
 
-1. `emit(event, data)` MUST deliver the frame `{ "event": string, "data": unknown }` to every socket attached to that user's stream, in emit order per user.
+1. `emit(event, data)` MUST deliver the frame `{ "event": string, "data": unknown }` to every socket attached to that user's stream and every admitted, identified room connection (§7.1), in emit order per user. This room delivery is a room broadcast; pending room attachments are excluded.
 2. Delivery is at-most-once. The stream carries no history and no acknowledgements.
 3. A runtime MUST accept multiple concurrent sockets per user, and MUST serve the stream beneath `users/{id}/` to callers authorized to administer that user.
 4. Event names are package-defined. Packages SHOULD namespace event names.
@@ -188,7 +191,7 @@ interface CredentialGrant {
   kind: 'bearer' | 'header' | 'query' | 'basic' | 'signing'
   origins: string[]                  // exact origins or suffix wildcards
   inject?: { header?: string; format?: string; query?: string }
-  allow?: { tools?: string[]; endpoints?: string[]; userEndpoints?: string[]; agents?: string[] }
+  allow?: { tools?: string[]; endpoints?: string[]; userEndpoints?: string[]; userRooms?: string[]; agents?: string[] }
   metadata?: Record<string, unknown>
 }
 ```
@@ -226,13 +229,57 @@ export default defineHook({
 });
 ```
 
-## 7.1 User Rooms and Attachment Admission
+### 7.1 User Rooms and Attachment Admission
 
 A runtime MAY support one packaged user room per project. A room definition is
 exported with `defineUserRoom` from a `users/<package>/room.ts` module, which
 MUST NOT also be routed as an HTTP endpoint. Room frames and presence callbacks
 execute under the same per-user serialization guarantee as user endpoints.
-Application authentication policy and proof formats belong to the room.
+Application authentication policy and proof formats belong to the room. If
+multiple modules declare rooms, the runtime MUST refuse room upgrades and room
+delivery until the ambiguity is resolved; it MUST NOT select one by import
+order. Independent user endpoints and event streams remain available.
+
+#### Transport and frame contract
+
+```text
+GET {runtime_prefix}/users/me/hub        (WebSocket upgrade)
+GET {runtime_prefix}/users/{id}/hub      (administrative callers)
+```
+
+The `me` form MUST resolve the authenticated user's identity. The administrative
+form MUST require authorization to administer the addressed user. Non-upgrade
+requests return HTTP 426. An accepted socket receives `{ "type": "hub_ready" }`;
+this acknowledges transport attachment, not application authentication.
+
+The URL query parameters `client_id` and optional `client_kind` are self-declared
+text, never credentials. Each is trimmed and truncated to 256 UTF-16 code units;
+empty values are absent. Explicit admission requires a nonempty `client_id`
+after normalization, otherwise the upgrade returns HTTP 400. Automatic mode
+MAY accept an unidentified hub socket for runtime coordination, but it is not
+a room connection: it is absent from `clients()`, receives no room broadcasts,
+and its frames do not invoke `onFrame`.
+
+Only text frames containing a JSON object with `type: 'room'` and a nonempty
+string `id` of at most 256 UTF-16 code units invoke `onFrame`. Other frames do
+not invoke the room. The `id` is chosen by the client to correlate replies;
+application replies SHOULD echo it. Other fields belong to the application
+protocol. The runtime does not automatically acknowledge a room frame.
+When no room is defined, an identified connection's valid room frame receives
+`{ type: 'room', id, error: 'no_room' }`. Runtimes MAY impose frame size, rate
+and delivery budgets, closing connections that exceed them.
+
+Supersession sends `{ type: 'superseded' }` and closes the replaced socket with code 4001. Clients SHOULD stop automatic
+reconnection after this signal. Other runtime close codes are implementation-defined, except for codes explicitly requested through `roomAttachments.close`.
+
+Room attach/detach uses `onPresence`; it does not also raise the §7
+`user_client_attached` / `user_client_detached` hooks. Those hooks describe the
+independent user event stream. A room's optional `endpoint` gives the policy
+name used for `CredentialGrant.allow.userEndpoints`. Without it, the registry
+path (for example `package/room`) is checked against `allow.userRooms`.
+`valuePrefix` reserves all value keys beginning with that prefix from
+client-writable value routes and suppresses `user_value_changed` for writes to
+those keys. Serialized application code may still read and write them.
 
 ```typescript
 interface UserRoomConnection {
@@ -244,6 +291,7 @@ interface UserRoomConnection {
 interface UserRoomAttachments {
   send(attachmentId: string, frame: unknown): Promise<boolean>
   admit(attachmentId: string): Promise<boolean>
+  close(attachmentId: string, code?: number, reason?: string): Promise<boolean>
 }
 interface UserRoomDefinition {
   admission?: 'automatic' | 'explicit'
@@ -262,14 +310,16 @@ oldest attachment first. `UserState.send(clientId, frame)` targets the admitted
 connection for that id and returns false if none exists. Neither method queues
 traffic for an absent connection. Ordinary room admission is automatic: a new
 connection with the same client id replaces the previous one. Automatic-mode
-presence MAY coalesce reconnects within a bounded grace period.
+presence MAY coalesce reconnects within a bounded grace period. A socket retired
+for rate, size or send failure MUST also produce a detached event after that
+grace period unless an admitted replacement remains.
 
 Explicit admission is an optional capability exposed as
 `UserState.roomAttachments?: UserRoomAttachments`. A consumer requiring it MUST
 check that this capability and `connection.attachmentId` exist and fail closed
 when unavailable. This capability is available during serialized room and user
-endpoint executions; observational hooks do not receive it. A runtime supporting `admission: 'explicit'` MUST implement
-all the following requirements:
+endpoint executions; observational hooks do not receive it. A runtime
+supporting `admission: 'explicit'` MUST implement all the following requirements:
 
 1. A new physical attachment starts pending. Its self-declared client id MUST
    NOT displace an admitted connection. Pending attachments MUST NOT receive
@@ -280,7 +330,7 @@ all the following requirements:
    `roomAttachments.send` addresses exactly the named live attachment, including
    a pending attachment. It MUST NOT fall back to another attachment or a client
    id, and MUST return false for detached, superseded, unknown or foreign-user
-   attachments. Replies retain the caller's frame and use at-most-once delivery.
+   attachments. The runtime delivers the supplied frame unchanged, at most once.
 3. After verifying its own application proof, the room calls `admit`. Admission
    MUST atomically promote that live attachment and supersede only the previous
    admitted connection for the same client id under the per-user serialization
@@ -300,17 +350,30 @@ all the following requirements:
    Callbacks carry the attachment identity so an application can discard
    attachment-specific challenges. Application state remains responsible for
    its own challenge expiry and restart recovery.
-7. A failure to load a declared room MUST fail an upgrade closed. It MUST NOT
-   silently enable automatic admission. Existing automatic-mode consumers
-   retain their behavior when they do not opt in.
+7. A room is declared when a module at a room path exports a `defineUserRoom`
+   definition. Other modules at that path remain ordinary user endpoints. If
+   loading a room path fails, the runtime MUST reject new room upgrades and
+   MUST treat existing room attachments as not admitted while its admission
+   policy is unknown. The failure MUST NOT affect user endpoints, the §4 event
+   stream, wake delivery to stream sockets, or detach handling for any socket.
+   A runtime SHOULD retry loading on a later call instead of caching the
+   failure. It MUST NOT silently enable automatic admission. Existing
+   automatic-mode consumers retain their behavior when they do not opt in.
+8. `roomAttachments.close` closes exactly the named live attachment, pending or
+   admitted, and reports its detach as in item 6. It uses the same addressing
+   rules as `send`, returning false for unknown, detached, superseded or
+   foreign-user attachments without affecting another socket. The default
+   code is 1000 and reason is empty. A supplied code MUST be 1000 or an integer
+   in 3000–4999, and the reason MUST contain at most 123 UTF-8 bytes; invalid
+   arguments MUST reject without retiring the live attachment. A subsequent
+   `send`, `admit` or `close` for the retired attachment returns false.
+9. A runtime MAY bound the number of pending attachments per user or per client
+   id, and the time an attachment may remain pending. It MUST close an
+   attachment that exceeds a bound and report the detach per item 6. Exact
+   bounds are implementation-defined.
 
-Conformance coverage MUST include an unverified duplicate client id preserving
-its victim's socket and routed traffic, attachment-only challenge replies,
-verified atomic promotion, stale admission and queued frames after detach,
-physical disconnect notifications, hibernation with pending and admitted
-sockets, legacy restoration, and automatic-mode compatibility. These are
-transport admission guarantees; they prescribe no application credentials,
-cryptographic handshake, or machine identity model.
+These are transport admission guarantees; they prescribe no application
+credentials, cryptographic handshake, or machine identity model.
 
 ## 8. Conformance
 
@@ -334,3 +397,8 @@ cryptographic handshake, or machine identity model.
 - **Reference mapping.** The Cloudflare runtime implements the user scope on its per-user Durable Object: serialized execution is native, stream sockets attach to the object, and `call()` is object-to-object RPC.
 - **Out of scope.** Authentication flows, account and billing records, and identity semantics are runtime concerns. Products project their results into values, env, or grants.
 - **Motivating consumers.** Cross-device registries and presence; entitlement gating with live occupancy events; per-user integrations consumed by tools via `user.fetch(grant, …)` without secret exposure.
+- **Room conformance guidance.** Exercise unverified duplicate client ids while
+  preserving the admitted socket and its routed traffic, attachment-only
+  replies and rejection, atomic promotion, stale admission and queued frames
+  after detach, physical disconnect notifications, hibernation with pending
+  and admitted sockets, legacy restoration, and automatic-mode compatibility.
