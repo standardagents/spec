@@ -226,6 +226,92 @@ export default defineHook({
 });
 ```
 
+## 7.1 User Rooms and Attachment Admission
+
+A runtime MAY support one packaged user room per project. A room definition is
+exported with `defineUserRoom` from a `users/<package>/room.ts` module, which
+MUST NOT also be routed as an HTTP endpoint. Room frames and presence callbacks
+execute under the same per-user serialization guarantee as user endpoints.
+Application authentication policy and proof formats belong to the room.
+
+```typescript
+interface UserRoomConnection {
+  clientId: string
+  clientKind: string | null
+  since: number                  // attachment time, not a unique identity
+  attachmentId?: string          // opaque physical attachment identity
+}
+interface UserRoomAttachments {
+  send(attachmentId: string, frame: unknown): Promise<boolean>
+  admit(attachmentId: string): Promise<boolean>
+}
+interface UserRoomDefinition {
+  admission?: 'automatic' | 'explicit'
+  endpoint?: string
+  valuePrefix?: string
+  onFrame(user: UserState, connection: UserRoomConnection,
+    frame: { type: 'room'; id: string; [key: string]: unknown }): Promise<void>
+  onPresence?(user: UserState, event: {
+    kind: 'attached' | 'detached'; connection: UserRoomConnection; at: number
+  }): Promise<void>
+}
+```
+
+`UserState.clients()` lists live admitted room connections, one per client id,
+oldest attachment first. `UserState.send(clientId, frame)` targets the admitted
+connection for that id and returns false if none exists. Neither method queues
+traffic for an absent connection. Ordinary room admission is automatic: a new
+connection with the same client id replaces the previous one. Automatic-mode
+presence MAY coalesce reconnects within a bounded grace period.
+
+Explicit admission is an optional capability exposed as
+`UserState.roomAttachments?: UserRoomAttachments`. A consumer requiring it MUST
+check that this capability and `connection.attachmentId` exist and fail closed
+when unavailable. This capability is available during serialized room and user
+endpoint executions; observational hooks do not receive it. A runtime supporting `admission: 'explicit'` MUST implement
+all the following requirements:
+
+1. A new physical attachment starts pending. Its self-declared client id MUST
+   NOT displace an admitted connection. Pending attachments MUST NOT receive
+   client-id-targeted traffic, room broadcasts, or runtime wake traffic, and
+   MUST NOT appear in `clients()` or count as a reachable execution client.
+   This does not change independently authorized user event stream access.
+2. `onFrame` receives pending frames so an application can exchange challenges.
+   `roomAttachments.send` addresses exactly the named live attachment, including
+   a pending attachment. It MUST NOT fall back to another attachment or a client
+   id, and MUST return false for detached, superseded, unknown or foreign-user
+   attachments. Replies retain the caller's frame and use at-most-once delivery.
+3. After verifying its own application proof, the room calls `admit`. Admission
+   MUST atomically promote that live attachment and supersede only the previous
+   admitted connection for the same client id under the per-user serialization
+   guarantee. Other pending attachments remain pending. Repeated admission of
+   the same live admitted attachment is idempotent. A stale admission MUST
+   return false and MUST NOT affect the current admitted connection.
+4. Attachment identities MUST be opaque and unique per physical connection,
+   including connections created in the same clock tick. A reconnect MUST get
+   a new identity. Hibernation retaining the physical socket MUST retain its
+   identity and admission state. A restored legacy socket lacking admission
+   state MUST start pending in explicit mode.
+5. Detached or superseded attachments MUST NOT be resurrected by delayed
+   callbacks or queued frames. A queued frame whose attachment ceased to be
+   live before execution MUST NOT invoke the room handler.
+6. Explicit-mode presence reports each physical attach and detach, including
+   pending and superseded attachments, without a reconnect grace period.
+   Callbacks carry the attachment identity so an application can discard
+   attachment-specific challenges. Application state remains responsible for
+   its own challenge expiry and restart recovery.
+7. A failure to load a declared room MUST fail an upgrade closed. It MUST NOT
+   silently enable automatic admission. Existing automatic-mode consumers
+   retain their behavior when they do not opt in.
+
+Conformance coverage MUST include an unverified duplicate client id preserving
+its victim's socket and routed traffic, attachment-only challenge replies,
+verified atomic promotion, stale admission and queued frames after detach,
+physical disconnect notifications, hibernation with pending and admitted
+sockets, legacy restoration, and automatic-mode compatibility. These are
+transport admission guarantees; they prescribe no application credentials,
+cryptographic handshake, or machine identity model.
+
 ## 8. Conformance
 
 | # | Requirement | Level |
@@ -240,6 +326,7 @@ export default defineHook({
 | 8 | Grant support (§6) | SHOULD |
 | 9 | Lifecycle hooks (§7) | SHOULD |
 | 10 | Administrative addressing of endpoints and stream beneath `users/{id}/` (§3.2, §4) | MUST |
+| 11 | Attachment admission semantics (§7.1), when explicit rooms are supported | MUST |
 
 ## Appendix A. Notes (Non-normative)
 
