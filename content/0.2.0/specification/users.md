@@ -269,14 +269,18 @@ When no room is defined, an identified connection's valid room frame receives
 `{ type: 'room', id, error: 'no_room' }`. Runtimes MAY impose frame size, rate
 and delivery budgets, closing connections that exceed them.
 
-Supersession sends `{ type: 'superseded' }` and closes the replaced socket with code 4001. Clients SHOULD stop automatic
-reconnection after this signal. Other runtime close codes are implementation-defined, except for codes explicitly requested through `roomAttachments.close`.
+Supersession sends `{ type: 'superseded' }` and closes the replaced socket
+with code 4001. Clients SHOULD stop automatic reconnection after this signal.
+Other runtime close codes are implementation-defined, except for codes
+explicitly requested through `roomAttachments.close`.
 
 Room attach/detach uses `onPresence`; it does not also raise the §7
 `user_client_attached` / `user_client_detached` hooks. Those hooks describe the
 independent user event stream. A room's optional `endpoint` gives the policy
 name used for `CredentialGrant.allow.userEndpoints`. Without it, the registry
-path (for example `package/room`) is checked against `allow.userRooms`.
+path (for example `package/room`) is checked against `allow.userRooms`, or
+against `allow.userEndpoints` when `userRooms` is absent. An empty `userRooms`
+list denies room callers without falling back.
 `valuePrefix` reserves all value keys beginning with that prefix from
 client-writable value routes and suppresses `user_value_changed` for writes to
 those keys. Serialized application code may still read and write them.
@@ -360,7 +364,8 @@ supporting `admission: 'explicit'` MUST implement all the following requirements
    failure. It MUST NOT silently enable automatic admission. Existing
    automatic-mode consumers retain their behavior when they do not opt in.
 8. `roomAttachments.close` closes exactly the named live attachment, pending or
-   admitted, and reports its detach as in item 6. It uses the same addressing
+   admitted, and reports its detach as in item 6 in explicit mode; automatic
+   mode uses its normal reconnect grace period. It uses the same addressing
    rules as `send`, returning false for unknown, detached, superseded or
    foreign-user attachments without affecting another socket. The default
    code is 1000 and reason is empty. A supplied code MUST be 1000 or an integer
