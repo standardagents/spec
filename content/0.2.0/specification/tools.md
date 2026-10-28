@@ -110,7 +110,32 @@ Semantics:
 - The named argument **SHOULD** be declared early in the `args` schema and kept short so it completes quickly.
 - If the model never emits the named argument, `tool_call_started` still fires once the tool call finishes, with `progress` undefined.
 
-## 8. Conformance Notes
+## 8. Annotations
+
+A function tool **MAY** declare `annotations`: an object of implementation-specific hints, keyed by the runtime or tool that reads them.
+
+```typescript
+type ToolAnnotations = Record<string, unknown>;
+
+defineTool({
+  description: 'Run a TypeScript module in a sandbox',
+  args: z.object({ code: z.string() }),
+  annotations: {
+    agentbuilder: { codemode: { codeArgument: 'code', language: 'typescript' } },
+  },
+  execute: async (state, args) => {
+    return { status: 'success', result: '...' };
+  },
+});
+```
+
+Semantics:
+- Annotations are non-normative. This specification defines no annotation keys, and their meaning belongs to whoever owns the key.
+- `defineTool()` **MUST** return `annotations` unchanged on the tool definition.
+- A runtime **MAY** read keys it understands, typically to choose how it displays a tool call, and **MUST** ignore keys it does not.
+- Annotations **MUST NOT** change argument validation, execution, the tool's results, or what is sent to the model. A tool behaves identically in a runtime that ignores them.
+
+## 9. Conformance Notes
 
 Implementations **MUST**:
 
@@ -118,3 +143,4 @@ Implementations **MUST**:
 - execute local tools sequentially in the order they were returned.
 - persist tool results as messages before advancing.
 - persist tool errors as tool result messages rather than halting execution.
+- preserve tool `annotations` and never let them affect execution.
