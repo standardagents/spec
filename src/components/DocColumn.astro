@@ -1,0 +1,15 @@
+---
+import type { MarkdownHeading } from 'astro'
+
+interface Props {
+  headings: MarkdownHeading[]
+}
+
+const hasToc = Astro.props.headings.some(h => h.depth === 2 || h.depth === 3)
+---
+
+<div class:list={['px-4 sm:px-6 lg:px-12', { 'min-[90rem]:pr-80': hasToc }]}>
+  <div class="mx-auto w-full max-w-[56rem]">
+    <slot />
+  </div>
+</div>

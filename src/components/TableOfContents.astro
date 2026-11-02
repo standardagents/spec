@@ -16,8 +16,8 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 ---
 
 {tocHeadings.length > 0 && (
-  <nav class="hidden xl:block w-56 shrink-0" id="toc-nav">
-    <div class="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto py-8 pl-4">
+  <nav class="fixed right-6 top-22 z-30 hidden w-60 min-[90rem]:block" id="toc-nav">
+    <div class="max-h-[calc(100vh-7rem)] overflow-y-auto p-4">
       {/* original: text-gray-500 dark:text-gray-400 */}
       <h4 class="font-label text-xs font-medium uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-3">
         On this page
@@ -41,6 +41,16 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 )}
 
 <style>
+  #toc-nav {
+    transition: opacity 0.2s, visibility 0.2s;
+  }
+
+  /* The story runs the full width of the page, under this card. */
+  #toc-nav.toc-hidden {
+    opacity: 0;
+    visibility: hidden;
+  }
+
   .toc-link {
     border-left: 2px solid transparent;
     padding-left: 0.75rem;
@@ -142,6 +152,15 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 
     headings.forEach(heading => observer.observe(heading));
 
+    // Clear the way for the full-width story while it reaches the card's area.
+    const story = document.getElementById('agent-story');
+    const tocNav = document.getElementById('toc-nav');
+    const storyObserver = new IntersectionObserver(
+      ([entry]) => tocNav?.classList.toggle('toc-hidden', entry.isIntersecting),
+      { rootMargin: '-88px 0px -50% 0px' }
+    );
+    if (story) storyObserver.observe(story);
+
     // Check if scrolled to bottom of page
     const isAtBottom = () => {
       const scrolledToBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50;
@@ -181,6 +200,7 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
     // Cleanup on page navigation (for Astro view transitions)
     document.addEventListener('astro:before-swap', () => {
       observer.disconnect();
+      storyObserver.disconnect();
       window.removeEventListener('scroll', handleScroll);
     }, { once: true });
   }

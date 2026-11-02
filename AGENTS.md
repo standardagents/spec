@@ -31,7 +31,6 @@ content/
 ├── 0.1.0/            # published and immutable — do not edit
 └── 0.2.0/            # current version ("sides are backings")
     ├── getting-started/
-    │   ├── overview.md
     │   └── examples.md
     ├── specification/
     │   ├── providers.md
@@ -59,6 +58,12 @@ content/
         └── packaging.md
 ```
 
+The homepage at `/` is the Overview of every current version and lives in
+`src/data/home.md`, outside the version folders. Only specification pages are
+versioned. Archived versions keep their own Overview. Homepage links to
+specification pages use `/latest/`, which resolves to the latest version at
+build time.
+
 Older version folders are archived, immutable content. Edit only the current
 version's folder; the version selector and `llms.txt` derive the latest
 version automatically from the folder names.
@@ -76,18 +81,22 @@ conversion examples in their own package documentation, not this specification.
 src/
 ├── components/
 │   ├── Header.tsx         # React island (mobile menu, version selector, theme)
-│   ├── Sidebar.astro      # Static navigation
+│   ├── Sidebar.astro      # Static navigation, fixed to the viewport's left edge
+│   ├── TableOfContents.astro # Floating "On this page" card
+│   ├── DocColumn.astro    # Body column of a documentation page
+│   ├── AgentStory.tsx     # Canvas story on the homepage
 │   ├── PageActions.astro  # Latest-version doc actions (copy/view markdown)
-│   ├── Logo.astro         # Full wordmark SVG
 │   ├── LogoMark.astro     # Icon-only SVG
 │   └── mdx/
 │       └── Callout.astro  # Tip/Note/Warning callouts
 ├── layouts/
-│   └── BaseLayout.astro   # Main HTML layout with theme script
+│   ├── BaseLayout.astro   # Main HTML layout with theme script
+│   └── DocLayout.astro    # Header, sidebar, contents card, and footer around a page
 ├── lib/
 │   └── content.ts         # Navigation helpers using getCollection
 ├── pages/
-│   ├── index.astro                    # Redirect to latest version
+│   ├── index.astro                    # Homepage, rendered from src/data/home.md
+│   ├── index.md.ts                    # Homepage raw markdown
 │   ├── [...slug].md.ts                # Raw markdown endpoint
 │   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
 │   ├── models.md.ts                   # Live curated models markdown endpoint
@@ -96,6 +105,7 @@ src/
 │       ├── index.astro                # Redirect to default page
 │       └── [...slug].astro            # Dynamic doc pages
 ├── data/
+│   ├── home.md             # Version-independent homepage content
 │   └── models.md           # Curated live model guidance consumed by /models.md
 ├── styles/
 │   └── global.css         # Tailwind + prose styles
@@ -109,6 +119,9 @@ The client-side React islands are:
 - `Header.tsx` (`client:load`) for the mobile menu, version dropdown, and theme
   toggle.
 - `InviteGate.tsx` (`client:load`) for Spec early-access validation.
+- `AgentStory.tsx` (`client:visible`) for the canvas story on the homepage,
+  placed at the `data-agent-story` marker in `src/data/home.md`. Its scene code lives in `src/story/` and was
+  ported from `standardagentbuilder.com`, using this site's fonts and colors.
 
 The production gate on `standardagentspec.org` accepts only Spec site-access codes from
 `https://agents.standardagentbuilder.com/api/site-access/:code`. Standard Code
@@ -132,7 +145,7 @@ Dark/light mode is handled via inline script in BaseLayout (no React context):
 ### Adding New Pages
 
 1. Create markdown file in `content/{version}/{group}/`
-2. First `# Heading` becomes the page title
+2. First `# Heading` becomes the page title.
 3. File automatically available at `/{version}/{group}/{slug}`
 
 Navigation order is controlled by the `NAV_ORDER` constant in `src/lib/content.ts`.

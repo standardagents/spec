@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import rehypeWrapTables from './src/lib/rehype-wrap-tables.mjs'
 
 export default defineConfig({
+  site: 'https://standardagentspec.org',
   output: 'static',
   integrations: [react()],
   vite: {

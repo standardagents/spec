@@ -45,6 +45,9 @@ const subpageOrder: Record<string, string[]> = {
   ],
 }
 
+// The homepage is the Overview of every version without its own archived Overview.
+const homeItem: BuiltItem = { slug: 'overview', title: 'Overview', href: '/', _orderKey: 'overview' }
+
 // Pages to exclude from navigation (group/slug)
 const excludedPages: Record<string, string[]> = {
   'infrastructure': ['providers'],
@@ -84,6 +87,12 @@ export async function getVersions(): Promise<string[]> {
 export async function getLatestVersion(): Promise<string> {
   const versions = await getVersions()
   return versions[0] || '0.1.0'
+}
+
+// The homepage is not versioned, so src/data/home.md links to specification
+// pages through /latest/.
+export function resolveLatestLinks(content: string, version: string): string {
+  return content.replaceAll('"/latest/', `"/${version}/`)
 }
 
 // Check if a page exists
@@ -166,6 +175,11 @@ export async function getNavigation(version: string): Promise<NavGroup[]> {
     }
   }
 
+  const startItems = (topLevelByGroup['getting-started'] ??= [])
+  if (!startItems.some(item => item.slug === 'overview')) {
+    startItems.push(homeItem)
+  }
+
   // Attach children to their matching top-level items
   for (const group of Object.keys(topLevelByGroup)) {
     for (const item of topLevelByGroup[group]) {
@@ -222,11 +236,12 @@ export async function getNavigation(version: string): Promise<NavGroup[]> {
   return nav
 }
 
-// Get the default page for a version (first page of first group)
+// Get the default page for a version (its first versioned page)
 export async function getDefaultPage(version: string): Promise<{ group: string; slug: string } | null> {
   const nav = await getNavigation(version)
-  if (nav.length > 0 && nav[0].items.length > 0) {
-    return { group: nav[0].group, slug: nav[0].items[0].slug }
+  for (const group of nav) {
+    const item = group.items.find(item => item.href !== homeItem.href)
+    if (item) return { group: group.group, slug: item.slug }
   }
   return null
 }
