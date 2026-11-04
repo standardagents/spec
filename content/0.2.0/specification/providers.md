@@ -10,14 +10,14 @@ The interface below defines conversational generation.
 ## 1. Provider Interface
 
 ```typescript
-interface Provider {
+interface LLMProviderInterface {
   readonly name: string;
   readonly specificationVersion: '1';
 
   generate(request: ProviderRequest): Promise<ProviderResponse>;
   stream(request: ProviderRequest): Promise<AsyncIterable<ProviderStreamChunk>>;
   supportsModel?(modelId: string): boolean;
-  getTools?(modelId?: string): Record<string, ToolDefinition>;
+  getTools?(modelId?: string): Record<string, ToolDefinition> | Promise<Record<string, ToolDefinition>>;
   getModels?(filter?: string): Promise<ProviderModelInfo[]>;
   getModelsPage?(query?: ProviderModelsQuery): Promise<ProviderModelsPage>;
   getModelCapabilities?(modelId: string): Promise<ModelCapabilities | null>;
@@ -34,7 +34,7 @@ interface Provider {
 | `generate` | Non-streaming generation. Returns complete response. |
 | `stream` | Streaming generation. Returns async iterable of chunks. |
 | `supportsModel` | Optional. Returns true if provider can handle the model. |
-| `getTools` | Optional. Returns provider-embedded tools available for the model. |
+| `getTools` | Optional. Returns provider-embedded tools available for the model, or a promise of those tools. |
 | `getModels` | Optional. Lists available models from the provider. |
 | `getModelsPage` | Optional. Lists available models with pagination/search metadata. |
 | `getModelCapabilities` | Optional. Returns capabilities for a specific model. |
@@ -47,7 +47,7 @@ interface Provider {
 Provider packages export a factory function that creates provider instances:
 
 ```typescript
-type ProviderFactory = (config: ProviderFactoryConfig) => Provider;
+type ProviderFactory = (config: ProviderFactoryConfig) => ProviderInstance;
 
 interface ProviderFactoryConfig {
   apiKey: string;
@@ -248,56 +248,60 @@ The `providerOptions` field allows provider-specific options not covered by the 
 2. `prompt.providerOptions` - Overrides for the prompt
 3. `request.providerOptions` - Runtime overrides
 
+When a prompt sets `reasoning.level`, the provider maps that level to the native control. The mapped value replaces any native effort value in the merged `providerOptions`. Other `providerOptions` keys remain unchanged. When a prompt omits `reasoning.level`, the merged `providerOptions` apply as they are.
+
 ### 2.2 Reasoning Levels
 
-Reasoning is specified as a 0-100 numeric scale. Models declare their supported levels in `capabilities.reasoningLevels`, which maps numeric values to the model's native reasoning strings.
+A prompt specifies `reasoning.level` on a scale from 0 to 100. A model declares its supported levels in `capabilities.reasoningLevels`. A provider maps the prompt level to the model's native reasoning control. A level between declared values maps to the nearest declared value.
 
 | Value | Typical Meaning |
 |-------|-----------------|
-| 0 | No reasoning |
-| 33 | Low effort |
-| 66 | Medium effort |
-| 100 | Maximum effort |
+| 0 | Request no reasoning |
+| 33 | Low reasoning |
+| 66 | Medium reasoning |
+| 100 | Maximum reasoning |
+
+A level of `0` requests no reasoning. A model can have a control that disables reasoning. For level `0`, the provider sends that control to such a model. A model without that control can have a lowest reasoning setting. For level `0`, the provider sends that lowest setting to such a model. This keeps level `0` at or below every higher level. For a model with no reasoning control, the provider sends no control.
 
 ## 3. Message Format
 
 ```typescript
 type ProviderMessage =
-  | SystemMessage
-  | UserMessage
-  | AssistantMessage
-  | ToolMessage;
+  | ProviderSystemMessage
+  | ProviderUserMessage
+  | ProviderAssistantMessage
+  | ProviderToolMessage;
 
-interface SystemMessage {
+interface ProviderSystemMessage {
   role: 'system';
   content: string;
 }
 
-interface UserMessage {
+interface ProviderUserMessage {
   role: 'user';
-  content: MessageContent;
+  content: ProviderMessageContent;
 }
 
-interface AssistantMessage {
+interface ProviderAssistantMessage {
   role: 'assistant';
   content?: string | null;
   reasoning?: string | null;
-  reasoningDetails?: ReasoningDetail[];
-  toolCalls?: ToolCallPart[];
+  reasoningDetails?: ProviderReasoningDetail[];
+  toolCalls?: ProviderToolCallPart[];
 }
 
-interface ToolMessage {
+interface ProviderToolMessage {
   role: 'tool';
   toolCallId: string;
   toolName: string;
-  content: ToolResultContent;
+  content: ProviderToolResultContent;
 }
 ```
 
 ### 3.1 Content Types
 
 ```typescript
-type MessageContent = string | ContentPart[];
+type ProviderMessageContent = string | ContentPart[];
 
 type ContentPart =
   | { type: 'text'; text: string }
@@ -311,13 +315,13 @@ The `image_url` type is used for passing image URLs directly to providers (OpenA
 ### 3.2 Tool Calls
 
 ```typescript
-interface ToolCallPart {
+interface ProviderToolCallPart {
   id: string;
   name: string;
   arguments: Record<string, unknown>;
 }
 
-type ToolResultContent =
+type ProviderToolResultContent =
   | string
   | { type: 'text'; text: string }
   | { type: 'error'; error: string }
@@ -343,9 +347,9 @@ interface ProviderTool {
 interface ProviderResponse {
   content: string | null;
   reasoning?: string | null;
-  reasoningDetails?: ReasoningDetail[];
-  toolCalls?: ToolCallPart[];
-  images?: GeneratedImage[];
+  reasoningDetails?: ProviderReasoningDetail[];
+  toolCalls?: ProviderToolCallPart[];
+  images?: ProviderGeneratedImage[];
   finishReason: 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'error';
   usage: {
     promptTokens: number;
@@ -363,7 +367,7 @@ interface ProviderResponse {
   };
 }
 
-interface GeneratedImage {
+interface ProviderGeneratedImage {
   data: string;
   mediaType: string;
   revisedPrompt?: string;
@@ -382,7 +386,7 @@ type ProviderStreamChunk =
   | { type: 'tool-call-delta'; id: string; argumentsDelta: string }
   | { type: 'tool-call-done'; id: string; arguments: Record<string, unknown> }
   | { type: 'image-delta'; index: number; data: string }
-  | { type: 'image-done'; index: number; image: GeneratedImage }
+  | { type: 'image-done'; index: number; image: ProviderGeneratedImage }
   | { type: 'finish'; finishReason: ProviderResponse['finishReason']; usage: ProviderResponse['usage'] }
   | { type: 'error'; error: string; code?: string };
 ```
@@ -468,7 +472,7 @@ This format allows icons to be embedded directly in UI elements without addition
 **Direct provider (e.g., OpenAI):**
 
 ```typescript
-class OpenAIProvider implements Provider {
+class OpenAIProvider implements LLMProviderInterface {
   getIcon(_modelId?: string): string {
     // Always return OpenAI icon - all models are from OpenAI
     return svgToDataUri(OPENAI_ICON_SVG);
@@ -479,7 +483,7 @@ class OpenAIProvider implements Provider {
 **Aggregator provider (e.g., OpenRouter):**
 
 ```typescript
-class OpenRouterProvider implements Provider {
+class OpenRouterProvider implements LLMProviderInterface {
   getIcon(modelId?: string): string | undefined {
     if (modelId) {
       // Extract lab from model ID: "anthropic/claude-3-opus" -> "anthropic"
@@ -564,7 +568,7 @@ interface ResponseSummary {
 ### 9.6 Example Implementation
 
 ```typescript
-class OpenRouterProvider implements Provider {
+class OpenRouterProvider implements LLMProviderInterface {
   async getResponseMetadata(
     summary: ResponseSummary,
     signal?: AbortSignal
@@ -602,7 +606,7 @@ Providers can embed built-in tools that leverage provider-specific capabilities.
 The optional `getTools` method returns tools available for a given model:
 
 ```typescript
-getTools(modelId?: string): Record<string, ToolDefinition>
+getTools(modelId?: string): Record<string, ToolDefinition> | Promise<Record<string, ToolDefinition>>
 ```
 
 **Behavior:**
@@ -652,13 +656,13 @@ Implementations **SHOULD** use `getTools(modelId)` to determine which tools are 
 
 ```typescript
 // Provider interface
-interface Provider {
+interface LLMProviderInterface {
   readonly name: string;
   readonly specificationVersion: '1';
   generate(request: ProviderRequest): Promise<ProviderResponse>;
   stream(request: ProviderRequest): Promise<AsyncIterable<ProviderStreamChunk>>;
   supportsModel?(modelId: string): boolean;
-  getTools?(modelId?: string): Record<string, ToolDefinition>;
+  getTools?(modelId?: string): Record<string, ToolDefinition> | Promise<Record<string, ToolDefinition>>;
   getModels?(filter?: string): Promise<ProviderModelInfo[]>;
   getModelsPage?(query?: ProviderModelsQuery): Promise<ProviderModelsPage>;
   getModelCapabilities?(modelId: string): Promise<ModelCapabilities | null>;
@@ -679,7 +683,7 @@ interface ResponseSummary {
 type ProviderFactory = ProviderFactoryWithOptions;
 
 interface ProviderFactoryWithOptions<TOptions = unknown> {
-  (config: ProviderFactoryConfig): Provider;
+  (config: ProviderFactoryConfig): ProviderInstance;
   providerOptions?: TOptions;
   configSlots?: ProviderConfigSlots;
   providerDefinition?: ProviderDefinition;
@@ -741,7 +745,7 @@ interface ProviderDefinition<
 interface ProviderOverrideContext {
   providerName: string;
   config: ProviderFactoryConfig;
-  baseProvider: Provider;
+  baseProvider: ProviderInstance;
 }
 
 type MaybePromise<T> = T | Promise<T>;
@@ -794,9 +798,9 @@ interface ProviderRequest {
 interface ProviderResponse {
   content: string | null;
   reasoning?: string | null;
-  reasoningDetails?: ReasoningDetail[];
-  toolCalls?: ToolCallPart[];
-  images?: GeneratedImage[];
+  reasoningDetails?: ProviderReasoningDetail[];
+  toolCalls?: ProviderToolCallPart[];
+  images?: ProviderGeneratedImage[];
   finishReason: 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'error';
   usage: ProviderUsage;
   metadata?: Record<string, unknown>;
@@ -822,26 +826,26 @@ interface ProviderUsagePricing {
 }
 
 // Messages
-type ProviderMessage = SystemMessage | UserMessage | AssistantMessage | ToolMessage;
+type ProviderMessage = ProviderSystemMessage | ProviderUserMessage | ProviderAssistantMessage | ProviderToolMessage;
 
-interface SystemMessage { role: 'system'; content: string; }
-interface UserMessage { role: 'user'; content: MessageContent; }
-interface AssistantMessage {
+interface ProviderSystemMessage { role: 'system'; content: string; }
+interface ProviderUserMessage { role: 'user'; content: ProviderMessageContent; }
+interface ProviderAssistantMessage {
   role: 'assistant';
   content?: string | null;
   reasoning?: string | null;
-  reasoningDetails?: ReasoningDetail[];
-  toolCalls?: ToolCallPart[];
+  reasoningDetails?: ProviderReasoningDetail[];
+  toolCalls?: ProviderToolCallPart[];
 }
-interface ToolMessage {
+interface ProviderToolMessage {
   role: 'tool';
   toolCallId: string;
   toolName: string;
-  content: ToolResultContent;
+  content: ProviderToolResultContent;
 }
 
 // Content
-type MessageContent = string | ContentPart[];
+type ProviderMessageContent = string | ContentPart[];
 type ContentPart =
   | { type: 'text'; text: string }
   | { type: 'image'; data: string; mediaType: string; detail?: 'auto' | 'low' | 'high' }
@@ -854,13 +858,13 @@ interface ProviderTool {
   function: { name: string; description: string; parameters?: JSONSchema };
 }
 
-interface ToolCallPart {
+interface ProviderToolCallPart {
   id: string;
   name: string;
   arguments: Record<string, unknown>;
 }
 
-type ToolResultContent = string | { type: 'text'; text: string } | { type: 'error'; error: string } | ContentPart[];
+type ProviderToolResultContent = string | { type: 'text'; text: string } | { type: 'error'; error: string } | ContentPart[];
 
 // Streaming
 type ProviderStreamChunk =
@@ -872,7 +876,7 @@ type ProviderStreamChunk =
   | { type: 'tool-call-delta'; id: string; argumentsDelta: string }
   | { type: 'tool-call-done'; id: string; arguments: Record<string, unknown> }
   | { type: 'image-delta'; index: number; data: string }
-  | { type: 'image-done'; index: number; image: GeneratedImage }
+  | { type: 'image-done'; index: number; image: ProviderGeneratedImage }
   | { type: 'finish'; finishReason: ProviderResponse['finishReason']; usage: ProviderUsage }
   | { type: 'error'; error: string; code?: string };
 

@@ -278,7 +278,7 @@ Effects are scheduled operations that run outside the normal tool execution cont
 - Execute with their own **ThreadState** context
 - Are ideal for **side effects** that don't need immediate results
 
-Effect definition syntax is specified in [Effects](/0.2.0/specification/effects). Packed effects may use qualified names (`{packageId}/{effectName}`) to avoid collisions.
+Effect definition syntax is specified in [Effects](/0.2.0/specification/effects). Packed effects may use [qualified names](/0.2.0/distribution/packaging#qualified-names) to avoid collisions.
 
 ### 4.1 Scheduling Effects
 
@@ -434,7 +434,7 @@ const prefs = await state.getValue<{ theme: string; locale: string }>('preferenc
 | `arguments` | Thread invocation | Durable when backed by thread metadata/properties | Creation/invocation arguments exposed to thread code and prompt interpolation |
 | `context` | Single execution | Ephemeral | Mutable scratch state shared during one execution |
 | `getValue` / `setValue` | Thread | Durable | Small structured state scoped to the thread |
-| `env` / `envType` / `setEnv` | Thread → user → instance → agent → prompt | Durable (encrypted at rest when supported) | Configuration and secrets with layered resolution and display/redaction metadata |
+| `env` / `envType` / `setEnv` | Thread → agent → prompt → user → instance | Durable (encrypted at rest when supported) | Configuration and secrets with layered resolution and display/redaction metadata |
 | File system | Thread | Durable | Large or binary payloads |
 
 Runtime semantics and conformance requirements for the durable key-value store live in [Runtime §15](/0.2.0/infrastructure/runtime#15-durable-key-value-store).

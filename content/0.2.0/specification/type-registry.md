@@ -42,6 +42,8 @@ declare global {
 | `HookIdRegistry` | Hook IDs from `defineHook()` | `StandardAgentSpec.HookIds` |
 | `HandlerRegistry` | Handler names from `defineHandler()` | `StandardAgentSpec.Handlers` |
 
+Registries include the [qualified names](/0.2.0/distribution/packaging#qualified-names) of packed entry agents. They do not include internal package definitions.
+
 ### 1.3 Type Resolution
 
 The computed types use TypeScript conditional types:

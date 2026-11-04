@@ -68,11 +68,7 @@ await state.scheduleEffect(
 
 ### 2.1 Packed Effect Names
 
-For packed package effects, runtimes should support qualified names:
-
-```text
-{packageId}/{effectName}
-```
+Runtimes should support [qualified names](/0.2.0/distribution/packaging#qualified-names) for packed effects.
 
 Example:
 

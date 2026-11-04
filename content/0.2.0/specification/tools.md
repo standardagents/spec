@@ -33,6 +33,16 @@ defineTool({
 });
 ```
 
+### 2.1 Tool Dependencies
+
+A function tool **MAY** declare `uses` as an array of names of tools, prompts, or agents it may invoke by name through `state.invokeTool()` or `state.queueTool()`. Names may be local or [qualified](/0.2.0/distribution/packaging#qualified-names).
+
+```typescript
+uses: ['validate_input', 'format_output'] as const
+```
+
+A packed tool **MUST** declare the targets it invokes by name. A package **MUST** include its required tool dependencies. When a `uses` list is supplied, the runtime **MUST** reject an invocation of a target outside the list. `queueTool()` throws an error for an undeclared target. `invokeTool()` returns an error result for an undeclared target. An empty list permits no targets. When `uses` is omitted, this restriction does not apply.
+
 ## 3. Variable Declarations
 
 Tool and prompt definitions can declare required variables:

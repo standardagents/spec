@@ -1,6 +1,8 @@
 # Packaging
 
-Standard Agents can be packaged into self-contained npm packages, making them installable and distributable. Each packed agent includes all its dependencies (prompts, tools, models, hooks, effects) in a single module.
+Standard Agents can be packaged into self-contained npm packages, making them installable and distributable. Each packed agent includes all its dependencies (prompts, tools, models, hooks, handlers, effects) in a single module.
+
+A package **MUST** include the handlers referenced by its agents. Packers discover a tool's named invocation dependencies from its `uses` declaration. A package **MUST** include the required tool dependencies declared there.
 
 ## Portability requirements
 
@@ -29,11 +31,14 @@ The package entry point exports named registries for each definition type, plus 
 ```typescript
 import type {
   AgentDefinition,
+  HandlerDefinition,
   PromptDefinition,
   ToolDefinition,
   ModelDefinition,
   PackedMeta,
 } from '@standardagents/spec';
+
+type DefinitionLoader<T> = () => Promise<T>;
 
 export const agents = {
   my_agent: async (): Promise<AgentDefinition> => ({
@@ -43,6 +48,8 @@ export const agents = {
     sideB: { human: true },
   }),
 } as const;
+
+export const handlers = {} as Record<string, DefinitionLoader<HandlerDefinition>>;
 
 export const prompts = {
   main_prompt: async (): Promise<PromptDefinition> => ({
@@ -124,6 +131,7 @@ Full interface:
 ```typescript
 interface PackedExports {
   agents: Record<string, DefinitionLoader<AgentDefinition>>;
+  handlers: Record<string, DefinitionLoader<HandlerDefinition>>;
   prompts: Record<string, DefinitionLoader<PromptDefinition>>;
   tools: Record<string, DefinitionLoader<ToolDefinition>>;
   models: Record<string, DefinitionLoader<ModelDefinition>>;
@@ -213,9 +221,15 @@ Each packed agent's definitions are isolated by package ID, preventing name coll
 | **Global** | Yes | - | Yes | No |
 | **Packed** | No | Yes | Yes | No |
 
-- **Global code** sees unpacked definitions and packed entry points
+- **Global code** sees unpacked definitions and packed entry agents
 - **Packed code** sees only its own package contents plus other entry points
 - **Internal tools/prompts** in a package are hidden from outside
+
+### Qualified Names
+
+A qualified name has the form `{packageId}/{name}`. Code outside a package uses a qualified name for a packed definition. The [Visibility Rules](#visibility-rules) determine which qualified names resolve.
+
+A scoped package ID contains a slash. For a scoped package, the second slash separates the package ID from the definition name. For example, `@scope/pkg/agent` has package ID `@scope/pkg` and name `agent`. The name `@scope/name` has one slash and is unqualified.
 
 ### Package Signature
 
@@ -267,6 +281,7 @@ Packed agents include TypeScript definitions for type-safe consumption:
 // dist/index.d.ts
 import type {
   AgentDefinition,
+  HandlerDefinition,
   PromptDefinition,
   ToolDefinition,
   ModelDefinition,
@@ -282,6 +297,8 @@ type DefinitionLoader<T> = () => Promise<T>;
 export declare const agents: {
   readonly my_agent: DefinitionLoader<AgentDefinition>;
 };
+
+export declare const handlers: Record<string, DefinitionLoader<HandlerDefinition>>;
 
 export declare const prompts: {
   readonly main_prompt: DefinitionLoader<PromptDefinition>;

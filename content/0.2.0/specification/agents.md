@@ -159,7 +159,7 @@ The following rules are normative:
 - Requirements apply only to direct parent relationships; they do not propagate transitively through the child graph.
 - `optional` relationships contribute hooks only while their flag is enabled. `hidden: true` affects model visibility, not composition, so hidden enabled relationships still contribute their required hooks.
 - Each requirement names a thread-scoped hook in the child's own package namespace. User-scoped hooks cannot be required on a parent.
-- The hook receives the parent's `ThreadState`, not the child thread's state, and remains active for the lifetime of the enabled relationship.
+- The hook receives the parent's `ThreadState` and remains active for the lifetime of the enabled relationship. It applies during every prompt on either side of the parent.
 - Missing, invalid, or unloadable required hooks **MUST** fail composition closed. Runtimes must not silently run a partially installed child.
 - Duplicate hook IDs within one child's `parentHooks` declaration are invalid.
 

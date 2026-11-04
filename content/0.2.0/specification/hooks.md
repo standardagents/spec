@@ -76,7 +76,7 @@ bring the parent-side integration behavior it requires.
 **Resolution and execution order for each hook type:**
 
 1. **Child before hooks** — `before_parent` requirements from enabled direct
-   child relationships, in prompt tool order and child declaration order
+   child relationships, in side A then side B relationship order and child declaration order
 2. **Prompt-level hooks** — A non-empty active prompt `hooks` array is the
    parent's base set
 3. **Agent-level hooks** — If the prompt has no hooks, the agent's `hooks` array
@@ -87,7 +87,8 @@ bring the parent-side integration behavior it requires.
 If none of these sources declares a matching hook, no hook runs. Downloaded or
 installed packages are not global hook sources. A child contributes hooks only
 when its entry agent is the target of an enabled direct subagent relationship
-on the active side. Disabled optional children contribute none;
+on either side. The requirements apply during every prompt on either side.
+Disabled optional children contribute none;
 hidden enabled children still contribute hooks because `hidden` controls only
 model visibility.
 
@@ -312,7 +313,7 @@ Called before a message is inserted into storage. Return modified data to transf
 
 **Signature:**
 ```typescript
-(state: ThreadState, message: Record<string, unknown>) => Promise<Record<string, unknown>>
+(state: ThreadState, message: Message) => Promise<Message>
 ```
 
 **Behavior:**
@@ -326,7 +327,7 @@ Called after a message is successfully inserted. Cannot modify the message.
 
 **Signature:**
 ```typescript
-(state: ThreadState, message: Record<string, unknown>) => Promise<void>
+(state: ThreadState, message: Message) => Promise<void>
 ```
 
 **Behavior:**
@@ -388,7 +389,7 @@ Called before a tool result is stored in the database.
 
 **Signature:**
 ```typescript
-(state: ThreadState, toolCall: Record<string, unknown>, toolResult: Record<string, unknown>) => Promise<Record<string, unknown>>
+(state: ThreadState, toolCall: HookToolCall, toolResult: HookToolResult) => Promise<HookToolResult>
 ```
 
 **Use cases:**
@@ -493,10 +494,12 @@ Files returned by a tool are surfaced through `attachments`. Each entry is eithe
 ```typescript
 interface LLMMessage {
   role: string;
-  content: string | null;
+  content?: string | null | unknown[];
   tool_calls?: unknown;
   tool_call_id?: string;
   name?: string;
+  reasoning_content?: string;
+  [key: string]: unknown;
 }
 ```
 
@@ -545,13 +548,13 @@ interface HookSignatures<
 
   before_create_message: (
     state: State,
-    message: Record<string, unknown>,
+    message: Message,
     context: HookExecutionContext
-  ) => Promise<Record<string, unknown>>;
+  ) => Promise<Message>;
 
   after_create_message: (
     state: State,
-    message: Record<string, unknown>,
+    message: Message,
     context: HookExecutionContext
   ) => Promise<void>;
 
@@ -570,10 +573,10 @@ interface HookSignatures<
 
   before_store_tool_result: (
     state: State,
-    toolCall: Record<string, unknown>,
-    toolResult: Record<string, unknown>,
+    toolCall: ToolCall,
+    toolResult: ToolResult,
     context: HookExecutionContext
-  ) => Promise<Record<string, unknown>>;
+  ) => Promise<ToolResult>;
 
   after_tool_call_success: (
     state: State,

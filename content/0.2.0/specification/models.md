@@ -329,7 +329,7 @@ export default defineModel({
 
 > Tip: Prefer the model vendor's published sampling recommendations over provider defaults, and record them here explicitly — an unset parameter silently rides whatever the provider defaults to, which can change under you.
 
-Prompt-level `reasoning` (effort, exclusion) remains the per-prompt knob; sampling stays with the model.
+A prompt can set a [reasoning level and visibility](/0.2.0/specification/prompts#6-reasoning-configuration). Sampling settings belong to the model.
 
 ### 8.6 Backward Compatibility
 

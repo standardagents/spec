@@ -25,15 +25,17 @@ A prompt definition **MAY** include the following properties:
 |----------|------|---------|-------------|
 | `includeChat` | `boolean` | `false` | Include full chat history |
 | `includePastTools` | `boolean` | `false` | Include past tool results |
-| `parallelToolCalls` | `boolean` | `false` | Allow parallel tool execution |
+| `parallelToolCalls` | `boolean` | Provider default | Allow parallel tool execution |
 | `toolChoice` | `'auto' \| 'none' \| 'required'` | `'auto'` | Tool calling strategy |
 | `requiredSchema` | `ZodSchema` | - | Input validation schema |
-| `tools` | `(string \| ToolConfig \| SubpromptConfig)[]` | - | Available tools, sub-prompts, and handoff agent tools. Subagent relationships are **not** declared here — see [§3.4](#34-subagent-lifecycle-tools) |
+| `tools` | `(string \| PromptToolConfig \| SubpromptConfig)[]` | - | Available tools, sub-prompts, and handoff agent tools. Subagent relationships are **not** declared here — see [§3.4](#34-subagent-lifecycle-tools) |
 | `variables` | `VariableDefinition[]` | - | Variable declarations consumed by this prompt |
 | `env` | `Record<string, string>` | - | Prompt-level default environment variable values |
 | `reasoning` | `ReasoningConfig` | - | Extended thinking config |
 | `recentImageThreshold` | `number` | `10` | Messages to keep images |
 | `hooks` | `string[]` | - | Hook IDs to run for this prompt |
+
+An explicit `parallelToolCalls` value controls the provider option. When omitted, the provider default applies.
 
 ## 2. Prompt Content
 
@@ -228,18 +230,14 @@ For models with extended thinking capabilities:
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `effort` | `'low' \| 'medium' \| 'high'` | Reasoning effort level |
+| `level` | `number` | Reasoning level from 0 to 100 |
 | `maxTokens` | `number` | Max tokens for reasoning |
 | `exclude` | `boolean` | Exclude reasoning from response |
 | `include` | `boolean` | Include reasoning in history |
 
-### 6.2 Effort Levels
+### 6.2 Reasoning Levels
 
-| Level | Behavior |
-|-------|----------|
-| `'low'` | Minimal reasoning, faster responses |
-| `'medium'` | Balanced reasoning and speed |
-| `'high'` | Maximum reasoning, slower but thorough |
+The `level` property uses the [reasoning scale](/0.2.0/specification/providers#22-reasoning-levels). An unset `level` uses the model's default reasoning behavior. A level of `0` requests no reasoning.
 
 ### 6.3 Reasoning Visibility
 
@@ -269,8 +267,8 @@ definePrompt({
 
 **Behavior:**
 
-- When `hooks` is specified, **only** those hooks run for this prompt
-- When `hooks` is omitted, the runtime falls back to agent-level hooks
+- When `hooks` is non-empty, only those hooks form the prompt base set
+- When `hooks` is omitted or empty, the runtime falls back to agent-level hooks
 - Hook IDs reference the `id` property from `defineHook({ hook, id, execute })`
 - See the [Hooks specification](/0.2.0/specification/hooks) for hook definition details
 
@@ -292,7 +290,7 @@ Implementations **MUST** validate that:
 Implementations **MUST** validate that:
 
 1. `toolChoice` is one of: `'auto'`, `'none'`, `'required'`
-2. `reasoning.effort` is one of: `'low'`, `'medium'`, `'high'`
+2. `reasoning.level` is a number from 0 to 100
 3. `recentImageThreshold` is a positive integer
 
 ## 10. TypeScript Reference
@@ -332,8 +330,8 @@ type PromptContent = string | StructuredPrompt;
 /**
  * Configuration for tools with env values.
  */
-interface ToolConfig<T extends string = string> {
-  name: T;
+interface PromptToolConfig {
+  name: string;
   env?: Record<string, string>;
   options?: Record<string, unknown>;
 }
@@ -355,7 +353,7 @@ interface SubpromptConfig<T extends string = string> {
  * Reasoning configuration.
  */
 interface ReasoningConfig {
-  effort?: 'low' | 'medium' | 'high';
+  level?: number;
   maxTokens?: number;
   exclude?: boolean;
   include?: boolean;
@@ -377,7 +375,7 @@ interface PromptDefinition<
   parallelToolCalls?: boolean;
   toolChoice?: 'auto' | 'none' | 'required';
   requiredSchema?: S;
-  tools?: (string | ToolConfig | SubpromptConfig)[];
+  tools?: (string | PromptToolConfig | SubpromptConfig)[];
   variables?: Array<{
     name: string;
     type: 'text' | 'secret';
@@ -472,7 +470,7 @@ export default definePrompt({
   model: 'heavy',
   prompt: 'You are an expert code reviewer. Analyze code thoroughly.',
   reasoning: {
-    effort: 'high',
+    level: 100,
     maxTokens: 4096,
     exclude: false,
   },

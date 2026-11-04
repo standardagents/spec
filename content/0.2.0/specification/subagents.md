@@ -11,7 +11,7 @@ Relationships are declared in the `subagents` array of a prompt- or handler-back
 ```typescript
 interface SubagentRelationship {
   agent: string;                // which agent definition to instantiate
-  as?: string;                  // relationship name; defaults to `agent`
+  as?: string;                  // relationship name; defaults to the unqualified agent name
   description?: string;         // model-facing override; falls back to the child's toolDescription
   maxInstances?: number;        // unset = unbounded
   immediate?: boolean | {       // spawn at THREAD CREATION
@@ -32,8 +32,8 @@ interface SubagentRelationship {
 
 | Property | Description |
 |----------|-------------|
-| `agent` | The agent definition to instantiate. Any agent is eligible; `exposeAsTool: true` marks it as designed for composition and supplies the default `toolDescription`. |
-| `as` | The **relationship name** — the tool-surface name, registry identity, and reference name. Defaults to `agent`. Two relationships may target the same `agent` under different `as` names, each with independent config ([§2.3](#23-aliases)). |
+| `agent` | The agent definition to instantiate. It accepts a [qualified name](/0.2.0/distribution/packaging#qualified-names) for a packed entry agent. Any agent is eligible. `exposeAsTool: true` marks an agent as designed for composition. It also supplies the default `toolDescription`. |
+| `as` | The **relationship name** identifies the relationship in tools, registries, and references. It defaults to the unqualified part of `agent`. Two relationships may target the same `agent` under different `as` names ([§2.3](#23-aliases)). |
 | `description` | Model-facing description override for this relationship. |
 | `maxInstances` | Cap on simultaneous instances. When reached, creation attempts **SHOULD** return a tool error explaining the cap and suggesting messaging an existing instance. |
 | `immediate` | Spawn at **thread creation**, before any side takes a turn ([§3.2](#32-immediate-spawning)). |
@@ -43,6 +43,8 @@ interface SubagentRelationship {
 | `initUserMessageProperty` / `initAttachmentsProperty` / `initAgentNameProperty` | Map creation arguments into the child's initial user message, attachments, and display name. |
 | `optional` | The branch is enabled only when the named environment flag resolves to `true`, `1`, or `yes` (case-insensitive). Disabled branches are unavailable for creation and runtime invocation. |
 | `hidden` | The relationship stays declared — code paths can still spawn the child — but it is excluded from every LLM request's tool surface. For infrastructure children the model must never invoke. |
+
+For example, `{ agent: '@scope/pkg/researcher' }` has the relationship name `researcher`. Relationship names are tool names. They cannot contain a slash.
 
 ## 2. Ownership Rules
 
