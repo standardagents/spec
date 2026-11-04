@@ -25,6 +25,7 @@ const { title, version, group, subSlug, currentPath, headings } = Astro.props
       currentVersion={version}
       currentGroup={group}
       currentSlug={subSlug}
+      currentPath={currentPath}
     />
     <Sidebar version={version} currentPath={currentPath} />
     <TableOfContents headings={headings} />

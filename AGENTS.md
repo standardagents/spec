@@ -1,6 +1,6 @@
 # standardagentspec.com
 
-Standard Agent Specification website - documentation for the Standard Agents spec.
+Standard Agent Specification website - documentation for the Standard Agent Specification.
 
 ## Stack
 
@@ -60,9 +60,10 @@ content/
 
 The homepage at `/` is the Overview of every current version and lives in
 `src/data/home.md`, outside the version folders. Only specification pages are
-versioned. Archived versions keep their own Overview. Homepage links to
-specification pages use `/latest/`, which resolves to the latest version at
-build time.
+versioned. Archived versions keep their own Overview. Homepage and Community
+links to specification pages use `/latest/`, which resolves to the latest
+version at build time. The Community page at `/community`, which includes
+governance, lives in `src/data/community.md`, and every version's navigation links to it.
 
 Older version folders are archived, immutable content. Edit only the current
 version's folder; the version selector and `llms.txt` derive the latest
@@ -93,10 +94,13 @@ src/
 │   ├── BaseLayout.astro   # Main HTML layout with theme script
 │   └── DocLayout.astro    # Header, sidebar, contents card, and footer around a page
 ├── lib/
-│   └── content.ts         # Navigation helpers using getCollection
+│   ├── content.ts         # Navigation helpers using getCollection
+│   └── nav-icons.ts       # Sidebar group icons
 ├── pages/
 │   ├── index.astro                    # Homepage, rendered from src/data/home.md
 │   ├── index.md.ts                    # Homepage raw markdown
+│   ├── community.astro                # Community page, rendered from src/data/community.md
+│   ├── community.md.ts                # Community raw markdown
 │   ├── [...slug].md.ts                # Raw markdown endpoint
 │   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
 │   ├── models.md.ts                   # Live curated models markdown endpoint
@@ -106,6 +110,7 @@ src/
 │       └── [...slug].astro            # Dynamic doc pages
 ├── data/
 │   ├── home.md             # Version-independent homepage content
+│   ├── community.md        # Version-independent community and governance content
 │   └── models.md           # Curated live model guidance consumed by /models.md
 ├── styles/
 │   └── global.css         # Tailwind + prose styles

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { navGroupIcons, navIconProps } from '../lib/nav-icons'
 
 // Type for window with our theme functions
 declare global {
@@ -12,6 +13,7 @@ interface Props {
   currentVersion: string
   currentGroup?: string
   currentSlug?: string
+  currentPath: string
 }
 
 // Get versions from the content at build time - these are passed as props
@@ -79,7 +81,7 @@ function Logo() {
         <path d="M44.06,0v44.08H0v105.92h105.93v-44.07h44.07V0H44.06ZM19.09,130.91c-16.47-16.47-5.29-54.45,24.96-85.18v60.2h60.23c-30.73,30.27-68.71,41.47-85.2,24.98ZM105.93,104.29v-60.21h-60.21C76.46,13.8,114.42,2.6,130.91,19.09c16.51,16.49,5.31,54.47-24.98,85.2Z" />
       </svg>
       <span className="font-heading text-[0.9375rem] leading-[1.1] sm:text-[1.25rem] sm:whitespace-nowrap">
-        Standard Agents Specification
+        Standard Agent Specification
       </span>
     </span>
   )
@@ -107,7 +109,7 @@ interface NavGroup {
  *   dark:text-gray-300 → dark:text-gray-400 (dark inactive text)
  *   dark:text-gray-400 → dark:text-gray-500 (dark secondary text)
  */
-export default function Header({ currentVersion, currentGroup, currentSlug }: Props) {
+export default function Header({ currentVersion, currentGroup, currentSlug, currentPath }: Props) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [menuOpen, setMenuOpen] = useState(false)
   const [versionOpen, setVersionOpen] = useState(false)
@@ -209,8 +211,8 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
 
   // Pure function to generate version URL - safe to call during render
   const getVersionUrl = (newVersion: string) => {
-    const isOverview = !currentGroup || (currentGroup === 'getting-started' && currentSlug === 'overview')
-    if (isOverview && newVersion === latestVersion) return '/'
+    if (!currentGroup && newVersion === latestVersion) return currentPath
+    if (currentGroup === 'getting-started' && currentSlug === 'overview' && newVersion === latestVersion) return '/'
     if (currentGroup && currentSlug) {
       return `/${newVersion}/${currentGroup}/${currentSlug}`
     }
@@ -352,12 +354,12 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
             <nav className="space-y-6">
               {navigation.map((navGroup) => (
                 <div key={navGroup.group}>
-                  <h3 className="mb-2 font-label text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <h3 className="mb-2 flex items-center gap-2 text-sm leading-5 font-semibold text-gray-900 dark:text-gray-100">
+                    <svg {...navIconProps} className="h-4 w-4 flex-none text-gray-500 dark:text-gray-400" aria-hidden="true" dangerouslySetInnerHTML={{ __html: navGroupIcons[navGroup.group] ?? '' }} />
                     {navGroup.title}
                   </h3>
                   <ul className="space-y-1">
                     {navGroup.items.map((item) => {
-                      const currentPath = currentGroup ? `/${currentVersion}/${currentGroup}${currentSlug ? `/${currentSlug}` : ''}` : '/'
                       const isActive = item.href === currentPath
                       const hasActiveChild = item.children?.some(c => c.href === currentPath) ?? false
                       return (
@@ -365,7 +367,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug }: Pr
                           <a
                             href={item.href}
                             onClick={() => setMenuOpen(false)}
-                            className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                            className={`block rounded-md px-3 py-2 text-sm transition-colors ${
                               isActive
                                 ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
                                 : 'text-gray-800 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100'

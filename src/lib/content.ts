@@ -29,7 +29,7 @@ const groupOrder = ['getting-started', 'guides', 'specification', 'infrastructur
 const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'handlers', 'agents', 'subagents', 'threads', 'users', 'hooks', 'type-registry']
 
 // Explicit page ordering within the getting-started group ('overview' always sorts first)
-const gettingStartedOrder = ['overview', 'examples']
+const gettingStartedOrder = ['overview', 'examples', 'community']
 
 // Explicit ordering of subpages under a parent slug (per group)
 // Key is "{group}/{parent}", value is the ordered list of child slugs.
@@ -47,6 +47,9 @@ const subpageOrder: Record<string, string[]> = {
 
 // The homepage is the Overview of every version without its own archived Overview.
 const homeItem: BuiltItem = { slug: 'overview', title: 'Overview', href: '/', _orderKey: 'overview' }
+
+// Community applies to the project as a whole, so every version links to one page.
+const communityItem: BuiltItem = { slug: 'community', title: 'Community', href: '/community', _orderKey: 'community' }
 
 // Pages to exclude from navigation (group/slug)
 const excludedPages: Record<string, string[]> = {
@@ -179,6 +182,7 @@ export async function getNavigation(version: string): Promise<NavGroup[]> {
   if (!startItems.some(item => item.slug === 'overview')) {
     startItems.push(homeItem)
   }
+  startItems.push(communityItem)
 
   // Attach children to their matching top-level items
   for (const group of Object.keys(topLevelByGroup)) {
@@ -240,7 +244,7 @@ export async function getNavigation(version: string): Promise<NavGroup[]> {
 export async function getDefaultPage(version: string): Promise<{ group: string; slug: string } | null> {
   const nav = await getNavigation(version)
   for (const group of nav) {
-    const item = group.items.find(item => item.href !== homeItem.href)
+    const item = group.items.find(item => item.href.startsWith(`/${version}/`))
     if (item) return { group: group.group, slug: item.slug }
   }
   return null
