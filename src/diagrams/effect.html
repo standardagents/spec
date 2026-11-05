@@ -1,0 +1,78 @@
+<!--
+  An agent schedules an effect that reminds a person 24 hours later (Examples, section 4).
+  See issue-triage.html for the colours and the links.
+-->
+<svg class="dg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ef-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/></marker>
+    <g id="ef-human"><rect class="dg-panel" x=".5" y=".5" width="149" height="83"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE B</text><text class="dg-title" x="12" y="58">Human</text><path class="dg-fold" d="M142 0h8v8z"/></g>
+    <g id="ef-side-side-a-240-132-prompt-model"><rect class="dg-panel" x=".5" y=".5" width="239" height="131"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE A</text><text class="dg-note" x="158" y="60.5">prompt</text><text class="dg-note" x="158" y="104.5">model</text><path class="dg-fold" d="M232 0h8v8z"/></g>
+    <g id="ef-chip-prompt-reminder_agent"><rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">reminder_agent</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="ef-chip-model-conversational"><rect class="dg-chip dg-chip--model" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">conversational</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="ef-bar-schedule_reminder"><rect class="dg-bar" width="180" height="34"/><text class="dg-bar-text" x="90" y="21.5">schedule_reminder</text><path class="dg-fold" d="M172 0h8v8z"/></g>
+    <g id="ef-bar-send_reminder"><rect class="dg-bar" width="150" height="34"/><text class="dg-bar-text" x="75" y="21.5">send_reminder</text><path class="dg-fold" d="M142 0h8v8z"/></g>
+    <g id="ef-pill-stopOnResponse"><rect class="dg-pill dg-pill--rule" x="-64" width="128" height="24"/><text class="dg-pill-text" y="16.5">stopOnResponse</text><path class="dg-fold" d="M56 0h8v8z"/></g>
+    <g id="ef-frame-AGENT-reminder_agent"><rect class="dg-knockout" x="-7" y="-11" width="183" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">reminder_agent</text><path class="dg-fold" d="M168-11h8v8z"/></g>
+    <g id="ef-pill-scheduleEffect"><rect class="dg-pill dg-pill--rule" x="-64" width="128" height="24"/><text class="dg-pill-text" y="16.5">scheduleEffect</text><path class="dg-fold" d="M56 0h8v8z"/></g>
+    <g id="ef-pill-injectMessage"><rect class="dg-pill dg-pill--rule" x="-60" width="120" height="24"/><text class="dg-pill-text" y="16.5">injectMessage</text><path class="dg-fold" d="M52 0h8v8z"/></g>
+    <text id="ef-edge-message" class="dg-edge-label">message</text>
+    <text id="ef-edge-text-reply" class="dg-edge-label">text reply</text>
+    <text id="ef-edge-tool-call" class="dg-edge-label">tool call</text>
+    <text id="ef-edge-result" class="dg-edge-label">result</text>
+    <text id="ef-edge-24-hours-later" class="dg-edge-label">24 hours later</text>
+  </defs>
+</svg>
+
+<svg class="dg-wide" viewBox="0 0 880 372">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="8.5" y="18.5" width="863" height="345"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M210 112H300"/>
+    <use href="#ef-edge-message" x="255" y="104"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M330 180V240H135V154"/>
+    <use href="#ef-edge-text-reply" x="232" y="220"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M375 180V270"/>
+    <use href="#ef-edge-tool-call" x="415" y="232"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M465 270V180"/>
+    <use href="#ef-edge-result" x="495" y="232"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M500 287H690"/>
+    <use href="#ef-edge-24-hours-later" x="595" y="268"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M765 304V336H90V154"/>
+  </g>
+  <a data-file="agents/agents/reminder_agent.ts" data-name="reminder_agent agent"><use href="#ef-frame-AGENT-reminder_agent" x="28" y="23"/></a>
+  <a data-file="agents/agents/reminder_agent.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#ef-pill-stopOnResponse" x="232" y="228"/></a>
+  <a data-file="agents/agents/reminder_agent.ts" data-mark="sideB" data-name="Side B, a human"><use href="#ef-human" x="60" y="70"/></a>
+  <a data-file="agents/agents/reminder_agent.ts" data-mark="sideA" data-name="Side A"><use href="#ef-side-side-a-240-132-prompt-model" x="300" y="48"/></a>
+  <a data-file="agents/prompts/reminder_agent.ts" data-name="reminder_agent prompt"><use href="#ef-chip-prompt-reminder_agent" x="312" y="88"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#ef-chip-model-conversational" x="312" y="132"/></a>
+  <a data-file="agents/tools/schedule_reminder.ts" data-name="schedule_reminder tool"><use href="#ef-bar-schedule_reminder" x="320" y="270"/></a>
+  <a data-file="agents/tools/schedule_reminder.ts" data-mark="scheduleEffect" data-name="scheduleEffect call"><use href="#ef-pill-scheduleEffect" x="595" y="275"/></a>
+  <a data-file="agents/effects/send_reminder.ts" data-name="send_reminder effect"><use href="#ef-bar-send_reminder" x="690" y="270"/></a>
+  <a data-file="agents/effects/send_reminder.ts" data-mark="injectMessage" data-name="injectMessage call"><use href="#ef-pill-injectMessage" x="430" y="324"/></a>
+</svg>
+
+<svg class="dg-narrow" viewBox="0 0 400 646">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="620"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M200 128V204"/>
+    <use href="#ef-edge-message" x="238" y="170"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M80 270H24V86H125"/>
+    <use href="#ef-edge-text-reply" x="54" y="184"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M130 336V420"/>
+    <use href="#ef-edge-tool-call" x="92" y="384"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M270 420V336"/>
+    <use href="#ef-edge-result" x="298" y="384"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M200 454V560"/>
+    <use href="#ef-edge-24-hours-later" x="200" y="484"/>
+    <path class="dg-edge" marker-end="url(#ef-arrow)" d="M275 577H372V86H275"/>
+  </g>
+  <a data-file="agents/agents/reminder_agent.ts" data-name="reminder_agent agent"><use href="#ef-frame-AGENT-reminder_agent" x="20" y="23"/></a>
+  <a data-file="agents/agents/reminder_agent.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#ef-pill-stopOnResponse" x="102" y="136"/></a>
+  <a data-file="agents/agents/reminder_agent.ts" data-mark="sideB" data-name="Side B, a human"><use href="#ef-human" x="125" y="44"/></a>
+  <a data-file="agents/agents/reminder_agent.ts" data-mark="sideA" data-name="Side A"><use href="#ef-side-side-a-240-132-prompt-model" x="80" y="204"/></a>
+  <a data-file="agents/prompts/reminder_agent.ts" data-name="reminder_agent prompt"><use href="#ef-chip-prompt-reminder_agent" x="92" y="244"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#ef-chip-model-conversational" x="92" y="288"/></a>
+  <a data-file="agents/tools/schedule_reminder.ts" data-name="schedule_reminder tool"><use href="#ef-bar-schedule_reminder" x="110" y="420"/></a>
+  <a data-file="agents/tools/schedule_reminder.ts" data-mark="scheduleEffect" data-name="scheduleEffect call"><use href="#ef-pill-scheduleEffect" x="200" y="496"/></a>
+  <a data-file="agents/effects/send_reminder.ts" data-name="send_reminder effect"><use href="#ef-bar-send_reminder" x="125" y="560"/></a>
+  <a data-file="agents/effects/send_reminder.ts" data-mark="injectMessage" data-name="injectMessage call"><use href="#ef-pill-injectMessage" x="312" y="600"/></a>
+</svg>

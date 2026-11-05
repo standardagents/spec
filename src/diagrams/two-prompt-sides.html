@@ -1,0 +1,132 @@
+<!--
+  A parent composes generate_banner, an agent with two prompt sides (Examples, section 7).
+  See issue-triage.html for the colours and the links.
+-->
+<svg class="dg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="tp-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/></marker>
+    <g id="tp-human"><rect class="dg-panel" x=".5" y=".5" width="149" height="83"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE B</text><text class="dg-title" x="12" y="58">Human</text><path class="dg-fold" d="M142 0h8v8z"/></g>
+    <g id="tp-side-side-a-240-176-prompt-subagent-model"><rect class="dg-panel" x=".5" y=".5" width="239" height="175"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE A</text><text class="dg-note" x="168" y="60.5">prompt</text><text class="dg-note" x="168" y="104.5">subagent</text><text class="dg-note" x="168" y="148.5">model</text><path class="dg-fold" d="M232 0h8v8z"/></g>
+    <g id="tp-side-side-a-240-132-prompt-model"><rect class="dg-panel" x=".5" y=".5" width="239" height="131"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE A</text><text class="dg-note" x="168" y="60.5">prompt</text><text class="dg-note" x="168" y="104.5">model</text><path class="dg-fold" d="M232 0h8v8z"/></g>
+    <g id="tp-side-side-b-240-132-prompt-model"><rect class="dg-panel" x=".5" y=".5" width="239" height="131"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE B</text><text class="dg-note" x="168" y="60.5">prompt</text><text class="dg-note" x="168" y="104.5">model</text><path class="dg-fold" d="M232 0h8v8z"/></g>
+    <g id="tp-chip-prompt-design_assistant"><rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="147" height="31"/><text class="dg-mono" x="11" y="20.5">design_assistant</text><path class="dg-fold" d="M140 0h8v8z"/></g>
+    <g id="tp-chip-child-generate_banner"><rect class="dg-chip dg-chip--child" x=".5" y=".5" width="147" height="31"/><text class="dg-mono" x="11" y="20.5">generate_banner</text><path class="dg-fold" d="M140 0h8v8z"/></g>
+    <g id="tp-chip-model-conversational"><rect class="dg-chip dg-chip--model" x=".5" y=".5" width="147" height="31"/><text class="dg-mono" x="11" y="20.5">conversational</text><path class="dg-fold" d="M140 0h8v8z"/></g>
+    <g id="tp-chip-prompt-banner_artist"><rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="147" height="31"/><text class="dg-mono" x="11" y="20.5">banner_artist</text><path class="dg-fold" d="M140 0h8v8z"/></g>
+    <g id="tp-chip-prompt-banner_qa"><rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="147" height="31"/><text class="dg-mono" x="11" y="20.5">banner_qa</text><path class="dg-fold" d="M140 0h8v8z"/></g>
+    <g id="tp-bar-generate_image"><rect class="dg-bar" width="130" height="34"/><text class="dg-bar-text" x="65" y="21.5">generate_image</text><path class="dg-fold" d="M122 0h8v8z"/></g>
+    <g id="tp-bar-view_banner"><rect class="dg-bar" width="120" height="34"/><text class="dg-bar-text" x="60" y="21.5">view_banner</text><path class="dg-fold" d="M112 0h8v8z"/></g>
+    <g id="tp-bar-approve_banner"><rect class="dg-bar" width="136" height="34"/><text class="dg-bar-text" x="68" y="21.5">approve_banner</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="tp-ext-OpenRouter"><rect class="dg-external" x=".5" y=".5" width="89" height="33"/><text class="dg-note dg-center" x="45" y="21.5">OpenRouter</text><path class="dg-fold" d="M82 0h8v8z"/></g>
+    <g id="tp-pill-blocking-true"><rect class="dg-pill dg-pill--rule" x="-62" width="124" height="24"/><text class="dg-pill-text" y="16.5">blocking: true</text><path class="dg-fold" d="M54 0h8v8z"/></g>
+    <g id="tp-pill-initUserMessageProperty"><rect class="dg-pill dg-pill--rule" x="-94" width="188" height="24"/><text class="dg-pill-text" y="16.5">initUserMessageProperty</text><path class="dg-fold" d="M86 0h8v8z"/></g>
+    <g id="tp-pill-sessionStop"><rect class="dg-pill dg-pill--rule" x="-50" width="100" height="24"/><text class="dg-pill-text" y="16.5">sessionStop</text><path class="dg-fold" d="M42 0h8v8z"/></g>
+    <g id="tp-pill-stopOnResponse"><rect class="dg-pill dg-pill--rule" x="-64" width="128" height="24"/><text class="dg-pill-text" y="16.5">stopOnResponse</text><path class="dg-fold" d="M56 0h8v8z"/></g>
+    <g id="tp-pill-maxSessionTurns-8"><rect class="dg-pill dg-pill--rule" x="-78" width="156" height="24"/><text class="dg-pill-text" y="16.5">maxSessionTurns: 8</text><path class="dg-fold" d="M70 0h8v8z"/></g>
+    <g id="tp-frame-AGENT-design_assistant"><rect class="dg-knockout" x="-7" y="-11" width="198" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">design_assistant</text><path class="dg-fold" d="M183-11h8v8z"/></g>
+    <g id="tp-frame-AGENT-generate_banner"><rect class="dg-knockout" x="-7" y="-11" width="190" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">generate_banner</text><path class="dg-fold" d="M175-11h8v8z"/></g>
+    <text id="tp-edge-message" class="dg-edge-label">message</text>
+    <text id="tp-edge-text-reply" class="dg-edge-label">text reply</text>
+    <text id="tp-edge-parent-waits" class="dg-edge-label">parent waits</text>
+    <text id="tp-edge-subagent_create" class="dg-edge-code">subagent_create</text>
+    <text id="tp-edge-changes" class="dg-edge-label">changes</text>
+    <text id="tp-edge-banner" class="dg-edge-label">banner</text>
+    <g id="tp-ll-summary"><rect class="dg-hit" x="-38" y="-14" width="76" height="19"/><text class="dg-edge-code">summary</text><path class="dg-fold" d="M30-14h8v8z"/></g>
+  </defs>
+</svg>
+
+<svg class="dg-wide" viewBox="0 0 880 622">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="8.5" y="18.5" width="863" height="222"/>
+    <rect class="dg-boundary" x="8.5" y="340.5" width="863" height="272"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M220 90H320"/>
+    <use href="#tp-edge-message" x="270" y="82"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M320 150H220"/>
+    <use href="#tp-edge-text-reply" x="270" y="142"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M400 216V322H250V372"/>
+    <use href="#tp-edge-parent-waits" x="510" y="284"/>
+    <use href="#tp-edge-subagent_create" x="476" y="304"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M280 412H600"/>
+    <use href="#tp-edge-banner" x="370" y="404"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M600 476H280"/>
+    <use href="#tp-edge-changes" x="370" y="468"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M130 504V548"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M190 548V504"/>
+    <path class="dg-edge dg-edge--external" d="M225 565H290"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M630 504V548"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M670 548V504"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M780 504V548"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M848 565H858V130H560"/>
+  </g>
+  <a data-file="agents/agents/design_assistant.ts" data-name="design_assistant agent"><use href="#tp-frame-AGENT-design_assistant" x="28" y="23"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-name="generate_banner agent, the child"><use href="#tp-frame-AGENT-generate_banner" x="28" y="345"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="blocking" data-name="blocking rule, which makes the parent wait"><use href="#tp-pill-blocking-true" x="400" y="268"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="initUserMessageProperty" data-name="initUserMessageProperty, which maps the request to the first message"><use href="#tp-pill-initUserMessageProperty" x="325" y="310"/></a>
+  <a data-file="agents/tools/approve_banner.ts" data-mark="summary" data-name="summary argument, which returns to the parent"><use href="#tp-ll-summary" x="720" y="122"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="sessionStop" data-name="sessionStop rule"><use href="#tp-pill-sessionStop" x="720" y="136"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="sideB" data-name="Parent side B, a human"><use href="#tp-human" x="70" y="60"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="sideA" data-name="Parent side A"><use href="#tp-side-side-a-240-176-prompt-subagent-model" x="320" y="40"/></a>
+  <a data-file="agents/prompts/design_assistant.ts" data-name="design_assistant prompt"><use href="#tp-chip-prompt-design_assistant" x="332" y="80"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="subagents" data-name="Subagent relationship to generate_banner"><use href="#tp-chip-child-generate_banner" x="332" y="124"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the parent"><use href="#tp-chip-model-conversational" x="332" y="168"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="sideA" data-name="Child side A, the artist"><use href="#tp-side-side-a-240-132-prompt-model" x="40" y="372"/></a>
+  <a data-file="agents/prompts/banner_artist.ts" data-name="banner_artist prompt"><use href="#tp-chip-prompt-banner_artist" x="52" y="412"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the artist"><use href="#tp-chip-model-conversational" x="52" y="456"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="sideB" data-name="Child side B, the reviewer"><use href="#tp-side-side-b-240-132-prompt-model" x="600" y="372"/></a>
+  <a data-file="agents/prompts/banner_qa.ts" data-name="banner_qa prompt"><use href="#tp-chip-prompt-banner_qa" x="612" y="412"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the reviewer"><use href="#tp-chip-model-conversational" x="612" y="456"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#tp-pill-stopOnResponse" x="440" y="430"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="maxSessionTurns" data-name="maxSessionTurns rule"><use href="#tp-pill-maxSessionTurns-8" x="440" y="520"/></a>
+  <a data-file="agents/tools/generate_image.ts" data-name="generate_image tool"><use href="#tp-bar-generate_image" x="95" y="548"/></a>
+  <a data-file="agents/tools/generate_image.ts" data-mark="openrouter.ai" data-name="OpenRouter image request"><use href="#tp-ext-OpenRouter" x="290" y="548"/></a>
+  <a data-file="agents/tools/view_banner.ts" data-name="view_banner tool"><use href="#tp-bar-view_banner" x="570" y="548"/></a>
+  <a data-file="agents/tools/approve_banner.ts" data-name="approve_banner tool"><use href="#tp-bar-approve_banner" x="712" y="548"/></a>
+</svg>
+
+<svg class="dg-narrow" viewBox="0 0 400 1044">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="361"/>
+    <rect class="dg-boundary" x="4.5" y="510.5" width="391" height="526"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M170 128V188"/>
+    <use href="#tp-edge-message" x="130" y="162"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M230 188V128"/>
+    <use href="#tp-edge-text-reply" x="272" y="162"/>
+    <use href="#tp-edge-parent-waits" x="110" y="396"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M110 364V540"/>
+    <use href="#tp-edge-subagent_create" x="110" y="446"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M80 606H24V800H80"/>
+    <use href="#tp-edge-banner" x="52" y="700"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M320 860H360V606H320"/>
+    <use href="#tp-edge-changes" x="352" y="702"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M120 672V718"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M180 718V672"/>
+    <path class="dg-edge dg-edge--external" d="M215 735H262"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M100 932V980"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M160 980V932"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M280 932V980"/>
+    <path class="dg-edge" marker-end="url(#tp-arrow)" d="M348 997H385V450H300V364"/>
+  </g>
+  <a data-file="agents/agents/design_assistant.ts" data-name="design_assistant agent"><use href="#tp-frame-AGENT-design_assistant" x="20" y="23"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-name="generate_banner agent, the child"><use href="#tp-frame-AGENT-generate_banner" x="150" y="515"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="blocking" data-name="blocking rule, which makes the parent wait"><use href="#tp-pill-blocking-true" x="110" y="402"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="initUserMessageProperty" data-name="initUserMessageProperty, which maps the request to the first message"><use href="#tp-pill-initUserMessageProperty" x="114" y="452"/></a>
+  <a data-file="agents/tools/approve_banner.ts" data-mark="summary" data-name="summary argument, which returns to the parent"><use href="#tp-ll-summary" x="300" y="394"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="sessionStop" data-name="sessionStop rule"><use href="#tp-pill-sessionStop" x="300" y="400"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="sideB" data-name="Parent side B, a human"><use href="#tp-human" x="125" y="44"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="sideA" data-name="Parent side A"><use href="#tp-side-side-a-240-176-prompt-subagent-model" x="80" y="188"/></a>
+  <a data-file="agents/prompts/design_assistant.ts" data-name="design_assistant prompt"><use href="#tp-chip-prompt-design_assistant" x="92" y="228"/></a>
+  <a data-file="agents/agents/design_assistant.ts" data-mark="subagents" data-name="Subagent relationship to generate_banner"><use href="#tp-chip-child-generate_banner" x="92" y="272"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the parent"><use href="#tp-chip-model-conversational" x="92" y="316"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="sideA" data-name="Child side A, the artist"><use href="#tp-side-side-a-240-132-prompt-model" x="80" y="540"/></a>
+  <a data-file="agents/prompts/banner_artist.ts" data-name="banner_artist prompt"><use href="#tp-chip-prompt-banner_artist" x="92" y="580"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the artist"><use href="#tp-chip-model-conversational" x="92" y="624"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="sideB" data-name="Child side B, the reviewer"><use href="#tp-side-side-b-240-132-prompt-model" x="80" y="800"/></a>
+  <a data-file="agents/prompts/banner_qa.ts" data-name="banner_qa prompt"><use href="#tp-chip-prompt-banner_qa" x="92" y="840"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the reviewer"><use href="#tp-chip-model-conversational" x="92" y="884"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#tp-pill-stopOnResponse" x="104" y="762"/></a>
+  <a data-file="agents/agents/generate_banner.ts" data-mark="maxSessionTurns" data-name="maxSessionTurns rule"><use href="#tp-pill-maxSessionTurns-8" x="270" y="762"/></a>
+  <a data-file="agents/tools/generate_image.ts" data-name="generate_image tool"><use href="#tp-bar-generate_image" x="85" y="718"/></a>
+  <a data-file="agents/tools/generate_image.ts" data-mark="openrouter.ai" data-name="OpenRouter image request"><use href="#tp-ext-OpenRouter" x="262" y="718"/></a>
+  <a data-file="agents/tools/view_banner.ts" data-name="view_banner tool"><use href="#tp-bar-view_banner" x="70" y="980"/></a>
+  <a data-file="agents/tools/approve_banner.ts" data-name="approve_banner tool"><use href="#tp-bar-approve_banner" x="212" y="980"/></a>
+</svg>

@@ -1,0 +1,105 @@
+<!--
+  The two sides of the assistant agent (Examples, section 1).
+
+  Every node and label is defined once, in <defs>. The two layouts below only
+  place those nodes and draw the edges. See issue-triage.html for the colours and
+  the links.
+-->
+<svg class="dg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="hw-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/>
+    </marker>
+
+    <!-- 150 x 84 -->
+    <g id="hw-human">
+      <rect class="dg-panel" x=".5" y=".5" width="149" height="83"/>
+      <rect class="dg-mark" x="12" y="13" width="6" height="6"/>
+      <text class="dg-label" x="24" y="20">SIDE B</text>
+      <text class="dg-title" x="12" y="58">Human</text>
+      <path class="dg-fold" d="M142 0h8v8z"/>
+    </g>
+
+    <!-- 240 x 132. Its chips are separate links, placed at x + 12 and y + 40 or y + 84. -->
+    <g id="hw-side-a">
+      <rect class="dg-panel" x=".5" y=".5" width="239" height="131"/>
+      <rect class="dg-mark" x="12" y="13" width="6" height="6"/>
+      <text class="dg-label" x="24" y="20">SIDE A</text>
+      <text class="dg-note" x="158" y="60.5">prompt</text>
+      <text class="dg-note" x="158" y="104.5">model</text>
+      <path class="dg-fold" d="M232 0h8v8z"/>
+    </g>
+
+    <!-- Chips are 136 x 32. -->
+    <g id="hw-chip-prompt">
+      <rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">assistant</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+    <g id="hw-chip-model">
+      <rect class="dg-chip dg-chip--model" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">conversational</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+
+    <!-- 90 x 34 -->
+    <g id="hw-provider">
+      <rect class="dg-external" x=".5" y=".5" width="89" height="33"/>
+      <text class="dg-note dg-center" x="45" y="21.5">OpenRouter</text>
+      <path class="dg-fold" d="M82 0h8v8z"/>
+    </g>
+
+    <!-- 128 x 24, centred on its x -->
+    <g id="hw-rule-stop-on-response">
+      <rect class="dg-pill dg-pill--rule" x="-64" width="128" height="24"/>
+      <text class="dg-pill-text" y="16.5">stopOnResponse</text>
+      <path class="dg-fold" d="M56 0h8v8z"/>
+    </g>
+
+    <text id="hw-edge-message" class="dg-edge-label">message</text>
+    <text id="hw-edge-reply" class="dg-edge-label">text reply</text>
+    <g id="hw-boundary-label">
+      <rect class="dg-knockout" x="-7" y="-11" width="146" height="16"/>
+      <rect class="dg-mark" y="-8" width="6" height="6"/>
+      <text class="dg-label" x="12">AGENT</text>
+      <text class="dg-mono" x="62">assistant</text>
+      <path class="dg-fold" d="M131-11h8v8z"/>
+    </g>
+  </defs>
+</svg>
+
+<svg class="dg-wide" viewBox="0 0 880 232">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="8.5" y="18.5" width="863" height="203"/>
+    <path class="dg-edge" marker-end="url(#hw-arrow)" d="M235 108H405"/>
+    <use href="#hw-edge-message" x="320" y="100"/>
+    <path class="dg-edge" marker-end="url(#hw-arrow)" d="M405 146H235"/>
+    <use href="#hw-edge-reply" x="320" y="138"/>
+    <path class="dg-edge dg-edge--external" d="M645 130H705"/>
+  </g>
+  <a data-file="agents/agents/assistant.ts" data-name="assistant agent"><use href="#hw-boundary-label" x="28" y="23"/></a>
+  <a data-file="agents/agents/assistant.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#hw-rule-stop-on-response" x="320" y="154"/></a>
+  <a data-file="agents/agents/assistant.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hw-human" x="85" y="88"/></a>
+  <a data-file="agents/agents/assistant.ts" data-mark="sideA" data-name="Side A"><use href="#hw-side-a" x="405" y="64"/></a>
+  <a data-file="agents/prompts/assistant.ts" data-name="assistant prompt"><use href="#hw-chip-prompt" x="417" y="104"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#hw-chip-model" x="417" y="148"/></a>
+  <a data-file="agents/models/conversational.ts" data-mark="provider" data-name="OpenRouter provider"><use href="#hw-provider" x="705" y="113"/></a>
+</svg>
+
+<svg class="dg-narrow" viewBox="0 0 400 424">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="397"/>
+    <path class="dg-edge" marker-end="url(#hw-arrow)" d="M170 128V204"/>
+    <use href="#hw-edge-message" x="124" y="170"/>
+    <path class="dg-edge" marker-end="url(#hw-arrow)" d="M230 204V128"/>
+    <use href="#hw-edge-reply" x="268" y="150"/>
+    <path class="dg-edge dg-edge--external" d="M200 336V368"/>
+  </g>
+  <a data-file="agents/agents/assistant.ts" data-name="assistant agent"><use href="#hw-boundary-label" x="20" y="23"/></a>
+  <a data-file="agents/agents/assistant.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#hw-rule-stop-on-response" x="304" y="160"/></a>
+  <a data-file="agents/agents/assistant.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hw-human" x="125" y="44"/></a>
+  <a data-file="agents/agents/assistant.ts" data-mark="sideA" data-name="Side A"><use href="#hw-side-a" x="80" y="204"/></a>
+  <a data-file="agents/prompts/assistant.ts" data-name="assistant prompt"><use href="#hw-chip-prompt" x="92" y="244"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#hw-chip-model" x="92" y="288"/></a>
+  <a data-file="agents/models/conversational.ts" data-mark="provider" data-name="OpenRouter provider"><use href="#hw-provider" x="155" y="368"/></a>
+</svg>

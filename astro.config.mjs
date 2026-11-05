@@ -2,6 +2,9 @@ import { defineConfig } from 'astro/config'
 import react from '@astrojs/react'
 import tailwindcss from '@tailwindcss/vite'
 import rehypeWrapTables from './src/lib/rehype-wrap-tables.mjs'
+import rehypeInlineDiagrams from './src/lib/rehype-inline-diagrams.mjs'
+import rehypeFileViewers from './src/lib/rehype-file-viewers.mjs'
+import remarkFauxThreads from './src/lib/remark-faux-threads.mjs'
 
 export default defineConfig({
   site: 'https://standardagentspec.org',
@@ -17,8 +20,8 @@ export default defineConfig({
     },
   },
   markdown: {
-    remarkPlugins: ['remark-gfm'],
-    rehypePlugins: [rehypeWrapTables],
+    remarkPlugins: ['remark-gfm', remarkFauxThreads],
+    rehypePlugins: [rehypeWrapTables, rehypeInlineDiagrams, rehypeFileViewers],
     shikiConfig: {
       themes: {
         light: 'github-light',

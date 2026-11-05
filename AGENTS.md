@@ -93,9 +93,14 @@ src/
 ├── layouts/
 │   ├── BaseLayout.astro   # Main HTML layout with theme script
 │   └── DocLayout.astro    # Header, sidebar, contents card, and footer around a page
+├── diagrams/              # Inline SVG diagrams for documentation pages
 ├── lib/
 │   ├── content.ts         # Navigation helpers using getCollection
-│   └── nav-icons.ts       # Sidebar group icons
+│   ├── nav-icons.ts       # Sidebar group icons
+│   ├── file-viewer-client.js      # Small script that file viewers inline
+│   ├── rehype-file-viewers.mjs    # Builds file viewers from code fences
+│   ├── rehype-inline-diagrams.mjs # Inlines src/diagrams files at build time
+│   └── remark-faux-threads.mjs    # Renders ```thread fences as static threads
 ├── pages/
 │   ├── index.astro                    # Homepage, rendered from src/data/home.md
 │   ├── index.md.ts                    # Homepage raw markdown
@@ -116,6 +121,56 @@ src/
 │   └── global.css         # Tailwind + prose styles
 └── content.config.ts      # Content collections definition
 ```
+
+### Diagrams, File Viewers, and Faux Threads
+
+Each section of the Examples page shows a diagram, then a file viewer, then its
+write-up. The page's raw Markdown endpoint keeps every code block and file path.
+Without script, every link still jumps to its file and every file stays readable.
+
+- **Diagrams:** `<figure data-diagram="name" aria-label="..."></figure>` in
+  Markdown inlines `src/diagrams/name.html` through
+  `src/lib/rehype-inline-diagrams.mjs`. A missing file fails the build. The
+  `aria-label` is the diagram's description, and the raw Markdown keeps it. Each
+  file defines its nodes once in `<defs>`, and its wide and narrow layouts place
+  them. Use flat `.dg-*` classes in `global.css`, because Firefox does not match
+  descendant selectors inside `<use>` clones. See the comment in
+  `src/diagrams/issue-triage.html` for links to files.
+- **File viewers:** `<div data-file-viewer>` around a section's fences builds one
+  viewer through `src/lib/rehype-file-viewers.mjs`. Each code fence must start with
+  a comment that names its path. A viewer holds every file its section needs to run
+  and no other file, so a file may repeat across viewers. A section's links open
+  files only in that section's viewer. A file in a folder outside `agents/`, such
+  as a CI workflow, has its own group in the tree. A YAML fence names its path with a
+  `#` comment. A file with no folder, such as `package.json`, sits at the tree's top
+  level.
+  Its client code is `src/lib/file-viewer-client.js`, and it must stay small and
+  free of dependencies.
+- **File links:** a Markdown link such as
+  ``[`sessionStop`](agents/agents/issue_triage.ts#sessionStop)`` opens that file in
+  the section's viewer and highlights the definition. A diagram node does the same
+  with `data-file` and `data-mark`. A link to an unknown file or definition fails
+  the build. Link only what a file declares. A default, a runtime status, or an
+  injected tool stays static, even when a related line exists.
+- **Faux threads:** a ` ```thread ` fence renders as an illustration of a
+  conversation through `src/lib/remark-faux-threads.mjs`, which documents the line
+  format. Inside a viewer, the thread is the first view and the default. A thread
+  must show only behavior the specification defines. It reads as a conversation:
+  a person's bubble, the model's text, one quiet line for each tool call or pause,
+  and a row that opens a child thread. A message from a side that no person backs,
+  or from a handler or an effect, shows its sender's name. A tool line aligns with
+  the side that made the call, and a `tool b` line marks a call from side B. A child thread is its own view under Thread
+  in the viewer, and the raw Markdown keeps it inside its parent's fence. The
+  diagram and write-up explain rules and runtime behavior, so a thread has no such
+  notes. A tool line's arguments and result stay behind a native disclosure.
+
+The specification does not define a folder layout. The viewers show AgentBuilder's
+layout with the `agents/` folder as their root, and one sentence in the page's
+introduction says so. Code comments and file links keep the full path. Keep these
+visuals free of captions, tags, and other meta notes.
+
+Astro's content layer caches rendered Markdown. Restart `pnpm dev` after you edit
+a diagram file, a plugin, or the viewer's client code.
 
 ### React Islands
 

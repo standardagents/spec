@@ -1,0 +1,229 @@
+<!--
+  A parent agent that composes the agent from Example 2, with submit_triage and a
+  handler on side B added (Examples, section 6).
+
+  Each agent has the same dashed AGENT frame, sides, chips, and tool bars as the
+  first two diagrams. The edges between the frames show the composition, from top
+  to bottom in time order: the parent waits, it creates the child with a request,
+  and the child's report comes back. See issue-triage.html for the colours and
+  the links. Dashed blue marks the subagent relationship, as it does the frames.
+  No file declares subagent_create, so it has no link.
+-->
+<svg class="dg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="cp-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/>
+    </marker>
+
+    <!-- 150 x 84 -->
+    <g id="cp-human">
+      <rect class="dg-panel" x=".5" y=".5" width="149" height="83"/>
+      <rect class="dg-mark" x="12" y="13" width="6" height="6"/>
+      <text class="dg-label" x="24" y="20">SIDE B</text>
+      <text class="dg-title" x="12" y="58">Human</text>
+      <path class="dg-fold" d="M142 0h8v8z"/>
+    </g>
+
+    <!-- 170 x 84. Its chip goes at x + 17 and y + 40. -->
+    <g id="cp-side-b-child">
+      <rect class="dg-panel" x=".5" y=".5" width="169" height="83"/>
+      <rect class="dg-mark" x="12" y="13" width="6" height="6"/>
+      <text class="dg-label" x="24" y="20">SIDE B</text>
+      <path class="dg-fold" d="M162 0h8v8z"/>
+    </g>
+
+    <!-- 240 x 176. Chips go at x + 12 and y + 40, y + 84, and y + 128. -->
+    <g id="cp-side-a-parent">
+      <rect class="dg-panel" x=".5" y=".5" width="239" height="175"/>
+      <rect class="dg-mark" x="12" y="13" width="6" height="6"/>
+      <text class="dg-label" x="24" y="20">SIDE A</text>
+      <text class="dg-note" x="158" y="60.5">prompt</text>
+      <text class="dg-note" x="158" y="104.5">subagent</text>
+      <text class="dg-note" x="158" y="148.5">model</text>
+      <path class="dg-fold" d="M232 0h8v8z"/>
+    </g>
+
+    <!-- 240 x 132. Chips go at x + 12 and y + 40 or y + 84. -->
+    <g id="cp-side-a-child">
+      <rect class="dg-panel" x=".5" y=".5" width="239" height="131"/>
+      <rect class="dg-mark" x="12" y="13" width="6" height="6"/>
+      <text class="dg-label" x="24" y="20">SIDE A</text>
+      <text class="dg-note" x="158" y="60.5">prompt</text>
+      <text class="dg-note" x="158" y="104.5">model</text>
+      <path class="dg-fold" d="M232 0h8v8z"/>
+    </g>
+
+    <!-- Chips are 136 x 32. -->
+    <g id="cp-chip-parent-prompt">
+      <rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">repo_assistant</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+    <g id="cp-chip-child-prompt">
+      <rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">issue_triager</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+    <g id="cp-chip-model">
+      <rect class="dg-chip dg-chip--model" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">conversational</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+    <g id="cp-chip-handler">
+      <rect class="dg-chip dg-chip--handler" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">return_reply</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+    <g id="cp-chip-relationship">
+      <rect class="dg-chip dg-chip--child" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">issue_triage</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+
+    <!-- Tool bars are 30 tall and centred on their x. -->
+    <g id="cp-tool-read">
+      <rect class="dg-bar" x="-67" width="134" height="30"/>
+      <text class="dg-bar-text" y="19.5">get_github_issue</text>
+      <path class="dg-fold" d="M59 0h8v8z"/>
+    </g>
+    <g id="cp-tool-submit">
+      <rect class="dg-bar" x="-62" width="124" height="30"/>
+      <text class="dg-bar-text" y="19.5">submit_triage</text>
+      <path class="dg-fold" d="M54 0h8v8z"/>
+    </g>
+
+    <!-- Pills are 24 tall and centred on their x. -->
+    <g id="cp-rule-blocking">
+      <rect class="dg-pill dg-pill--rule" x="-62" width="124" height="24"/>
+      <text class="dg-pill-text" y="16.5">blocking: true</text>
+      <path class="dg-fold" d="M54 0h8v8z"/>
+    </g>
+    <g id="cp-rule-init">
+      <rect class="dg-pill dg-pill--rule" x="-94" width="188" height="24"/>
+      <text class="dg-pill-text" y="16.5">initUserMessageProperty</text>
+      <path class="dg-fold" d="M86 0h8v8z"/>
+    </g>
+    <g id="cp-rule-session-stop">
+      <rect class="dg-pill dg-pill--rule" x="-50" width="100" height="24"/>
+      <text class="dg-pill-text" y="16.5">sessionStop</text>
+      <path class="dg-fold" d="M42 0h8v8z"/>
+    </g>
+    <g id="cp-rule-stop-session">
+      <rect class="dg-pill dg-pill--rule" x="-50" width="100" height="24"/>
+      <text class="dg-pill-text" y="16.5">stopSession</text>
+      <path class="dg-fold" d="M42 0h8v8z"/>
+    </g>
+
+    <!-- Edge labels are centred on their x. A link label has a box to click. -->
+    <text id="cp-edge-message" class="dg-edge-label">message</text>
+    <text id="cp-edge-reply" class="dg-edge-label">text reply</text>
+    <text id="cp-edge-waits" class="dg-edge-label">parent waits</text>
+    <text id="cp-edge-create" class="dg-edge-code">subagent_create</text>
+    <g id="cp-edge-report">
+      <rect class="dg-hit" x="-30" y="-14" width="60" height="19"/>
+      <text class="dg-edge-code">report</text>
+      <path class="dg-fold" d="M22-14h8v8z"/>
+    </g>
+
+    <g id="cp-boundary-parent">
+      <rect class="dg-knockout" x="-7" y="-11" width="182" height="16"/>
+      <rect class="dg-mark" y="-8" width="6" height="6"/>
+      <text class="dg-label" x="12">AGENT</text>
+      <text class="dg-mono" x="62">repo_assistant</text>
+      <path class="dg-fold" d="M167-11h8v8z"/>
+    </g>
+    <g id="cp-boundary-child">
+      <rect class="dg-knockout" x="-7" y="-11" width="168" height="16"/>
+      <rect class="dg-mark" y="-8" width="6" height="6"/>
+      <text class="dg-label" x="12">AGENT</text>
+      <text class="dg-mono" x="62">issue_triage</text>
+      <path class="dg-fold" d="M153-11h8v8z"/>
+    </g>
+  </defs>
+</svg>
+
+<svg class="dg-wide" viewBox="0 0 880 452">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="8.5" y="18.5" width="280" height="365"/>
+    <rect class="dg-boundary" x="500.5" y="18.5" width="371" height="424"/>
+    <!-- Each agent's two sides exchange turns. -->
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M120 128V188"/>
+    <use href="#cp-edge-message" x="82" y="162"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M176 188V128"/>
+    <use href="#cp-edge-reply" x="216" y="162"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M640 232V128"/>
+    <use href="#cp-edge-reply" x="696" y="186"/>
+    <!-- The child's side A calls its tools. -->
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M566 363V390"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M608 390V363"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M728 363V390"/>
+    <!-- The parent composes the child. -->
+    <use href="#cp-edge-waits" x="394" y="212"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M268 288H520"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M728 420V432H440V346H268"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M555 86H470V346H268"/>
+    <use href="#cp-edge-create" x="394" y="280"/>
+  </g>
+  <a data-file="agents/agents/repo_assistant.ts" data-name="repo_assistant agent"><use href="#cp-boundary-parent" x="28" y="23"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-name="issue_triage agent, the child"><use href="#cp-boundary-child" x="520" y="23"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="sideB" data-name="Parent side B, a human"><use href="#cp-human" x="73" y="44"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="sideA" data-name="Parent side A"><use href="#cp-side-a-parent" x="28" y="188"/></a>
+  <a data-file="agents/prompts/repo_assistant.ts" data-name="repo_assistant prompt"><use href="#cp-chip-parent-prompt" x="40" y="228"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="subagents" data-name="Subagent relationship to issue_triage"><use href="#cp-chip-relationship" x="40" y="272"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the parent"><use href="#cp-chip-model" x="40" y="316"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="blocking" data-name="blocking rule, which makes the parent wait"><use href="#cp-rule-blocking" x="394" y="218"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="initUserMessageProperty" data-name="initUserMessageProperty, which maps the request to the first message"><use href="#cp-rule-init" x="394" y="294"/></a>
+  <a data-file="agents/tools/submit_triage.ts" data-mark="report" data-name="report argument, which returns to the parent"><use href="#cp-edge-report" x="356" y="338"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sessionStop" data-name="sessionStop rule"><use href="#cp-rule-session-stop" x="440" y="376"/></a>
+  <a data-file="agents/handlers/return_reply.ts" data-mark="stopSession" data-name="stopSession call, which returns a text reply to the parent"><use href="#cp-rule-stop-session" x="470" y="160"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sideB" data-name="Child side B, a handler"><use href="#cp-side-b-child" x="555" y="44"/></a>
+  <a data-file="agents/handlers/return_reply.ts" data-name="return_reply handler"><use href="#cp-chip-handler" x="572" y="84"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sideA" data-name="Child side A"><use href="#cp-side-a-child" x="520" y="232"/></a>
+  <a data-file="agents/prompts/issue_triager.ts" data-name="issue_triager prompt"><use href="#cp-chip-child-prompt" x="532" y="272"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the child"><use href="#cp-chip-model" x="532" y="316"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#cp-tool-read" x="587" y="390"/></a>
+  <a data-file="agents/tools/submit_triage.ts" data-name="submit_triage tool"><use href="#cp-tool-submit" x="728" y="390"/></a>
+</svg>
+
+<svg class="dg-narrow" viewBox="0 0 400 916">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="361"/>
+    <rect class="dg-boundary" x="4.5" y="510.5" width="391" height="398"/>
+    <!-- Each agent's two sides exchange turns. -->
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M170 128V188"/>
+    <use href="#cp-edge-message" x="130" y="162"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M230 188V128"/>
+    <use href="#cp-edge-reply" x="272" y="162"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M200 704V620"/>
+    <use href="#cp-edge-reply" x="200" y="664"/>
+    <!-- The child's side A calls its tools. -->
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M90 835V862"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M130 862V835"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M262 835V862"/>
+    <!-- The parent composes the child. -->
+    <use href="#cp-edge-waits" x="100" y="396"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M100 363V704"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M324 877H378V450H300V363"/>
+    <path class="dg-edge" marker-end="url(#cp-arrow)" d="M285 578H378V450H300V363"/>
+    <use href="#cp-edge-create" x="100" y="446"/>
+  </g>
+  <a data-file="agents/agents/repo_assistant.ts" data-name="repo_assistant agent"><use href="#cp-boundary-parent" x="20" y="23"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-name="issue_triage agent, the child"><use href="#cp-boundary-child" x="130" y="515"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="sideB" data-name="Parent side B, a human"><use href="#cp-human" x="125" y="44"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="sideA" data-name="Parent side A"><use href="#cp-side-a-parent" x="80" y="188"/></a>
+  <a data-file="agents/prompts/repo_assistant.ts" data-name="repo_assistant prompt"><use href="#cp-chip-parent-prompt" x="92" y="228"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="subagents" data-name="Subagent relationship to issue_triage"><use href="#cp-chip-relationship" x="92" y="272"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the parent"><use href="#cp-chip-model" x="92" y="316"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="blocking" data-name="blocking rule, which makes the parent wait"><use href="#cp-rule-blocking" x="100" y="402"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="initUserMessageProperty" data-name="initUserMessageProperty, which maps the request to the first message"><use href="#cp-rule-init" x="104" y="452"/></a>
+  <a data-file="agents/tools/submit_triage.ts" data-mark="report" data-name="report argument, which returns to the parent"><use href="#cp-edge-report" x="300" y="394"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sessionStop" data-name="sessionStop rule"><use href="#cp-rule-session-stop" x="300" y="400"/></a>
+  <a data-file="agents/handlers/return_reply.ts" data-mark="stopSession" data-name="stopSession call, which returns a text reply to the parent"><use href="#cp-rule-stop-session" x="338" y="524"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sideB" data-name="Child side B, a handler"><use href="#cp-side-b-child" x="115" y="536"/></a>
+  <a data-file="agents/handlers/return_reply.ts" data-name="return_reply handler"><use href="#cp-chip-handler" x="132" y="576"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sideA" data-name="Child side A"><use href="#cp-side-a-child" x="80" y="704"/></a>
+  <a data-file="agents/prompts/issue_triager.ts" data-name="issue_triager prompt"><use href="#cp-chip-child-prompt" x="92" y="744"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model of the child"><use href="#cp-chip-model" x="92" y="788"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#cp-tool-read" x="97" y="862"/></a>
+  <a data-file="agents/tools/submit_triage.ts" data-name="submit_triage tool"><use href="#cp-tool-submit" x="262" y="862"/></a>
+</svg>

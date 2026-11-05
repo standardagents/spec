@@ -1,0 +1,160 @@
+<!--
+  One issue_triage session (Examples, section 2).
+
+  Every node and label is defined once, in <defs>. The two layouts below only
+  place those nodes and draw the edges, so a change to a label reaches both.
+  Node sizes are in the comment beside each definition. Colours come from the
+  --dg-* tokens in src/styles/global.css, which follow the homepage scene kit:
+  yellow marks a prompt, magenta a model, purple a rule that constrains the run,
+  and a solid bar a function tool.
+
+  A node that a file defines is a link, and a blue corner marks it. The link
+  stands outside <defs>, because a link inside a <use> clone takes no keyboard
+  focus. rehype-file-viewers.mjs resolves data-file and data-mark, and data-name
+  starts the link's accessible name. Static parts sit in one aria-hidden group.
+-->
+<svg class="dg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="it-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+      <path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/>
+    </marker>
+
+    <!-- 150 x 84 -->
+    <g id="it-human">
+      <rect class="dg-panel" x=".5" y=".5" width="149" height="83"/>
+      <rect class="dg-mark" x="12" y="13" width="6" height="6"/>
+      <text class="dg-label" x="24" y="20">SIDE B</text>
+      <text class="dg-title" x="12" y="58">Human</text>
+      <path class="dg-fold" d="M142 0h8v8z"/>
+    </g>
+
+    <!-- 240 x 132. Its chips are separate links, placed at x + 12 and y + 40 or y + 84. -->
+    <g id="it-side-a">
+      <rect class="dg-panel" x=".5" y=".5" width="239" height="131"/>
+      <rect class="dg-mark" x="12" y="13" width="6" height="6"/>
+      <text class="dg-label" x="24" y="20">SIDE A</text>
+      <text class="dg-note" x="158" y="60.5">prompt</text>
+      <text class="dg-note" x="158" y="104.5">model</text>
+      <path class="dg-fold" d="M232 0h8v8z"/>
+    </g>
+
+    <!-- Chips are 136 x 32. -->
+    <g id="it-chip-prompt">
+      <rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">issue_triager</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+    <g id="it-chip-model">
+      <rect class="dg-chip dg-chip--model" x=".5" y=".5" width="135" height="31"/>
+      <text class="dg-mono" x="11" y="20.5">conversational</text>
+      <path class="dg-fold" d="M128 0h8v8z"/>
+    </g>
+
+    <!-- 200 x 34 -->
+    <g id="it-tool-read">
+      <rect class="dg-bar" width="200" height="34"/>
+      <text class="dg-bar-text" x="100" y="21.5">get_github_issue</text>
+      <path class="dg-fold" d="M192 0h8v8z"/>
+    </g>
+
+    <!-- 90 x 34 -->
+    <g id="it-github">
+      <rect class="dg-external" x=".5" y=".5" width="89" height="33"/>
+      <text class="dg-note dg-center" x="45" y="21.5">GitHub API</text>
+      <path class="dg-fold" d="M82 0h8v8z"/>
+    </g>
+
+    <!-- Pills are 24 tall and centred on their x. Their widths are in the rects. -->
+    <g id="it-rule-stop-on-response">
+      <rect class="dg-pill dg-pill--rule" x="-64" width="128" height="24"/>
+      <text class="dg-pill-text" y="16.5">stopOnResponse</text>
+      <path class="dg-fold" d="M56 0h8v8z"/>
+    </g>
+    <g id="it-rule-session-turns">
+      <rect class="dg-pill dg-pill--rule" x="-78" width="156" height="24"/>
+      <text class="dg-pill-text" y="16.5">maxSessionTurns: 6</text>
+      <path class="dg-fold" d="M70 0h8v8z"/>
+    </g>
+    <g id="it-rule-steps">
+      <rect class="dg-pill dg-pill--rule" x="-47" width="94" height="24"/>
+      <text class="dg-pill-text" y="16.5">maxSteps: 5</text>
+      <path class="dg-fold" d="M39 0h8v8z"/>
+    </g>
+    <g id="it-rule-past-tools">
+      <rect class="dg-pill dg-pill--prompt" x="-70" width="140" height="24"/>
+      <text class="dg-pill-text" y="16.5">includePastTools</text>
+      <path class="dg-fold" d="M62 0h8v8z"/>
+    </g>
+
+    <!-- Edge labels are centred on their x. -->
+    <text id="it-edge-message" class="dg-edge-label">message</text>
+    <text id="it-edge-reply" class="dg-edge-label">text reply</text>
+    <text id="it-edge-call" class="dg-edge-label">tool call</text>
+    <text id="it-edge-result" class="dg-edge-label">result</text>
+    <g id="it-boundary-label">
+      <rect class="dg-knockout" x="-7" y="-11" width="168" height="16"/>
+      <rect class="dg-mark" y="-8" width="6" height="6"/>
+      <text class="dg-label" x="12">AGENT</text>
+      <text class="dg-mono" x="62">issue_triage</text>
+      <path class="dg-fold" d="M153-11h8v8z"/>
+    </g>
+  </defs>
+</svg>
+
+<svg class="dg-wide" viewBox="0 0 880 352">
+  <g aria-hidden="true"><rect class="dg-boundary" x="8.5" y="18.5" width="863" height="325"/></g>
+  <a data-file="agents/agents/issue_triage.ts" data-name="issue_triage agent"><use href="#it-boundary-label" x="28" y="23"/></a>
+  <g transform="translate(75 0)">
+  <g aria-hidden="true">
+    <!-- Side B and side A exchange turns. -->
+    <path class="dg-edge" marker-end="url(#it-arrow)" d="M186 130H266"/>
+    <use href="#it-edge-message" x="226" y="122"/>
+    <path class="dg-edge" marker-end="url(#it-arrow)" d="M290 196V272H111V172"/>
+    <use href="#it-edge-reply" x="200" y="252"/>
+    <!-- The model reads the issue. -->
+    <path class="dg-edge" marker-end="url(#it-arrow)" d="M378 196V290"/>
+    <path class="dg-edge" marker-end="url(#it-arrow)" d="M490 290V196"/>
+    <use href="#it-edge-call" x="338" y="248"/>
+    <use href="#it-edge-result" x="519" y="226"/>
+    <path class="dg-edge dg-edge--external" d="M542 307H604"/>
+  </g>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#it-rule-stop-on-response" x="200" y="260"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="maxSessionTurns" data-name="maxSessionTurns rule"><use href="#it-rule-session-turns" x="200" y="204"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="maxSteps" data-name="maxSteps rule"><use href="#it-rule-steps" x="434" y="232"/></a>
+  <a data-file="agents/prompts/issue_triager.ts" data-mark="includePastTools" data-name="includePastTools setting"><use href="#it-rule-past-tools" x="568" y="236"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sideB" data-name="Side B, a human"><use href="#it-human" x="36" y="88"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sideA" data-name="Side A"><use href="#it-side-a" x="266" y="64"/></a>
+  <a data-file="agents/prompts/issue_triager.ts" data-name="issue_triager prompt"><use href="#it-chip-prompt" x="278" y="104"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#it-chip-model" x="278" y="148"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#it-tool-read" x="342" y="290"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-mark="fetch" data-name="GitHub API call"><use href="#it-github" x="604" y="290"/></a>
+  </g>
+</svg>
+
+<svg class="dg-narrow" viewBox="0 0 400 494">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="468"/>
+    <!-- Side B and side A exchange turns. -->
+    <path class="dg-edge" marker-end="url(#it-arrow)" d="M210 128V204"/>
+    <use href="#it-edge-message" x="248" y="170"/>
+    <path class="dg-edge" marker-end="url(#it-arrow)" d="M90 270H24V86H135"/>
+    <use href="#it-edge-reply" x="56" y="262"/>
+    <!-- The model reads the issue. -->
+    <path class="dg-edge" marker-end="url(#it-arrow)" d="M118 336V428"/>
+    <path class="dg-edge" marker-end="url(#it-arrow)" d="M222 428V336"/>
+    <use href="#it-edge-call" x="78" y="388"/>
+    <use href="#it-edge-result" x="250" y="368"/>
+    <path class="dg-edge dg-edge--external" d="M270 445H286"/>
+  </g>
+  <a data-file="agents/agents/issue_triage.ts" data-name="issue_triage agent"><use href="#it-boundary-label" x="20" y="23"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#it-rule-stop-on-response" x="102" y="136"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="maxSessionTurns" data-name="maxSessionTurns rule"><use href="#it-rule-session-turns" x="116" y="168"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="maxSteps" data-name="maxSteps rule"><use href="#it-rule-steps" x="170" y="372"/></a>
+  <a data-file="agents/prompts/issue_triager.ts" data-mark="includePastTools" data-name="includePastTools setting"><use href="#it-rule-past-tools" x="300" y="380"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sideB" data-name="Side B, a human"><use href="#it-human" x="135" y="44"/></a>
+  <a data-file="agents/agents/issue_triage.ts" data-mark="sideA" data-name="Side A"><use href="#it-side-a" x="90" y="204"/></a>
+  <a data-file="agents/prompts/issue_triager.ts" data-name="issue_triager prompt"><use href="#it-chip-prompt" x="102" y="244"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#it-chip-model" x="102" y="288"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#it-tool-read" x="70" y="428"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-mark="fetch" data-name="GitHub API call"><use href="#it-github" x="286" y="428"/></a>
+</svg>

@@ -1,0 +1,76 @@
+<!--
+  A parent composes an agent from an npm package (Examples, section 8).
+  See issue-triage.html for the colours and the links.
+-->
+<svg class="dg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="pk-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/></marker>
+    <g id="pk-human"><rect class="dg-panel" x=".5" y=".5" width="149" height="83"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE B</text><text class="dg-title" x="12" y="58">Human</text><path class="dg-fold" d="M142 0h8v8z"/></g>
+    <g id="pk-side-side-a-240-176-prompt-subagent-model"><rect class="dg-panel" x=".5" y=".5" width="239" height="175"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE A</text><text class="dg-note" x="158" y="60.5">prompt</text><text class="dg-note" x="158" y="104.5">subagent</text><text class="dg-note" x="158" y="148.5">model</text><path class="dg-fold" d="M232 0h8v8z"/></g>
+    <g id="pk-chip-prompt-repo_assistant"><rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">repo_assistant</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="pk-chip-child-issue_triage"><rect class="dg-chip dg-chip--child" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">issue_triage</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="pk-chip-model-conversational"><rect class="dg-chip dg-chip--model" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">conversational</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="pk-ext-standardagent-triage"><rect class="dg-external" x=".5" y=".5" width="189" height="33"/><text class="dg-note dg-center" x="95" y="21.5">standardagent-triage</text><path class="dg-fold" d="M182 0h8v8z"/></g>
+    <g id="pk-pill-blocking-true"><rect class="dg-pill dg-pill--rule" x="-62" width="124" height="24"/><text class="dg-pill-text" y="16.5">blocking: true</text><path class="dg-fold" d="M54 0h8v8z"/></g>
+    <g id="pk-pill-initUserMessageProperty"><rect class="dg-pill dg-pill--rule" x="-94" width="188" height="24"/><text class="dg-pill-text" y="16.5">initUserMessageProperty</text><path class="dg-fold" d="M86 0h8v8z"/></g>
+    <g id="pk-frame-AGENT-repo_assistant"><rect class="dg-knockout" x="-7" y="-11" width="183" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">repo_assistant</text><path class="dg-fold" d="M168-11h8v8z"/></g>
+    <g id="pk-frame-AGENT-issue_triage"><rect class="dg-knockout" x="-7" y="-11" width="168" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">issue_triage</text><path class="dg-fold" d="M153-11h8v8z"/></g>
+    <text id="pk-edge-message" class="dg-edge-label">message</text>
+    <text id="pk-edge-text-reply" class="dg-edge-label">text reply</text>
+    <text id="pk-edge-parent-waits" class="dg-edge-label">parent waits</text>
+    <text id="pk-edge-subagent_create" class="dg-edge-code">subagent_create</text>
+    <text id="pk-edge-result" class="dg-edge-label">result</text>
+  </defs>
+</svg>
+
+<svg class="dg-wide" viewBox="0 0 880 392">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="8.5" y="18.5" width="280" height="365"/>
+    <rect class="dg-boundary" x="500.5" y="218.5" width="371" height="110"/>
+    <path class="dg-edge" marker-end="url(#pk-arrow)" d="M120 128V188"/>
+    <use href="#pk-edge-message" x="82" y="162"/>
+    <path class="dg-edge" marker-end="url(#pk-arrow)" d="M176 188V128"/>
+    <use href="#pk-edge-text-reply" x="216" y="162"/>
+    <use href="#pk-edge-parent-waits" x="394" y="212"/>
+    <path class="dg-edge" marker-end="url(#pk-arrow)" d="M268 272H590"/>
+    <path class="dg-edge" marker-end="url(#pk-arrow)" d="M590 306H268"/>
+    <use href="#pk-edge-subagent_create" x="394" y="264"/>
+    <use href="#pk-edge-result" x="430" y="328"/>
+  </g>
+  <a data-file="agents/agents/repo_assistant.ts" data-name="repo_assistant agent"><use href="#pk-frame-AGENT-repo_assistant" x="28" y="23"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="standardagent-triage/issue_triage" data-name="issue_triage agent from standardagent-triage"><use href="#pk-frame-AGENT-issue_triage" x="520" y="223"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="blocking" data-name="blocking rule, which makes the parent wait"><use href="#pk-pill-blocking-true" x="394" y="218"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="initUserMessageProperty" data-name="initUserMessageProperty, which maps the request to the first message"><use href="#pk-pill-initUserMessageProperty" x="394" y="278"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="sideB" data-name="Parent side B, a human"><use href="#pk-human" x="73" y="44"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="sideA" data-name="Parent side A"><use href="#pk-side-side-a-240-176-prompt-subagent-model" x="28" y="188"/></a>
+  <a data-file="agents/prompts/repo_assistant.ts" data-name="repo_assistant prompt"><use href="#pk-chip-prompt-repo_assistant" x="40" y="228"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="subagents" data-name="Subagent relationship to issue_triage"><use href="#pk-chip-child-issue_triage" x="40" y="272"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#pk-chip-model-conversational" x="40" y="316"/></a>
+  <a data-file="package.json" data-mark="standardagent-triage" data-name="The standardagent-triage package"><use href="#pk-ext-standardagent-triage" x="590" y="272"/></a>
+</svg>
+
+<svg class="dg-narrow" viewBox="0 0 400 640">
+  <g aria-hidden="true">
+    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="361"/>
+    <rect class="dg-boundary" x="4.5" y="540.5" width="391" height="90"/>
+    <path class="dg-edge" marker-end="url(#pk-arrow)" d="M170 128V188"/>
+    <use href="#pk-edge-message" x="130" y="162"/>
+    <path class="dg-edge" marker-end="url(#pk-arrow)" d="M230 188V128"/>
+    <use href="#pk-edge-text-reply" x="272" y="162"/>
+    <use href="#pk-edge-parent-waits" x="110" y="396"/>
+    <path class="dg-edge" marker-end="url(#pk-arrow)" d="M110 364V574"/>
+    <path class="dg-edge" marker-end="url(#pk-arrow)" d="M290 574V364"/>
+    <use href="#pk-edge-subagent_create" x="110" y="446"/>
+    <use href="#pk-edge-result" x="290" y="450"/>
+  </g>
+  <a data-file="agents/agents/repo_assistant.ts" data-name="repo_assistant agent"><use href="#pk-frame-AGENT-repo_assistant" x="20" y="23"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="standardagent-triage/issue_triage" data-name="issue_triage agent from standardagent-triage"><use href="#pk-frame-AGENT-issue_triage" x="20" y="545"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="blocking" data-name="blocking rule, which makes the parent wait"><use href="#pk-pill-blocking-true" x="110" y="402"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="initUserMessageProperty" data-name="initUserMessageProperty, which maps the request to the first message"><use href="#pk-pill-initUserMessageProperty" x="114" y="452"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="sideB" data-name="Parent side B, a human"><use href="#pk-human" x="125" y="44"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="sideA" data-name="Parent side A"><use href="#pk-side-side-a-240-176-prompt-subagent-model" x="80" y="188"/></a>
+  <a data-file="agents/prompts/repo_assistant.ts" data-name="repo_assistant prompt"><use href="#pk-chip-prompt-repo_assistant" x="92" y="228"/></a>
+  <a data-file="agents/agents/repo_assistant.ts" data-mark="subagents" data-name="Subagent relationship to issue_triage"><use href="#pk-chip-child-issue_triage" x="92" y="272"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#pk-chip-model-conversational" x="92" y="316"/></a>
+  <a data-file="package.json" data-mark="standardagent-triage" data-name="The standardagent-triage package"><use href="#pk-ext-standardagent-triage" x="105" y="574"/></a>
+</svg>

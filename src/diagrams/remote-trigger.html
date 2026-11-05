@@ -1,0 +1,97 @@
+<!--
+  A GitHub Actions workflow reaches a thread endpoint on triage_inbox (Examples, section 9).
+  See issue-triage.html for the colours and the links.
+-->
+<svg class="dg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="rt-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/></marker>
+    <g id="rt-bar-triage-yml"><rect class="dg-bar" width="110" height="34"/><text class="dg-bar-text" x="55" y="21.5">triage.yml</text><path class="dg-fold" d="M102 0h8v8z"/></g>
+    <g id="rt-ext-issue-opened"><rect class="dg-external" x=".5" y=".5" width="109" height="33"/><text class="dg-note dg-center" x="55" y="21.5">issue opened</text><path class="dg-fold" d="M102 0h8v8z"/></g>
+    <g id="rt-chip-endpoint-issues-post"><rect class="dg-chip dg-chip--endpoint" x=".5" y=".5" width="115" height="31"/><text class="dg-mono" x="11" y="20.5">issues.post</text><path class="dg-fold" d="M108 0h8v8z"/></g>
+    <g id="rt-pill-queueMessage"><rect class="dg-pill dg-pill--rule" x="-56" width="112" height="24"/><text class="dg-pill-text" y="16.5">queueMessage</text><path class="dg-fold" d="M48 0h8v8z"/></g>
+    <g id="rt-side-side-a-240-132-prompt-model"><rect class="dg-panel" x=".5" y=".5" width="239" height="131"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE A</text><text class="dg-note" x="158" y="60.5">prompt</text><text class="dg-note" x="158" y="104.5">model</text><path class="dg-fold" d="M232 0h8v8z"/></g>
+    <g id="rt-side-side-b-170-84-"><rect class="dg-panel" x=".5" y=".5" width="169" height="83"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE B</text><path class="dg-fold" d="M162 0h8v8z"/></g>
+    <g id="rt-chip-prompt-inbox_triager"><rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">inbox_triager</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="rt-chip-model-conversational"><rect class="dg-chip dg-chip--model" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">conversational</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="rt-chip-handler-close_session"><rect class="dg-chip dg-chip--handler" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">close_session</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="rt-bar-apply_triage"><rect class="dg-bar" width="130" height="34"/><text class="dg-bar-text" x="65" y="21.5">apply_triage</text><path class="dg-fold" d="M122 0h8v8z"/></g>
+    <g id="rt-ext-GitHub-API"><rect class="dg-external" x=".5" y=".5" width="89" height="33"/><text class="dg-note dg-center" x="45" y="21.5">GitHub API</text><path class="dg-fold" d="M82 0h8v8z"/></g>
+    <g id="rt-pill-stopOnResponse"><rect class="dg-pill dg-pill--rule" x="-64" width="128" height="24"/><text class="dg-pill-text" y="16.5">stopOnResponse</text><path class="dg-fold" d="M56 0h8v8z"/></g>
+    <g id="rt-pill-stopSession"><rect class="dg-pill dg-pill--rule" x="-50" width="100" height="24"/><text class="dg-pill-text" y="16.5">stopSession</text><path class="dg-fold" d="M42 0h8v8z"/></g>
+    <g id="rt-frame-AGENT-triage_inbox"><rect class="dg-knockout" x="-7" y="-11" width="168" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">triage_inbox</text><path class="dg-fold" d="M153-11h8v8z"/></g>
+    <g id="rt-frame-GITHUB-ACTIONS-"><rect class="dg-knockout" x="-7" y="-11" width="142" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">GITHUB ACTIONS</text><text class="dg-mono" x="134"></text><path class="dg-fold" d="M127-11h8v8z"/></g>
+    <text id="rt-edge-POST--issues" class="dg-edge-label">POST /issues</text>
+    <text id="rt-edge-text-reply" class="dg-edge-label">text reply</text>
+    <text id="rt-edge-tool-call" class="dg-edge-label">tool call</text>
+    <text id="rt-edge-result" class="dg-edge-label">result</text>
+    <text id="rt-edge-labels-and-comment" class="dg-edge-label">labels and comment</text>
+  </defs>
+</svg>
+
+<svg class="dg-wide" viewBox="0 0 880 418">
+  <g aria-hidden="true">
+    <rect class="dg-group" x="8.5" y="58.5" width="146" height="150"/>
+    <rect class="dg-boundary" x="480.5" y="18.5" width="391" height="392"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M135 114H250"/>
+    <use href="#rt-edge-POST--issues" x="205" y="106"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M80 150V131"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M366 114H510"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M580 180V252"/>
+    <use href="#rt-edge-text-reply" x="580" y="197"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M700 180V260"/>
+    <use href="#rt-edge-tool-call" x="725" y="224"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M750 260V180"/>
+    <use href="#rt-edge-result" x="780" y="226"/>
+    <path class="dg-edge dg-edge--external" d="M760 294V344"/>
+    <use href="#rt-edge-labels-and-comment" x="760" y="396"/>
+  </g>
+  <a data-file=".github/workflows/triage.yml" data-name="GitHub Actions workflow"><use href="#rt-frame-GITHUB-ACTIONS-" x="20" y="63"/></a>
+  <a data-file=".github/workflows/triage.yml" data-name="triage.yml workflow"><use href="#rt-bar-triage-yml" x="25" y="97"/></a>
+  <a data-file=".github/workflows/triage.yml" data-mark="opened" data-name="Issue opened event"><use href="#rt-ext-issue-opened" x="25" y="150"/></a>
+  <a data-file="agents/api/issues.post.ts" data-name="issues.post thread endpoint"><use href="#rt-chip-endpoint-issues-post" x="250" y="98"/></a>
+  <a data-file="agents/api/issues.post.ts" data-mark="queueMessage" data-name="queueMessage call"><use href="#rt-pill-queueMessage" x="424" y="102"/></a>
+  <a data-file="agents/agents/triage_inbox.ts" data-name="triage_inbox agent"><use href="#rt-frame-AGENT-triage_inbox" x="500" y="23"/></a>
+  <a data-file="agents/agents/triage_inbox.ts" data-mark="sideA" data-name="Side A"><use href="#rt-side-side-a-240-132-prompt-model" x="510" y="48"/></a>
+  <a data-file="agents/prompts/inbox_triager.ts" data-name="inbox_triager prompt"><use href="#rt-chip-prompt-inbox_triager" x="522" y="88"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#rt-chip-model-conversational" x="522" y="132"/></a>
+  <a data-file="agents/agents/triage_inbox.ts" data-mark="sideB" data-name="Side B, a handler"><use href="#rt-side-side-b-170-84-" x="495" y="252"/></a>
+  <a data-file="agents/handlers/close_session.ts" data-name="close_session handler"><use href="#rt-chip-handler-close_session" x="512" y="292"/></a>
+  <a data-file="agents/agents/triage_inbox.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#rt-pill-stopOnResponse" x="580" y="204"/></a>
+  <a data-file="agents/handlers/close_session.ts" data-mark="stopSession" data-name="stopSession call"><use href="#rt-pill-stopSession" x="580" y="338"/></a>
+  <a data-file="agents/tools/apply_triage.ts" data-name="apply_triage tool"><use href="#rt-bar-apply_triage" x="695" y="260"/></a>
+  <a data-file="agents/tools/apply_triage.ts" data-mark="fetch" data-name="GitHub API call"><use href="#rt-ext-GitHub-API" x="715" y="344"/></a>
+</svg>
+
+<svg class="dg-narrow" viewBox="0 0 400 690">
+  <g aria-hidden="true">
+    <rect class="dg-group" x="4.5" y="58.5" width="391" height="74"/>
+    <rect class="dg-boundary" x="4.5" y="270.5" width="391" height="410"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M150 95H245"/>
+    <use href="#rt-edge-POST--issues" x="300" y="148"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M300 112V170"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M300 202V300"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M160 432V510"/>
+    <use href="#rt-edge-text-reply" x="160" y="451"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M270 432V530"/>
+    <use href="#rt-edge-tool-call" x="236" y="500"/>
+    <path class="dg-edge" marker-end="url(#rt-arrow)" d="M320 530V432"/>
+    <use href="#rt-edge-result" x="350" y="500"/>
+    <path class="dg-edge dg-edge--external" d="M310 564V610"/>
+    <use href="#rt-edge-labels-and-comment" x="310" y="664"/>
+  </g>
+  <a data-file=".github/workflows/triage.yml" data-name="GitHub Actions workflow"><use href="#rt-frame-GITHUB-ACTIONS-" x="20" y="63"/></a>
+  <a data-file=".github/workflows/triage.yml" data-name="triage.yml workflow"><use href="#rt-bar-triage-yml" x="245" y="78"/></a>
+  <a data-file=".github/workflows/triage.yml" data-mark="opened" data-name="Issue opened event"><use href="#rt-ext-issue-opened" x="40" y="78"/></a>
+  <a data-file="agents/api/issues.post.ts" data-name="issues.post thread endpoint"><use href="#rt-chip-endpoint-issues-post" x="242" y="170"/></a>
+  <a data-file="agents/api/issues.post.ts" data-mark="queueMessage" data-name="queueMessage call"><use href="#rt-pill-queueMessage" x="300" y="226"/></a>
+  <a data-file="agents/agents/triage_inbox.ts" data-name="triage_inbox agent"><use href="#rt-frame-AGENT-triage_inbox" x="20" y="275"/></a>
+  <a data-file="agents/agents/triage_inbox.ts" data-mark="sideA" data-name="Side A"><use href="#rt-side-side-a-240-132-prompt-model" x="100" y="300"/></a>
+  <a data-file="agents/prompts/inbox_triager.ts" data-name="inbox_triager prompt"><use href="#rt-chip-prompt-inbox_triager" x="112" y="340"/></a>
+  <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#rt-chip-model-conversational" x="112" y="384"/></a>
+  <a data-file="agents/agents/triage_inbox.ts" data-mark="sideB" data-name="Side B, a handler"><use href="#rt-side-side-b-170-84-" x="30" y="510"/></a>
+  <a data-file="agents/handlers/close_session.ts" data-name="close_session handler"><use href="#rt-chip-handler-close_session" x="42" y="550"/></a>
+  <a data-file="agents/agents/triage_inbox.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#rt-pill-stopOnResponse" x="160" y="458"/></a>
+  <a data-file="agents/handlers/close_session.ts" data-mark="stopSession" data-name="stopSession call"><use href="#rt-pill-stopSession" x="115" y="596"/></a>
+  <a data-file="agents/tools/apply_triage.ts" data-name="apply_triage tool"><use href="#rt-bar-apply_triage" x="245" y="530"/></a>
+  <a data-file="agents/tools/apply_triage.ts" data-mark="fetch" data-name="GitHub API call"><use href="#rt-ext-GitHub-API" x="265" y="610"/></a>
+</svg>
