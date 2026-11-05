@@ -1,5 +1,5 @@
 <!--
-  One issue_reader session with a hook on its tool result (Examples, section 3).
+  One duplicate_finder session with a hook on its tool results (Examples, section 3).
   See issue-triage.html for the colours and the links.
 -->
 <svg class="dg-defs" width="0" height="0" aria-hidden="true" focusable="false">
@@ -7,72 +7,79 @@
     <marker id="hk-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/></marker>
     <g id="hk-human"><rect class="dg-panel" x=".5" y=".5" width="149" height="83"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE B</text><text class="dg-title" x="12" y="58">Human</text><path class="dg-fold" d="M142 0h8v8z"/></g>
     <g id="hk-side-side-a-240-132-prompt-model"><rect class="dg-panel" x=".5" y=".5" width="239" height="131"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE A</text><text class="dg-note" x="158" y="60.5">prompt</text><text class="dg-note" x="158" y="104.5">model</text><path class="dg-fold" d="M232 0h8v8z"/></g>
-    <g id="hk-chip-prompt-issue_reader"><rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">issue_reader</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="hk-chip-prompt-duplicate_finder"><rect class="dg-chip dg-chip--prompt" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">duplicate_finder</text><path class="dg-fold" d="M128 0h8v8z"/></g>
     <g id="hk-chip-model-conversational"><rect class="dg-chip dg-chip--model" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">conversational</text><path class="dg-fold" d="M128 0h8v8z"/></g>
     <g id="hk-bar-get_github_issue"><rect class="dg-bar" width="200" height="34"/><text class="dg-bar-text" x="100" y="21.5">get_github_issue</text><path class="dg-fold" d="M192 0h8v8z"/></g>
+    <g id="hk-bar-search_github_issues"><rect class="dg-bar" width="200" height="34"/><text class="dg-bar-text" x="100" y="21.5">search_github_issues</text><path class="dg-fold" d="M192 0h8v8z"/></g>
+    <g id="hk-bar-close_as_duplicate"><rect class="dg-bar" width="200" height="34"/><text class="dg-bar-text" x="100" y="21.5">close_as_duplicate</text><path class="dg-fold" d="M192 0h8v8z"/></g>
     <g id="hk-ext-GitHub-API"><rect class="dg-external" x=".5" y=".5" width="89" height="33"/><text class="dg-note dg-center" x="45" y="21.5">GitHub API</text><path class="dg-fold" d="M82 0h8v8z"/></g>
     <g id="hk-pill-stopOnResponse"><rect class="dg-pill dg-pill--rule" x="-64" width="128" height="24"/><text class="dg-pill-text" y="16.5">stopOnResponse</text><path class="dg-fold" d="M56 0h8v8z"/></g>
-    <g id="hk-frame-AGENT-issue_reader"><rect class="dg-knockout" x="-7" y="-11" width="168" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">issue_reader</text><path class="dg-fold" d="M153-11h8v8z"/></g>
+    <g id="hk-frame-AGENT-duplicate_finder"><rect class="dg-knockout" x="-7" y="-11" width="198" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">duplicate_finder</text><path class="dg-fold" d="M183-11h8v8z"/></g>
     <g id="hk-chip-hook-redact_emails"><rect class="dg-chip dg-chip--hook" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">redact_emails</text><path class="dg-fold" d="M128 0h8v8z"/></g>
     <g id="hk-pill-before_store_tool_result"><rect class="dg-pill dg-pill--hook" x="-102" width="204" height="24"/><text class="dg-pill-text" y="16.5">before_store_tool_result</text><path class="dg-fold" d="M94 0h8v8z"/></g>
     <text id="hk-edge-message" class="dg-edge-label">message</text>
     <text id="hk-edge-text-reply" class="dg-edge-label">text reply</text>
-    <text id="hk-edge-tool-call" class="dg-edge-label">tool call</text>
-    <text id="hk-edge-result" class="dg-edge-label">result</text>
-    <text id="hk-edge-redacted-result" class="dg-edge-label">redacted result</text>
+    <text id="hk-edge-tool-call" class="dg-edge-label">tool calls</text>
+    <text id="hk-edge-result" class="dg-edge-label">results</text>
+    <text id="hk-edge-redacted-result" class="dg-edge-label">redacted results</text>
   </defs>
 </svg>
 
-<svg class="dg-wide" viewBox="0 0 880 350">
+<svg class="dg-wide" viewBox="0 0 880 402">
   <g aria-hidden="true">
-    <rect class="dg-boundary" x="8.5" y="18.5" width="863" height="323"/>
+    <rect class="dg-boundary" x="8.5" y="18.5" width="863" height="375"/>
     <path class="dg-edge" marker-end="url(#hk-arrow)" d="M210 112H300"/>
     <use href="#hk-edge-message" x="255" y="104"/>
     <path class="dg-edge" marker-end="url(#hk-arrow)" d="M330 180V252H135V154"/>
     <use href="#hk-edge-text-reply" x="232" y="232"/>
-    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M380 180V270"/>
-    <use href="#hk-edge-tool-call" x="420" y="232"/>
-    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M540 278H624"/>
-    <use href="#hk-edge-result" x="580" y="270"/>
-    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M692 262V114H540"/>
+    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M380 180V262"/>
+    <use href="#hk-edge-tool-call" x="424" y="232"/>
+    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M540 279H624"/>
+    <path class="dg-edge" d="M540 319H582V279M540 359H582V319"/>
+    <use href="#hk-edge-result" x="582" y="271"/>
+    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M692 263V114H540"/>
     <use href="#hk-edge-redacted-result" x="640" y="102"/>
-    <path class="dg-edge dg-edge--external" d="M340 287H290"/>
+    <path class="dg-edge dg-edge--external" d="M340 319H290M340 279H315V319M340 359H315V319"/>
   </g>
-  <a data-file="agents/agents/issue_reader.ts" data-name="issue_reader agent"><use href="#hk-frame-AGENT-issue_reader" x="28" y="23"/></a>
-  <a data-file="agents/agents/issue_reader.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#hk-pill-stopOnResponse" x="232" y="240"/></a>
-  <a data-file="agents/agents/issue_reader.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hk-human" x="60" y="70"/></a>
-  <a data-file="agents/agents/issue_reader.ts" data-mark="sideA" data-name="Side A"><use href="#hk-side-side-a-240-132-prompt-model" x="300" y="48"/></a>
-  <a data-file="agents/prompts/issue_reader.ts" data-name="issue_reader prompt"><use href="#hk-chip-prompt-issue_reader" x="312" y="88"/></a>
+  <a data-file="agents/agents/duplicate_finder.ts" data-name="duplicate_finder agent"><use href="#hk-frame-AGENT-duplicate_finder" x="28" y="23"/></a>
+  <a data-file="agents/agents/duplicate_finder.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#hk-pill-stopOnResponse" x="232" y="240"/></a>
+  <a data-file="agents/agents/duplicate_finder.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hk-human" x="60" y="70"/></a>
+  <a data-file="agents/agents/duplicate_finder.ts" data-mark="sideA" data-name="Side A"><use href="#hk-side-side-a-240-132-prompt-model" x="300" y="48"/></a>
+  <a data-file="agents/prompts/duplicate_finder.ts" data-name="duplicate_finder prompt"><use href="#hk-chip-prompt-duplicate_finder" x="312" y="88"/></a>
   <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#hk-chip-model-conversational" x="312" y="132"/></a>
-  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#hk-bar-get_github_issue" x="340" y="270"/></a>
-  <a data-file="agents/tools/get_github_issue.ts" data-mark="fetch" data-name="GitHub API call"><use href="#hk-ext-GitHub-API" x="200" y="270"/></a>
-  <a data-file="agents/hooks/redact_emails.ts" data-name="redact_emails hook"><use href="#hk-chip-hook-redact_emails" x="624" y="262"/></a>
-  <a data-file="agents/hooks/redact_emails.ts" data-mark="before_store_tool_result" data-name="before_store_tool_result hook type"><use href="#hk-pill-before_store_tool_result" x="692" y="302"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#hk-bar-get_github_issue" x="340" y="262"/></a>
+  <a data-file="agents/tools/search_github_issues.ts" data-name="search_github_issues tool"><use href="#hk-bar-search_github_issues" x="340" y="302"/></a>
+  <a data-file="agents/tools/close_as_duplicate.ts" data-name="close_as_duplicate tool"><use href="#hk-bar-close_as_duplicate" x="340" y="342"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-mark="fetch" data-name="GitHub API call"><use href="#hk-ext-GitHub-API" x="200" y="302"/></a>
+  <a data-file="agents/hooks/redact_emails.ts" data-name="redact_emails hook"><use href="#hk-chip-hook-redact_emails" x="624" y="263"/></a>
+  <a data-file="agents/hooks/redact_emails.ts" data-mark="before_store_tool_result" data-name="before_store_tool_result hook type"><use href="#hk-pill-before_store_tool_result" x="692" y="303"/></a>
 </svg>
 
-<svg class="dg-narrow" viewBox="0 0 400 614">
+<svg class="dg-narrow" viewBox="0 0 400 676">
   <g aria-hidden="true">
-    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="588"/>
+    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="650"/>
     <path class="dg-edge" marker-end="url(#hk-arrow)" d="M210 128V204"/>
     <use href="#hk-edge-message" x="248" y="170"/>
     <path class="dg-edge" marker-end="url(#hk-arrow)" d="M90 270H24V86H135"/>
     <use href="#hk-edge-text-reply" x="56" y="262"/>
     <path class="dg-edge" marker-end="url(#hk-arrow)" d="M118 336V428"/>
-    <use href="#hk-edge-tool-call" x="78" y="388"/>
-    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M170 462V520"/>
-    <use href="#hk-edge-result" x="198" y="496"/>
-    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M238 536H384V270H330"/>
-    <use href="#hk-edge-redacted-result" x="322" y="528"/>
-    <path class="dg-edge dg-edge--external" d="M270 445H286"/>
+    <use href="#hk-edge-tool-call" x="74" y="388"/>
+    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M170 542V580"/>
+    <use href="#hk-edge-result" x="202" y="566"/>
+    <path class="dg-edge" marker-end="url(#hk-arrow)" d="M238 596H384V270H330"/>
+    <use href="#hk-edge-redacted-result" x="316" y="588"/>
+    <path class="dg-edge dg-edge--external" d="M270 445H286M270 485H278V445M270 525H278V485"/>
   </g>
-  <a data-file="agents/agents/issue_reader.ts" data-name="issue_reader agent"><use href="#hk-frame-AGENT-issue_reader" x="20" y="23"/></a>
-  <a data-file="agents/agents/issue_reader.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#hk-pill-stopOnResponse" x="102" y="136"/></a>
-  <a data-file="agents/agents/issue_reader.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hk-human" x="135" y="44"/></a>
-  <a data-file="agents/agents/issue_reader.ts" data-mark="sideA" data-name="Side A"><use href="#hk-side-side-a-240-132-prompt-model" x="90" y="204"/></a>
-  <a data-file="agents/prompts/issue_reader.ts" data-name="issue_reader prompt"><use href="#hk-chip-prompt-issue_reader" x="102" y="244"/></a>
+  <a data-file="agents/agents/duplicate_finder.ts" data-name="duplicate_finder agent"><use href="#hk-frame-AGENT-duplicate_finder" x="20" y="23"/></a>
+  <a data-file="agents/agents/duplicate_finder.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#hk-pill-stopOnResponse" x="102" y="136"/></a>
+  <a data-file="agents/agents/duplicate_finder.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hk-human" x="135" y="44"/></a>
+  <a data-file="agents/agents/duplicate_finder.ts" data-mark="sideA" data-name="Side A"><use href="#hk-side-side-a-240-132-prompt-model" x="90" y="204"/></a>
+  <a data-file="agents/prompts/duplicate_finder.ts" data-name="duplicate_finder prompt"><use href="#hk-chip-prompt-duplicate_finder" x="102" y="244"/></a>
   <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#hk-chip-model-conversational" x="102" y="288"/></a>
   <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#hk-bar-get_github_issue" x="70" y="428"/></a>
+  <a data-file="agents/tools/search_github_issues.ts" data-name="search_github_issues tool"><use href="#hk-bar-search_github_issues" x="70" y="468"/></a>
+  <a data-file="agents/tools/close_as_duplicate.ts" data-name="close_as_duplicate tool"><use href="#hk-bar-close_as_duplicate" x="70" y="508"/></a>
   <a data-file="agents/tools/get_github_issue.ts" data-mark="fetch" data-name="GitHub API call"><use href="#hk-ext-GitHub-API" x="286" y="428"/></a>
-  <a data-file="agents/hooks/redact_emails.ts" data-name="redact_emails hook"><use href="#hk-chip-hook-redact_emails" x="102" y="520"/></a>
-  <a data-file="agents/hooks/redact_emails.ts" data-mark="before_store_tool_result" data-name="before_store_tool_result hook type"><use href="#hk-pill-before_store_tool_result" x="170" y="562"/></a>
+  <a data-file="agents/hooks/redact_emails.ts" data-name="redact_emails hook"><use href="#hk-chip-hook-redact_emails" x="102" y="580"/></a>
+  <a data-file="agents/hooks/redact_emails.ts" data-mark="before_store_tool_result" data-name="before_store_tool_result hook type"><use href="#hk-pill-before_store_tool_result" x="170" y="622"/></a>
 </svg>

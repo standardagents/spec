@@ -7,10 +7,10 @@
     <marker id="hd-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path class="dg-arrowhead" d="M0 .5 7.5 4 0 7.5z"/></marker>
     <g id="hd-human"><rect class="dg-panel" x=".5" y=".5" width="149" height="83"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE B</text><text class="dg-title" x="12" y="58">Human</text><path class="dg-fold" d="M142 0h8v8z"/></g>
     <g id="hd-side-side-a-240-88-handler"><rect class="dg-panel" x=".5" y=".5" width="239" height="87"/><rect class="dg-mark" x="12" y="13" width="6" height="6"/><text class="dg-label" x="24" y="20">SIDE A</text><text class="dg-note" x="158" y="60.5">handler</text><path class="dg-fold" d="M232 0h8v8z"/></g>
-    <g id="hd-chip-handler-status_command"><rect class="dg-chip dg-chip--handler" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">status_command</text><path class="dg-fold" d="M128 0h8v8z"/></g>
+    <g id="hd-chip-handler-close_command"><rect class="dg-chip dg-chip--handler" x=".5" y=".5" width="135" height="31"/><text class="dg-mono" x="11" y="20.5">close_command</text><path class="dg-fold" d="M128 0h8v8z"/></g>
     <g id="hd-ext-GitHub-API"><rect class="dg-external" x=".5" y=".5" width="89" height="33"/><text class="dg-note dg-center" x="45" y="21.5">GitHub API</text><path class="dg-fold" d="M82 0h8v8z"/></g>
     <g id="hd-pill-injectMessage"><rect class="dg-pill dg-pill--rule" x="-60" width="120" height="24"/><text class="dg-pill-text" y="16.5">injectMessage</text><path class="dg-fold" d="M52 0h8v8z"/></g>
-    <g id="hd-frame-AGENT-status_bot"><rect class="dg-knockout" x="-7" y="-11" width="153" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">status_bot</text><path class="dg-fold" d="M138-11h8v8z"/></g>
+    <g id="hd-frame-AGENT-close_bot"><rect class="dg-knockout" x="-7" y="-11" width="146" height="16"/><rect class="dg-mark" y="-8" width="6" height="6"/><text class="dg-label" x="12">AGENT</text><text class="dg-mono" x="62">close_bot</text><path class="dg-fold" d="M131-11h8v8z"/></g>
     <text id="hd-edge-message" class="dg-edge-label">message</text>
     <text id="hd-edge-reply" class="dg-edge-label">reply</text>
   </defs>
@@ -25,12 +25,12 @@
     <use href="#hd-edge-reply" x="278" y="172"/>
     <path class="dg-edge dg-edge--external" d="M570 92H640"/>
   </g>
-  <a data-file="agents/agents/status_bot.ts" data-name="status_bot agent"><use href="#hd-frame-AGENT-status_bot" x="28" y="23"/></a>
-  <a data-file="agents/handlers/status_command.ts" data-mark="injectMessage" data-name="injectMessage call"><use href="#hd-pill-injectMessage" x="278" y="180"/></a>
-  <a data-file="agents/agents/status_bot.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hd-human" x="60" y="50"/></a>
-  <a data-file="agents/agents/status_bot.ts" data-mark="sideA" data-name="Side A, a handler"><use href="#hd-side-side-a-240-88-handler" x="330" y="48"/></a>
-  <a data-file="agents/handlers/status_command.ts" data-name="status_command handler"><use href="#hd-chip-handler-status_command" x="342" y="88"/></a>
-  <a data-file="agents/handlers/status_command.ts" data-mark="fetch" data-name="GitHub API call"><use href="#hd-ext-GitHub-API" x="640" y="75"/></a>
+  <a data-file="agents/agents/close_bot.ts" data-name="close_bot agent"><use href="#hd-frame-AGENT-close_bot" x="28" y="23"/></a>
+  <a data-file="agents/handlers/close_command.ts" data-mark="injectMessage" data-name="injectMessage call"><use href="#hd-pill-injectMessage" x="278" y="180"/></a>
+  <a data-file="agents/agents/close_bot.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hd-human" x="60" y="50"/></a>
+  <a data-file="agents/agents/close_bot.ts" data-mark="sideA" data-name="Side A, a handler"><use href="#hd-side-side-a-240-88-handler" x="330" y="48"/></a>
+  <a data-file="agents/handlers/close_command.ts" data-name="close_command handler"><use href="#hd-chip-handler-close_command" x="342" y="88"/></a>
+  <a data-file="agents/handlers/close_command.ts" data-mark="fetch" data-name="GitHub API call"><use href="#hd-ext-GitHub-API" x="640" y="75"/></a>
 </svg>
 
 <svg class="dg-narrow" viewBox="0 0 400 398">
@@ -42,10 +42,10 @@
     <use href="#hd-edge-reply" x="52" y="236"/>
     <path class="dg-edge dg-edge--external" d="M200 292V332"/>
   </g>
-  <a data-file="agents/agents/status_bot.ts" data-name="status_bot agent"><use href="#hd-frame-AGENT-status_bot" x="20" y="23"/></a>
-  <a data-file="agents/handlers/status_command.ts" data-mark="injectMessage" data-name="injectMessage call"><use href="#hd-pill-injectMessage" x="84" y="160"/></a>
-  <a data-file="agents/agents/status_bot.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hd-human" x="125" y="44"/></a>
-  <a data-file="agents/agents/status_bot.ts" data-mark="sideA" data-name="Side A, a handler"><use href="#hd-side-side-a-240-88-handler" x="80" y="204"/></a>
-  <a data-file="agents/handlers/status_command.ts" data-name="status_command handler"><use href="#hd-chip-handler-status_command" x="92" y="244"/></a>
-  <a data-file="agents/handlers/status_command.ts" data-mark="fetch" data-name="GitHub API call"><use href="#hd-ext-GitHub-API" x="155" y="332"/></a>
+  <a data-file="agents/agents/close_bot.ts" data-name="close_bot agent"><use href="#hd-frame-AGENT-close_bot" x="20" y="23"/></a>
+  <a data-file="agents/handlers/close_command.ts" data-mark="injectMessage" data-name="injectMessage call"><use href="#hd-pill-injectMessage" x="84" y="160"/></a>
+  <a data-file="agents/agents/close_bot.ts" data-mark="sideB" data-name="Side B, a human"><use href="#hd-human" x="125" y="44"/></a>
+  <a data-file="agents/agents/close_bot.ts" data-mark="sideA" data-name="Side A, a handler"><use href="#hd-side-side-a-240-88-handler" x="80" y="204"/></a>
+  <a data-file="agents/handlers/close_command.ts" data-name="close_command handler"><use href="#hd-chip-handler-close_command" x="92" y="244"/></a>
+  <a data-file="agents/handlers/close_command.ts" data-mark="fetch" data-name="GitHub API call"><use href="#hd-ext-GitHub-API" x="155" y="332"/></a>
 </svg>

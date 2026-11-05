@@ -124,8 +124,10 @@ src/
 
 ### Diagrams, File Viewers, and Faux Threads
 
-Each section of the Examples page shows a diagram, then a file viewer, then its
-write-up. The page's raw Markdown endpoint keeps every code block and file path.
+Each section of the Examples page shows a prompt box, then a diagram, then a file
+viewer, then its write-up. The prompt box is an `<aside class="agent-prompt">` in
+Markdown. It holds a request that a person might give a coding agent to produce
+the example. The page's raw Markdown endpoint keeps every code block and file path.
 Without script, every link still jumps to its file and every file stays readable.
 
 - **Diagrams:** `<figure data-diagram="name" aria-label="..."></figure>` in

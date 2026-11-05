@@ -1,5 +1,6 @@
 <!--
-  One issue_triage session (Examples, section 2).
+  One issue_triage session (Examples, section 2). The model finds an issue
+  by search when the person describes it, reads it, and labels it.
 
   Every node and label is defined once, in <defs>. The two layouts below only
   place those nodes and draw the edges, so a change to a label reaches both.
@@ -57,6 +58,18 @@
       <path class="dg-fold" d="M192 0h8v8z"/>
     </g>
 
+    <g id="it-tool-label">
+      <rect class="dg-bar" width="200" height="34"/>
+      <text class="dg-bar-text" x="100" y="21.5">label_github_issue</text>
+      <path class="dg-fold" d="M192 0h8v8z"/>
+    </g>
+
+    <g id="it-tool-search">
+      <rect class="dg-bar" width="200" height="34"/>
+      <text class="dg-bar-text" x="100" y="21.5">search_github_issues</text>
+      <path class="dg-fold" d="M192 0h8v8z"/>
+    </g>
+
     <!-- 90 x 34 -->
     <g id="it-github">
       <rect class="dg-external" x=".5" y=".5" width="89" height="33"/>
@@ -89,7 +102,7 @@
     <!-- Edge labels are centred on their x. -->
     <text id="it-edge-message" class="dg-edge-label">message</text>
     <text id="it-edge-reply" class="dg-edge-label">text reply</text>
-    <text id="it-edge-call" class="dg-edge-label">tool call</text>
+    <text id="it-edge-call" class="dg-edge-label">tool calls</text>
     <text id="it-edge-result" class="dg-edge-label">result</text>
     <g id="it-boundary-label">
       <rect class="dg-knockout" x="-7" y="-11" width="168" height="16"/>
@@ -101,8 +114,8 @@
   </defs>
 </svg>
 
-<svg class="dg-wide" viewBox="0 0 880 352">
-  <g aria-hidden="true"><rect class="dg-boundary" x="8.5" y="18.5" width="863" height="325"/></g>
+<svg class="dg-wide" viewBox="0 0 880 432">
+  <g aria-hidden="true"><rect class="dg-boundary" x="8.5" y="18.5" width="863" height="405"/></g>
   <a data-file="agents/agents/issue_triage.ts" data-name="issue_triage agent"><use href="#it-boundary-label" x="28" y="23"/></a>
   <g transform="translate(75 0)">
   <g aria-hidden="true">
@@ -111,12 +124,12 @@
     <use href="#it-edge-message" x="226" y="122"/>
     <path class="dg-edge" marker-end="url(#it-arrow)" d="M290 196V272H111V172"/>
     <use href="#it-edge-reply" x="200" y="252"/>
-    <!-- The model reads the issue. -->
+    <!-- The model finds, reads, and labels the issue. -->
     <path class="dg-edge" marker-end="url(#it-arrow)" d="M378 196V290"/>
     <path class="dg-edge" marker-end="url(#it-arrow)" d="M490 290V196"/>
-    <use href="#it-edge-call" x="338" y="248"/>
+    <use href="#it-edge-call" x="334" y="248"/>
     <use href="#it-edge-result" x="519" y="226"/>
-    <path class="dg-edge dg-edge--external" d="M542 307H604"/>
+    <path class="dg-edge dg-edge--external" d="M542 307H604M542 347H573V307M542 387H573V347"/>
   </g>
   <a data-file="agents/agents/issue_triage.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#it-rule-stop-on-response" x="200" y="260"/></a>
   <a data-file="agents/agents/issue_triage.ts" data-mark="maxSessionTurns" data-name="maxSessionTurns rule"><use href="#it-rule-session-turns" x="200" y="204"/></a>
@@ -126,25 +139,27 @@
   <a data-file="agents/agents/issue_triage.ts" data-mark="sideA" data-name="Side A"><use href="#it-side-a" x="266" y="64"/></a>
   <a data-file="agents/prompts/issue_triager.ts" data-name="issue_triager prompt"><use href="#it-chip-prompt" x="278" y="104"/></a>
   <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#it-chip-model" x="278" y="148"/></a>
-  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#it-tool-read" x="342" y="290"/></a>
+  <a data-file="agents/tools/search_github_issues.ts" data-name="search_github_issues tool"><use href="#it-tool-search" x="342" y="290"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#it-tool-read" x="342" y="330"/></a>
+  <a data-file="agents/tools/label_github_issue.ts" data-name="label_github_issue tool"><use href="#it-tool-label" x="342" y="370"/></a>
   <a data-file="agents/tools/get_github_issue.ts" data-mark="fetch" data-name="GitHub API call"><use href="#it-github" x="604" y="290"/></a>
   </g>
 </svg>
 
-<svg class="dg-narrow" viewBox="0 0 400 494">
+<svg class="dg-narrow" viewBox="0 0 400 574">
   <g aria-hidden="true">
-    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="468"/>
+    <rect class="dg-boundary" x="4.5" y="18.5" width="391" height="548"/>
     <!-- Side B and side A exchange turns. -->
     <path class="dg-edge" marker-end="url(#it-arrow)" d="M210 128V204"/>
     <use href="#it-edge-message" x="248" y="170"/>
     <path class="dg-edge" marker-end="url(#it-arrow)" d="M90 270H24V86H135"/>
     <use href="#it-edge-reply" x="56" y="262"/>
-    <!-- The model reads the issue. -->
+    <!-- The model finds, reads, and labels the issue. -->
     <path class="dg-edge" marker-end="url(#it-arrow)" d="M118 336V428"/>
     <path class="dg-edge" marker-end="url(#it-arrow)" d="M222 428V336"/>
-    <use href="#it-edge-call" x="78" y="388"/>
+    <use href="#it-edge-call" x="74" y="388"/>
     <use href="#it-edge-result" x="250" y="368"/>
-    <path class="dg-edge dg-edge--external" d="M270 445H286"/>
+    <path class="dg-edge dg-edge--external" d="M270 445H286M270 485H278V445M270 525H278V485"/>
   </g>
   <a data-file="agents/agents/issue_triage.ts" data-name="issue_triage agent"><use href="#it-boundary-label" x="20" y="23"/></a>
   <a data-file="agents/agents/issue_triage.ts" data-mark="stopOnResponse" data-name="stopOnResponse rule"><use href="#it-rule-stop-on-response" x="102" y="136"/></a>
@@ -155,6 +170,8 @@
   <a data-file="agents/agents/issue_triage.ts" data-mark="sideA" data-name="Side A"><use href="#it-side-a" x="90" y="204"/></a>
   <a data-file="agents/prompts/issue_triager.ts" data-name="issue_triager prompt"><use href="#it-chip-prompt" x="102" y="244"/></a>
   <a data-file="agents/models/conversational.ts" data-name="conversational model"><use href="#it-chip-model" x="102" y="288"/></a>
-  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#it-tool-read" x="70" y="428"/></a>
+  <a data-file="agents/tools/search_github_issues.ts" data-name="search_github_issues tool"><use href="#it-tool-search" x="70" y="428"/></a>
+  <a data-file="agents/tools/get_github_issue.ts" data-name="get_github_issue tool"><use href="#it-tool-read" x="70" y="468"/></a>
+  <a data-file="agents/tools/label_github_issue.ts" data-name="label_github_issue tool"><use href="#it-tool-label" x="70" y="508"/></a>
   <a data-file="agents/tools/get_github_issue.ts" data-mark="fetch" data-name="GitHub API call"><use href="#it-github" x="286" y="428"/></a>
 </svg>
