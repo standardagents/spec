@@ -6,9 +6,9 @@ Agents built with this standard can be freely published, installed, and composed
 
 <p class="section-intro">Agents are <em>deterministic</em> software that harnesses the non-deterministic results produced by models in pursuit of a desired objective.</p>
 
-1. Agents should be the atomic unit of AI software, not models.
-2. Agents should be vendor-agnostic.
-3. Agents should be domain-specific.
+1. Agents should be vendor-agnostic.
+2. Agents should be domain-specific.
+3. Agents should be coupled to a model.
 4. Agents should be composable.
 5. Agents should be portable.
 
