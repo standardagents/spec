@@ -195,6 +195,29 @@ before storing it.
 
 All other components are static Astro components rendered at build time.
 
+### Client-side Navigation
+
+The site stays fully static. `ClientRouter` in `BaseLayout.astro` swaps pages without
+a document load, and it prefetches links on hover. Pages swap with no animation.
+
+- The access wall comes first. The inline head script in `BaseLayout.astro` runs once
+  and stays in place. It sets the gate state on each incoming document in
+  `astro:before-swap`, so a swap cannot show content before `InviteGate` hydrates and
+  checks access. Keep this logic in that head script.
+- That script also carries the theme class, sidebar scroll position, and scroll
+  behavior across swaps, because a swap replaces the attributes on `<html>`.
+- Page scripts use `onPage(key, setup)` from `src/lib/page-lifecycle.ts`. The setup
+  runs on every page view. It returns a cleanup function for anything attached to
+  `document` or `window`. A bundled script runs only once, so do not put page setup at
+  the top level of a script.
+- Islands mount again with new props after each swap, and their effects must clean up.
+- A file viewer's inline scripts use `data-astro-rerun`. The router handles viewer
+  links as hash links, so it owns their history entries. The viewer restores the
+  scroll position after the router's hash scroll.
+- Links to non-HTML routes load normally, because the router falls back to a document
+  load for them. Link to a page with `ClientRouter`, and avoid the redirect page at
+  `/{version}`, which forces a document load.
+
 ### Theme System
 
 Dark/light mode is handled via inline script in BaseLayout (no React context):

@@ -238,7 +238,7 @@ export default function rehypeFileViewers() {
         viewer,
         {
           type: 'raw',
-          value: `${count === 1 ? `<script>${CLIENT}</script>` : ''}<script>fileViewer(document.getElementById('${id}'))</script>`,
+          value: `${count === 1 ? `<script data-astro-rerun>${CLIENT}</script>` : ''}<script data-astro-rerun>fileViewer(document.getElementById('${id}'))</script>`,
         },
         ...section.slice(end + 1),
       ]

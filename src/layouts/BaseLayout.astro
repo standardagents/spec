@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from 'astro:transitions'
 import '../styles/global.css'
 import InviteGate from '../components/InviteGate'
 
@@ -15,7 +16,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site)
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" transition:animate="none">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -48,12 +49,37 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site)
         // Check for stored invite code OR ?invite= param (which will be validated by React)
         var host = window.location.hostname.toLowerCase();
         var isLocal = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.orb.local');
-        var hasStoredCode = localStorage.getItem('sab_spec_invite');
-        if (!isLocal && !hasStoredCode) {
+        function needsGate() {
+          return !isLocal && !localStorage.getItem('sab_spec_invite');
+        }
+        if (needsGate()) {
           document.documentElement.classList.add('invite-gate-pending');
         }
+
+        // Client-side navigation replaces <html> attributes and <body>. This head
+        // script stays in place and runs once, so it carries state across swaps.
+        // The gate state is on the incoming document before it swaps in, so no
+        // frame shows its content until InviteGate hydrates and checks access.
+        var sidebarTop = 0;
+        document.addEventListener('astro:before-swap', function(event) {
+          var root = event.newDocument.documentElement;
+          root.classList.toggle('dark', document.documentElement.classList.contains('dark'));
+          root.classList.toggle('invite-gate-pending', needsGate());
+          // Scroll restoration must not animate. global.css makes scrolling smooth.
+          root.style.scrollBehavior = 'auto';
+          var sidebar = document.querySelector('[data-sidebar-scroll]');
+          sidebarTop = sidebar ? sidebar.scrollTop : 0;
+        });
+        document.addEventListener('astro:after-swap', function() {
+          var sidebar = document.querySelector('[data-sidebar-scroll]');
+          if (sidebar) sidebar.scrollTop = sidebarTop;
+        });
+        document.addEventListener('astro:page-load', function() {
+          document.documentElement.style.removeProperty('scroll-behavior');
+        });
       })();
     </script>
+    <ClientRouter fallback="swap" />
   </head>
   <body>
     <div data-invite-gate>

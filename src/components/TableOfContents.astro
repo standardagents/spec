@@ -71,6 +71,8 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 </style>
 
 <script>
+  import { onPage } from '../lib/page-lifecycle';
+
   function initScrollSpy() {
     const tocLinks = document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
     if (tocLinks.length === 0) return;
@@ -199,15 +201,12 @@ const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
       }
     }
 
-    // Cleanup on page navigation (for Astro view transitions)
-    document.addEventListener('astro:before-swap', () => {
+    return () => {
       observer.disconnect();
       storyObserver.disconnect();
       window.removeEventListener('scroll', handleScroll);
-    }, { once: true });
+    };
   }
 
-  // Initialize on load and after Astro view transitions
-  initScrollSpy();
-  document.addEventListener('astro:after-swap', initScrollSpy);
+  onPage('scroll-spy', initScrollSpy);
 </script>

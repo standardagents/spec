@@ -39,6 +39,7 @@ const { markdownUrl } = Astro.props
 
       <a
         href={markdownUrl}
+        data-astro-prefetch="false"
         target="_blank"
         rel="noreferrer"
         class="flex items-start gap-3 rounded-xl px-3 py-3 transition hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -70,6 +71,8 @@ const { markdownUrl } = Astro.props
 </style>
 
 <script>
+  import { onPage } from '../lib/page-lifecycle'
+
   const copyText = async (text) => {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text)
@@ -87,40 +90,42 @@ const { markdownUrl } = Astro.props
     textarea.remove()
   }
 
-  document.querySelectorAll('[data-page-actions]').forEach((container) => {
-    const details = container.querySelector('details')
-    const copyButton = container.querySelector('[data-copy-markdown]')
-    const summaryLabel = container.querySelector('[data-summary-label]')
-    const markdownUrl = container.getAttribute('data-markdown-url')
-    let resetTimer
+  onPage('page-actions', () => {
+    document.querySelectorAll('[data-page-actions]').forEach((container) => {
+      const details = container.querySelector('details')
+      const copyButton = container.querySelector('[data-copy-markdown]')
+      const summaryLabel = container.querySelector('[data-summary-label]')
+      const markdownUrl = container.getAttribute('data-markdown-url')
+      let resetTimer
 
-    copyButton?.addEventListener('click', async (event) => {
-      event.preventDefault()
-      if (!markdownUrl) return
+      copyButton?.addEventListener('click', async (event) => {
+        event.preventDefault()
+        if (!markdownUrl) return
 
-      try {
-        const response = await fetch(markdownUrl)
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${markdownUrl}`)
+        try {
+          const response = await fetch(markdownUrl)
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${markdownUrl}`)
+          }
+
+          const markdown = await response.text()
+          await copyText(markdown)
+
+          if (summaryLabel) {
+            summaryLabel.textContent = 'Copied'
+            window.clearTimeout(resetTimer)
+            resetTimer = window.setTimeout(() => {
+              summaryLabel.textContent = 'Copy page'
+            }, 1600)
+          }
+
+          if (details) {
+            details.open = false
+          }
+        } catch (error) {
+          console.error(error)
         }
-
-        const markdown = await response.text()
-        await copyText(markdown)
-
-        if (summaryLabel) {
-          summaryLabel.textContent = 'Copied'
-          window.clearTimeout(resetTimer)
-          resetTimer = window.setTimeout(() => {
-            summaryLabel.textContent = 'Copy page'
-          }, 1600)
-        }
-
-        if (details) {
-          details.open = false
-        }
-      } catch (error) {
-        console.error(error)
-      }
+      })
     })
   })
 </script>

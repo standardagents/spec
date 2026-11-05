@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar.astro'
 import TableOfContents from '../components/TableOfContents.astro'
 import Header from '../components/Header.tsx'
 import Footer from '../components/Footer.astro'
+import { getDefaultPage, getVersions } from '../lib/content'
 
 interface Props {
   title?: string
@@ -16,6 +17,17 @@ interface Props {
 }
 
 const { title, version, group, subSlug, currentPath, headings } = Astro.props
+
+// The redirect page at /{version} has no client router, so the version selector
+// links to each version's first page.
+const versionHomes = Object.fromEntries(
+  await Promise.all(
+    (await getVersions()).map(async (name) => {
+      const page = await getDefaultPage(name)
+      return [name, page ? `/${name}/${page.group}/${page.slug}` : `/${name}`]
+    }),
+  ),
+)
 ---
 
 <BaseLayout title={title}>
@@ -26,6 +38,7 @@ const { title, version, group, subSlug, currentPath, headings } = Astro.props
       currentGroup={group}
       currentSlug={subSlug}
       currentPath={currentPath}
+      versionHomes={versionHomes}
     />
     <Sidebar version={version} currentPath={currentPath} />
     <TableOfContents headings={headings} />
@@ -37,63 +50,74 @@ const { title, version, group, subSlug, currentPath, headings } = Astro.props
     <Footer />
   </div>
   <script>
+    import { onPage } from '../lib/page-lifecycle'
+
     // Detect table overflow and scroll position
-    function checkTableOverflow() {
-      document.querySelectorAll('.prose-content .table-wrapper').forEach(wrapper => {
-        const table = wrapper.querySelector('table')
-        const thead = wrapper.querySelector('thead')
-        const hasOverflow = wrapper.scrollWidth > wrapper.clientWidth
-        wrapper.classList.toggle('has-overflow', hasOverflow)
+    onPage('table-overflow', () => {
+      const tracked = new WeakSet<Element>()
 
-        // Remove existing badge if no overflow
-        let badge = wrapper.querySelector('.column-badge')
-        if (!hasOverflow) {
-          if (badge) badge.remove()
-          return
-        }
+      const checkTableOverflow = () => {
+        document.querySelectorAll('.prose-content .table-wrapper').forEach(wrapper => {
+          const table = wrapper.querySelector('table')
+          const thead = wrapper.querySelector('thead')
+          const hasOverflow = wrapper.scrollWidth > wrapper.clientWidth
+          wrapper.classList.toggle('has-overflow', hasOverflow)
 
-        // Update badge count on scroll
-        const headerRow = thead.querySelector('tr')
-        const updateBadge = () => {
-          const ths = table.querySelectorAll('thead th:not(.column-badge)')
-          const wrapperRect = wrapper.getBoundingClientRect()
-          let hiddenCount = 0
-
-          ths.forEach(th => {
-            const thRect = th.getBoundingClientRect()
-            // Column is hidden until 40px of it is visible in the viewport
-            if (thRect.left > wrapperRect.right - 40) {
-              hiddenCount++
-            }
-          })
-
-          badge = wrapper.querySelector('.column-badge')
-          if (hiddenCount > 0) {
-            if (!badge) {
-              badge = document.createElement('th')
-              badge.className = 'column-badge'
-              headerRow.appendChild(badge)
-            }
-            badge.innerHTML = `+${hiddenCount}<span class="scroll-arrow"></span>`
-          } else if (badge) {
-            badge.remove()
+          // Remove existing badge if no overflow
+          let badge = wrapper.querySelector('.column-badge')
+          if (!hasOverflow) {
+            if (badge) badge.remove()
+            return
           }
-        }
 
-        // Track scroll position for sticky column shadow
-        wrapper.addEventListener('scroll', () => {
-          const isScrolled = wrapper.scrollLeft > 0
-          const isAtEnd = wrapper.scrollLeft >= wrapper.scrollWidth - wrapper.clientWidth - 1
-          wrapper.classList.toggle('is-scrolled', isScrolled)
-          wrapper.classList.toggle('is-at-end', isAtEnd)
+          // Update badge count on scroll
+          const headerRow = thead.querySelector('tr')
+          const updateBadge = () => {
+            const ths = table.querySelectorAll('thead th:not(.column-badge)')
+            const wrapperRect = wrapper.getBoundingClientRect()
+            let hiddenCount = 0
+
+            ths.forEach(th => {
+              const thRect = th.getBoundingClientRect()
+              // Column is hidden until 40px of it is visible in the viewport
+              if (thRect.left > wrapperRect.right - 40) {
+                hiddenCount++
+              }
+            })
+
+            badge = wrapper.querySelector('.column-badge')
+            if (hiddenCount > 0) {
+              if (!badge) {
+                badge = document.createElement('th')
+                badge.className = 'column-badge'
+                headerRow.appendChild(badge)
+              }
+              badge.innerHTML = `+${hiddenCount}<span class="scroll-arrow"></span>`
+            } else if (badge) {
+              badge.remove()
+            }
+          }
+
+          // Track scroll position for sticky column shadow
+          if (!tracked.has(wrapper)) {
+            tracked.add(wrapper)
+            wrapper.addEventListener('scroll', () => {
+              const isScrolled = wrapper.scrollLeft > 0
+              const isAtEnd = wrapper.scrollLeft >= wrapper.scrollWidth - wrapper.clientWidth - 1
+              wrapper.classList.toggle('is-scrolled', isScrolled)
+              wrapper.classList.toggle('is-at-end', isAtEnd)
+              updateBadge()
+            }, { passive: true })
+          }
+
+          // Initial badge update
           updateBadge()
-        }, { passive: true })
+        })
+      }
 
-        // Initial badge update
-        updateBadge()
-      })
-    }
-    checkTableOverflow()
-    window.addEventListener('resize', checkTableOverflow)
+      checkTableOverflow()
+      window.addEventListener('resize', checkTableOverflow)
+      return () => window.removeEventListener('resize', checkTableOverflow)
+    })
   </script>
 </BaseLayout>

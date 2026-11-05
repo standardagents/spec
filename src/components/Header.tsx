@@ -14,6 +14,7 @@ interface Props {
   currentGroup?: string
   currentSlug?: string
   currentPath: string
+  versionHomes: Record<string, string>
 }
 
 // Get versions from the content at build time - these are passed as props
@@ -109,20 +110,12 @@ interface NavGroup {
  *   dark:text-gray-300 → dark:text-gray-400 (dark inactive text)
  *   dark:text-gray-400 → dark:text-gray-500 (dark secondary text)
  */
-export default function Header({ currentVersion, currentGroup, currentSlug, currentPath }: Props) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+export default function Header({ currentVersion, currentGroup, currentSlug, currentPath, versionHomes }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [versionOpen, setVersionOpen] = useState(false)
   const [navigation, setNavigation] = useState<NavGroup[]>([])
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
-
-  // Initialize theme from DOM on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setTheme(window.getTheme?.() || 'light')
-    }
-  }, [])
 
   // Handle escape key and outside click to close mobile menu
   useEffect(() => {
@@ -203,7 +196,6 @@ export default function Header({ currentVersion, currentGroup, currentSlug, curr
   const handleToggleTheme = () => {
     if (typeof window !== 'undefined' && window.toggleTheme) {
       window.toggleTheme()
-      setTheme(window.getTheme?.() || 'light')
     }
   }
 
@@ -216,7 +208,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug, curr
     if (currentGroup && currentSlug) {
       return `/${newVersion}/${currentGroup}/${currentSlug}`
     }
-    return `/${newVersion}`
+    return versionHomes[newVersion] ?? `/${newVersion}`
   }
 
   // Event handler for closing dropdowns - only called on click
@@ -278,7 +270,9 @@ export default function Header({ currentVersion, currentGroup, currentSlug, curr
                 onClick={handleToggleTheme}
                 className="rounded-md p-2 text-gray-800 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
               >
-                {theme === 'light' ? <MoonIcon className="h-5 w-5" /> : <SunIcon className="h-5 w-5" />}
+                {/* CSS picks the icon, so a page swap cannot show the wrong one. */}
+                <MoonIcon className="h-5 w-5 dark:hidden" />
+                <SunIcon className="hidden h-5 w-5 dark:block" />
               </button>
               {/* Hamburger - mobile only */}
               <button

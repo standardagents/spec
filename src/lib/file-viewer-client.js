@@ -1,7 +1,11 @@
 // Client code for file viewers. rehype-file-viewers.mjs inlines it once in a page,
 // and each viewer then calls fileViewer() right after its markup, so the viewer is
 // ready before it paints. Without this script, every file stays in the page.
-window.fileViewer = (() => {
+//
+// The client router runs this script again each time a reader returns to a page,
+// and the guard keeps one set of listeners. The router handles a viewer link as a
+// hash link, so it owns the history entry and keeps back and forward in step.
+window.fileViewer ??= (() => {
   const count = (text, pattern) => (text.match(pattern) ?? []).length
 
   const markDefinition = (panel, mark) => {
@@ -51,15 +55,23 @@ window.fileViewer = (() => {
     return panel?.classList.contains('fv-panel') ? panel : null
   }
 
-  document.addEventListener('click', (event) => {
+  // The router scrolls to a hash link's target, and a view change must not move
+  // the page, so this listener saves the position before the router runs.
+  let before = { x: 0, y: 0 }
+  document.addEventListener('click', () => {
+    before = { x: scrollX, y: scrollY }
+  }, true)
+
+  // This window listener runs after the router's document listener.
+  addEventListener('click', (event) => {
     const link = event.target.closest?.('a[data-fv-view]')
-    if (!link || event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    if (!link || !event.defaultPrevented) return
     const viewer = document.getElementById(link.dataset.fvViewer)
     if (!viewer?.classList.contains('fv-ready')) return
-    event.preventDefault()
     const mark = link.dataset.fvMark
     const panel = show(viewer, link.dataset.fvView, mark)
-    history.pushState({ mark }, '', `#${panel.id}`)
+    scrollTo({ left: before.x, top: before.y, behavior: 'instant' })
+    history.replaceState({ ...history.state, mark, scrollX: before.x, scrollY: before.y }, '')
     viewer.scrollIntoView({ block: 'nearest' })
     // A keyboard click has no detail, or in Firefox no position. Only that reader's
     // focus moves to the new view.
@@ -71,12 +83,13 @@ window.fileViewer = (() => {
     if (!event.target.matches?.('.fv-select')) return
     const viewer = event.target.closest('.fv')
     const panel = show(viewer, event.target.value)
-    history.replaceState(null, '', `#${panel.id}`)
+    history.replaceState({ ...history.state, mark: undefined }, '', `#${panel.id}`)
   })
 
   addEventListener('popstate', (event) => {
     const panel = fromHash()
     if (panel) show(panel.closest('.fv'), panel.dataset.fvView, event.state?.mark)
+    else if (!location.hash) document.querySelectorAll('.fv').forEach((viewer) => show(viewer, viewer.querySelector('.fv-panel').dataset.fvView))
   })
 
   return (viewer) => {
@@ -84,7 +97,8 @@ window.fileViewer = (() => {
     const first = viewer.querySelector('.fv-panel')
     const linked = fromHash()
     const isLinked = linked?.closest('.fv') === viewer
-    show(viewer, isLinked ? linked.dataset.fvView : first.dataset.fvView)
-    if (isLinked) viewer.scrollIntoView()
+    show(viewer, isLinked ? linked.dataset.fvView : first.dataset.fvView, isLinked ? history.state?.mark : undefined)
+    // A history move has a saved scroll position, and the router restored it.
+    if (isLinked && !history.state?.scrollY) viewer.scrollIntoView()
   }
 })()

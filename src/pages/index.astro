@@ -31,83 +31,92 @@ if (parts.length !== 2) {
     <article class="prose-content is-overview" set:html={parts[1]} />
   </DocColumn>
   <script>
-    document.querySelectorAll<HTMLButtonElement>('[data-copy-command]').forEach((button) => {
-      const label = button.querySelector('[data-copy-label]')
-      let resetTimer: number | undefined
-      button.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(button.dataset.copyCommand ?? '')
-        } catch (error) {
-          console.error(error)
-          return
-        }
-        if (!label) return
-        label.textContent = 'Copied'
-        window.clearTimeout(resetTimer)
-        resetTimer = window.setTimeout(() => {
-          label.textContent = 'Copy'
-        }, 1600)
+    import { onPage } from '../lib/page-lifecycle'
+
+    onPage('copy-command', () => {
+      document.querySelectorAll<HTMLButtonElement>('[data-copy-command]').forEach((button) => {
+        const label = button.querySelector('[data-copy-label]')
+        let resetTimer: number | undefined
+        button.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(button.dataset.copyCommand ?? '')
+          } catch (error) {
+            console.error(error)
+            return
+          }
+          if (!label) return
+          label.textContent = 'Copied'
+          window.clearTimeout(resetTimer)
+          resetTimer = window.setTimeout(() => {
+            label.textContent = 'Copy'
+          }, 1600)
+        })
       })
     })
   </script>
   <script>
+    import { onPage } from '../lib/page-lifecycle'
+
     const DURATION = 220
     const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
-    const items = [...document.querySelectorAll<HTMLDetailsElement>('details.faq-item')]
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const running = new WeakMap<HTMLDetailsElement, Animation>()
 
-    // The browser's exclusive `name` group closes items instantly, so this
-    // script takes over exclusivity when it runs.
-    items.forEach((item) => item.removeAttribute('name'))
+    onPage('faq', () => {
+      const items = [...document.querySelectorAll<HTMLDetailsElement>('details.faq-item')]
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+      const running = new WeakMap<HTMLDetailsElement, Animation>()
 
-    function isOpening(item: HTMLDetailsElement) {
-      return item.open && !item.hasAttribute('data-closing')
-    }
+      // The browser's exclusive `name` group closes items instantly, so this
+      // script takes over exclusivity when it runs.
+      items.forEach((item) => item.removeAttribute('name'))
 
-    function toggle(item: HTMLDetailsElement, opening: boolean) {
-      const startHeight = item.offsetHeight
-      running.get(item)?.cancel()
-      item.open = true
-      item.toggleAttribute('data-closing', !opening)
-
-      if (reducedMotion.matches) {
-        item.open = opening
-        item.removeAttribute('data-closing')
-        return
+      function isOpening(item: HTMLDetailsElement) {
+        return item.open && !item.hasAttribute('data-closing')
       }
 
-      const summary = item.querySelector('summary')!
-      const border = item.offsetHeight - item.clientHeight
-      const endHeight = opening ? item.offsetHeight : summary.offsetHeight + border
+      function toggle(item: HTMLDetailsElement, opening: boolean) {
+        const startHeight = item.offsetHeight
+        running.get(item)?.cancel()
+        item.open = true
+        item.toggleAttribute('data-closing', !opening)
 
-      item.style.overflow = 'clip'
-      const animation = item.animate(
-        { height: [`${startHeight}px`, `${endHeight}px`] },
-        { duration: DURATION, easing: EASING },
-      )
-      item.querySelectorAll('p').forEach((answer) => {
-        answer.animate(
-          { opacity: opening ? [0, 1] : [1, 0] },
-          { duration: DURATION, easing: 'ease' },
-        )
-      })
-      running.set(item, animation)
-      animation.onfinish = () => {
-        item.open = opening
-        item.removeAttribute('data-closing')
-        item.style.overflow = ''
-      }
-    }
-
-    items.forEach((item) => {
-      item.querySelector('summary')!.addEventListener('click', (event) => {
-        event.preventDefault()
-        const opening = !isOpening(item)
-        if (opening) {
-          items.filter((other) => other !== item && isOpening(other)).forEach((other) => toggle(other, false))
+        if (reducedMotion.matches) {
+          item.open = opening
+          item.removeAttribute('data-closing')
+          return
         }
-        toggle(item, opening)
+
+        const summary = item.querySelector('summary')!
+        const border = item.offsetHeight - item.clientHeight
+        const endHeight = opening ? item.offsetHeight : summary.offsetHeight + border
+
+        item.style.overflow = 'clip'
+        const animation = item.animate(
+          { height: [`${startHeight}px`, `${endHeight}px`] },
+          { duration: DURATION, easing: EASING },
+        )
+        item.querySelectorAll('p').forEach((answer) => {
+          answer.animate(
+            { opacity: opening ? [0, 1] : [1, 0] },
+            { duration: DURATION, easing: 'ease' },
+          )
+        })
+        running.set(item, animation)
+        animation.onfinish = () => {
+          item.open = opening
+          item.removeAttribute('data-closing')
+          item.style.overflow = ''
+        }
+      }
+
+      items.forEach((item) => {
+        item.querySelector('summary')!.addEventListener('click', (event) => {
+          event.preventDefault()
+          const opening = !isOpening(item)
+          if (opening) {
+            items.filter((other) => other !== item && isOpening(other)).forEach((other) => toggle(other, false))
+          }
+          toggle(item, opening)
+        })
       })
     })
   </script>

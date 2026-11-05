@@ -9,6 +9,10 @@ import remarkFauxThreads from './src/lib/remark-faux-threads.mjs'
 export default defineConfig({
   site: 'https://standardagentspec.org',
   output: 'static',
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover',
+  },
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
