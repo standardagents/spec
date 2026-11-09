@@ -14,8 +14,14 @@ This page documents the message record, the APIs for manipulating the list, and 
 | `role` | `'system' \| 'user' \| 'assistant' \| 'tool'` | Message role |
 | `content` | `string \| null` | Message content |
 | `name` | `string \| null` | Tool name (for tool results) |
-| `tool_calls` | `string \| null` | JSON-encoded tool calls |
+| `tool_calls` | `string \| null` | JSON-encoded array of tool calls. Each entry is `{ id: string, type: 'function', function: { name: string, arguments: string } }`, where `arguments` is itself JSON-encoded |
 | `tool_call_id` | `string \| null` | Tool call ID (for results) |
+| `tool_status` | `'success' \| 'error' \| null` | Outcome of the tool call (for results) |
+| `status` | `'pending' \| 'completed' \| 'failed' \| null` | Lifecycle state. `pending` while the message is queued or still being generated |
+| `attachments` | `AttachmentRef[] \| null` | Files delivered with the message ([§1.2](#12-attachment-references)) |
+| `reasoning_content` | `string \| null` | Model reasoning text persisted with an assistant message, when the runtime retains it |
+| `reasoning_details` | `string \| null` | Provider-specific reasoning data, JSON-encoded |
+| `prompt` | `string \| null` | Name of the prompt that produced the message |
 | `created_at` | `number` | Creation timestamp |
 | `parent_id` | `string \| null` | Parent message (sub-prompts) |
 | `depth` | `number` | Nesting depth (0 = top-level) |
@@ -41,6 +47,24 @@ Runtimes **SHOULD** set the following OPTIONAL `metadata` keys on messages whose
 | `metadata.forwarded_from` | The origin thread or message of forwarded content |
 
 These are conventions, not requirements: consumers **MUST** tolerate their absence, and runtimes **MUST NOT** rely on them for routing correctness.
+
+### 1.2 Attachment References
+
+An attachment is a file in the thread's [file system](/0.2.0/specification/threads/filesystem) that a message references.
+
+```typescript
+interface AttachmentRef {
+  id: string;
+  type: 'file';
+  path: string;          // path in the thread file system
+  name: string;          // file name
+  mimeType: string;
+  size: number;          // bytes
+  width?: number;        // pixels, for images
+  height?: number;       // pixels, for images
+  description?: string;
+}
+```
 
 ## 2. Reading Messages
 

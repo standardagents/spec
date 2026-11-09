@@ -363,11 +363,12 @@ Runtimes **MAY** enforce implementation-defined caps on key length, value size, 
 
 ## 15. Thread Client API
 
-A runtime **SHOULD** expose the [Thread Client API](/0.2.0/specification/threads/client-api): HTTP routes to create, list, and read threads, read and send messages, and stop execution, plus a WebSocket thread stream. These routes and frames are fixed by the specification so that one client works against any conforming runtime.
+A runtime **SHOULD** expose the [Thread Client API](/0.2.0/specification/threads/client-api): HTTP routes to list agents, create, list, read, update, and delete threads, read, send, and delete messages, read thread files, and stop execution, plus a WebSocket thread stream and the stream tickets that authorize it. These routes and frames are fixed by the specification so that one client works against any conforming runtime.
 
 A runtime that exposes the API **MUST**:
-- mount every specified route beneath `{runtime_prefix}/threads`
-- authenticate every request and enforce its thread access policy on thread-addressed routes
+- mount every specified route beneath `{runtime_prefix}`
+- authenticate every request, accept bearer credentials on HTTP routes and single-use stream tickets on the stream upgrade, and enforce its thread access policy on thread-addressed routes
+- return a `5xx` status, never a client-error status, for internal failures
 - set a created thread's owner from the authenticated caller
 - accept a sent message durably and respond before the resulting execution completes
 - send a `thread_status` snapshot as the first frame of every stream connection, and again on every run status change

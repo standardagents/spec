@@ -124,7 +124,7 @@ as opaque.
 ### 4.4 Client delivery
 
 Run status is push-only. Runtimes that expose the
-[thread stream](/0.2.0/specification/threads/client-api#10-thread-stream)
+[thread stream](/0.2.0/specification/threads/client-api#16-thread-stream)
 **MUST** send a status frame immediately after accepting each stream
 connection (a snapshot) and again on every change:
 
@@ -133,7 +133,7 @@ connection (a snapshot) and again on every change:
 ```
 
 A reconnecting client resynchronizes from the snapshot; clients **SHOULD NOT**
-poll for run status. The [thread read route](/0.2.0/specification/threads/client-api#6-reading-a-thread)
+poll for run status. The [thread read route](/0.2.0/specification/threads/client-api#8-reading-a-thread)
 returns the same `status` object.
 
 ## 5. TypeScript Reference

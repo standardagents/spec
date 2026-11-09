@@ -85,6 +85,7 @@ Both sides are explicit. There is no implicit "missing side B is a human" defaul
 | `title` | `string` | - | Human-readable label |
 | `description` | `string` | - | Agent summary |
 | `icon` | `string` | - | Display icon |
+| `primary` | `boolean` | `true` | Whether the agent is a user-facing entry point. Clients omit non-primary agents from agent pickers. A non-primary agent remains addressable |
 | `exposeAsTool` | `boolean` | `false` | Expose callable entrypoint ([§5](#5-tool-exposure)) |
 | `toolDescription` | `string` | - | Callable description |
 | `env` | `Record<string, string>` | - | Agent-level default variable values |

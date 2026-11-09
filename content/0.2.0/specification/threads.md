@@ -335,7 +335,7 @@ state.emit('progress', {
 });
 ```
 
-Events are delivered at most once to every client connected to the [thread stream](/0.2.0/specification/threads/client-api#10-thread-stream), as an `event` frame:
+Events are delivered at most once to every client connected to the [thread stream](/0.2.0/specification/threads/client-api#16-thread-stream), as an `event` frame:
 
 ```json
 { "type": "event", "eventType": "progress", "data": { "step": 3, "total": 10 }, "timestamp": 1727870000000 }
