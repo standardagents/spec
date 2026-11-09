@@ -1,7 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions'
 import '../styles/global.css'
-import InviteGate from '../components/InviteGate'
 
 interface Props {
   title?: string
@@ -45,26 +44,12 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site)
           return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
         };
 
-        // Invite gate - hide content by default, show only if authenticated
-        // Check for stored invite code OR ?invite= param (which will be validated by React)
-        var host = window.location.hostname.toLowerCase();
-        var isLocal = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.orb.local');
-        function needsGate() {
-          return !isLocal && !localStorage.getItem('sab_spec_invite');
-        }
-        if (needsGate()) {
-          document.documentElement.classList.add('invite-gate-pending');
-        }
-
         // Client-side navigation replaces <html> attributes and <body>. This head
         // script stays in place and runs once, so it carries state across swaps.
-        // The gate state is on the incoming document before it swaps in, so no
-        // frame shows its content until InviteGate hydrates and checks access.
         var sidebarTop = 0;
         document.addEventListener('astro:before-swap', function(event) {
           var root = event.newDocument.documentElement;
           root.classList.toggle('dark', document.documentElement.classList.contains('dark'));
-          root.classList.toggle('invite-gate-pending', needsGate());
           // Scroll restoration must not animate. global.css makes scrolling smooth.
           root.style.scrollBehavior = 'auto';
           var sidebar = document.querySelector('[data-sidebar-scroll]');
@@ -82,16 +67,6 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site)
     <ClientRouter fallback="swap" />
   </head>
   <body>
-    <div data-invite-gate>
-      <!-- Static loading spinner shown before React hydrates -->
-      <div id="invite-gate-loader" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <svg class="h-6 w-6 animate-spin text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-      </div>
-      <InviteGate client:load />
-    </div>
     <slot />
   </body>
 </html>

@@ -180,20 +180,9 @@ The client-side React islands are:
 
 - `Header.tsx` (`client:load`) for the mobile menu, version dropdown, and theme
   toggle.
-- `InviteGate.tsx` (`client:load`) for Spec early-access validation.
 - `AgentStory.tsx` (`client:visible`) for the canvas story on the homepage,
   placed at the `data-agent-story` marker in `src/data/home.md`. Its scene code lives in `src/story/` and was
   ported from `standardagentbuilder.com`, using this site's fonts and colors.
-
-The production gate on `standardagentspec.org` accepts only Spec site-access codes from
-`https://agents.standardagentbuilder.com/api/site-access/:code`. Standard Code
-keys and Standard Agents Platform signup invites are separate products and do
-not unlock the Spec. The unified admin's **Spec** action silently assigns a code
-to a waitlist email, while **Mint Spec** creates unassigned codes for manual
-handoff. Successful codes are stored in `localStorage` as `sab_spec_invite`.
-Platform invitation emails include the separate Spec code and link here with
-that code in the `?invite=` query parameter, which `InviteGate.tsx` validates
-before storing it.
 
 All other components are static Astro components rendered at build time.
 
@@ -202,11 +191,8 @@ All other components are static Astro components rendered at build time.
 The site stays fully static. `ClientRouter` in `BaseLayout.astro` swaps pages without
 a document load, and it prefetches links on hover. Pages swap with no animation.
 
-- The access wall comes first. The inline head script in `BaseLayout.astro` runs once
-  and stays in place. It sets the gate state on each incoming document in
-  `astro:before-swap`, so a swap cannot show content before `InviteGate` hydrates and
-  checks access. Keep this logic in that head script.
-- That script also carries the theme class, sidebar scroll position, and scroll
+- The inline head script in `BaseLayout.astro` runs once and stays in place.
+- That script carries the theme class, sidebar scroll position, and scroll
   behavior across swaps, because a swap replaces the attributes on `<html>`.
 - Page scripts use `onPage(key, setup)` from `src/lib/page-lifecycle.ts`. The setup
   runs on every page view. It returns a cleanup function for anything attached to
