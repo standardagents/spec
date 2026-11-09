@@ -48,7 +48,8 @@ content/
     │   │   ├── code-execution.md
     │   │   ├── execution-state.md
     │   │   ├── decisions.md
-    │   │   └── endpoints.md
+    │   │   ├── endpoints.md
+    │   │   └── client-api.md
     │   ├── hooks.md
     │   └── type-registry.md
     ├── infrastructure/

@@ -42,6 +42,7 @@ const subpageOrder: Record<string, string[]> = {
     'execution-state',
     'decisions',
     'endpoints',
+    'client-api',
   ],
 }
 
