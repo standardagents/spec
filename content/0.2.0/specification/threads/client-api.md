@@ -412,21 +412,16 @@ GET {runtime_prefix}/threads/{threadId}/stream        (WebSocket upgrade)
 ```typescript
 type ThreadStreamFrame =
   | { type: 'thread_status'; status: ThreadStatus }
-  | { type: 'message_data'; message_id: string; depth: number; data: StreamMessage }
+  | { type: 'message_data'; message_id: string; depth: number; data: Message }
   | { type: 'message_chunk'; message_id: string; depth: number; chunk: string }
   | { type: 'reasoning_chunk'; message_id: string; depth: number; chunk: string }
   | { type: 'event'; eventType: string; data: unknown; timestamp: number }
-
-type StreamMessage = Omit<Message, 'attachments' | 'silent'> & {
-  attachments?: AttachmentRef[] | string | null    // a string is the JSON encoding of the array
-  silent?: boolean | 0 | 1
-}
 ```
 
 1. Every frame the runtime sends **MUST** be a text frame containing a JSON object with a string `type`. The heartbeat reply (§16.3) is the only exception.
 2. `thread_status` carries the thread's [run status](/0.2.0/specification/threads/execution-state#4-run-status).
-3. `message_data` carries a complete [message record](/0.2.0/specification/threads/messages#1-message-structure) in `data`, as a `StreamMessage`. `message_id` **MUST** equal `data.id`.
-4. A `StreamMessage` differs from the record returned by message reads (§11) in two fields only. `attachments` is either the array or the JSON encoding of that array. `silent` is either a boolean or the number `0` or `1`. A client **MUST** accept both forms of each field.
+3. `message_data` carries a complete [message record](/0.2.0/specification/threads/messages#1-message-structure) in `data`. `message_id` **MUST** equal `data.id`.
+4. The record in a `message_data` frame **MUST** have the same form as the record returned by message reads (§11): `attachments` is an array or `null`, and `silent` is a boolean. A runtime **MUST NOT** send a stored encoding of a field in place of that form.
 5. `message_chunk` carries a fragment of the visible content of the assistant message identified by `message_id`.
 6. `reasoning_chunk` carries a transient fragment of model reasoning that accompanies the assistant message identified by `message_id`.
 7. `event` carries one [`state.emit(eventType, data)`](/0.2.0/specification/threads#5-events) call.
