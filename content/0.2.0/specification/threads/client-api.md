@@ -39,7 +39,9 @@ GET  {runtime_prefix}/threads/{threadId}/stream        (WebSocket upgrade)
 
 1. Request and response bodies **MUST** be JSON.
 2. Property names are case-sensitive and **MUST** be spelled exactly as given in this section.
-3. A failed request **MUST** return a status from the table below with the body `{ "error": string }`. The `error` text is informational.
+3. A failed request **MUST** return a non-2xx status with the body `{ "error": string }`. The `error` text is informational.
+4. For each condition in the table below, the runtime **MUST** return the corresponding status.
+5. For an internal failure or temporary unavailability, the runtime **MUST** return a `5xx` status. It **MUST NOT** report such a failure with a status from the table.
 
 | Status | Condition |
 |--------|-----------|
@@ -213,9 +215,10 @@ interface SendMessageResponse {
 3. The runtime **MUST** return `423` when the thread is terminated.
 4. The runtime **MUST** store each attachment in the thread's [file system](/0.2.0/specification/threads/filesystem) and reference it from the message.
 5. The runtime **MUST** accept the message durably and return `202` with a `SendMessageResponse` without waiting for the resulting execution.
-6. The runtime **MUST** deliver the accepted message with the semantics of [`queueMessage`](/0.2.0/specification/threads/messages#4-queueing-messages).
-7. `messageId` **MUST** be the `id` of the message record once it is persisted.
-8. The runtime **MUST** publish the accepted message to the thread stream (§10) as a `message_data` frame carrying that `messageId`.
+6. The runtime **MUST NOT** return `202` for a message it did not accept durably. When acceptance fails, the runtime **MUST** return a `5xx` status (§3.2), and the message **MUST NOT** be delivered.
+7. The runtime **MUST** deliver the accepted message with the semantics of [`queueMessage`](/0.2.0/specification/threads/messages#4-queueing-messages).
+8. `messageId` **MUST** be the `id` of the message record once it is persisted.
+9. The runtime **MUST** publish the accepted message to the thread stream (§10) as a `message_data` frame carrying that `messageId`.
 
 ## 9. Stopping Execution
 
@@ -292,7 +295,7 @@ Requirements 2 to 9 apply to a runtime that exposes the thread client API.
 | 1 | Expose the thread client API (§1) | SHOULD |
 | 2 | Every route in §2, mounted beneath `{runtime_prefix}/threads` | MUST |
 | 3 | Authentication and thread access enforcement (§3.1) | MUST |
-| 4 | Error statuses and the `{ "error": string }` body (§3.2) | MUST |
+| 4 | Error statuses, `5xx` for internal failures, and the `{ "error": string }` body (§3.2) | MUST |
 | 5 | Thread creation, listing, and reading (§4, §5, §6) | MUST |
 | 6 | Message reading and filtering (§7) | MUST |
 | 7 | Durable, asynchronous message sending (§8) | MUST |
