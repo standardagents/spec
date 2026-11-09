@@ -374,6 +374,8 @@ A runtime that exposes the API **MUST**:
 - send a `thread_status` snapshot as the first frame of every stream connection, and again on every run status change
 - publish message creations and updates as `message_data` frames, streamed assistant content as `message_chunk` frames, and `state.emit` calls as `event` frames
 - withhold `reasoning_chunk` frames from connections that did not opt in
+- persist the reasoning a model returns with an assistant message, and carry it in the message record on reads and on the stream
+- on thread deletion, make the thread and its descendants unavailable to new work, abort and discard their work, and close their streams before confirming
 - apply each connection's `depth` and `includeSilent` filters
 - answer the `stream_ping` text frame with `stream_pong`
 

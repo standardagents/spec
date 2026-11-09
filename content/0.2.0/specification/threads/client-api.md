@@ -277,9 +277,17 @@ interface DeleteThreadResponse {
 }
 ```
 
-1. The runtime **MUST** delete the thread and every descendant thread, with their messages and files.
-2. A successful request **MUST** return `200` with a `DeleteThreadResponse`. `deletedThreadIds` **MUST** list every deleted thread, including `threadId`.
-3. After a successful request, every route addressed to a deleted thread **MUST** return `404`.
+The **deletion set** of a request is the addressed thread and every descendant thread.
+
+1. Before it deletes anything, the runtime **MUST** make every thread in the deletion set unavailable to new work. From that point each such thread **MUST** reject new messages, **MUST NOT** start an execution, and **MUST NOT** create a child thread.
+2. A child thread created beneath a thread in the deletion set before requirement 1 takes effect **MUST** be part of the deletion set.
+3. The runtime **MUST** abort every execution in flight in the deletion set, and **MUST** discard every queued message and scheduled [effect](/0.2.0/specification/effects) of those threads.
+4. The runtime **MUST** close every [thread stream](#16-thread-stream) connection to a thread in the deletion set with WebSocket close code `1000`.
+5. The runtime **MUST** delete the messages, files, and stored values of every thread in the deletion set.
+6. The runtime **MUST** return `200` with a `DeleteThreadResponse` only once requirements 1 to 5 hold. `deletedThreadIds` **MUST** list every thread in the deletion set, including `threadId`.
+7. After a successful request, no execution of a deleted thread may persist state or start work, and every route addressed to a deleted thread **MUST** return `404`.
+8. When deletion fails part-way, the runtime **MUST** return a `5xx` status (§3.2). Every thread in the deletion set **MUST** remain unavailable to new work, and the addressed thread **MUST** remain addressable so that the request can be repeated.
+9. A repeated request **MUST** complete the deletion.
 
 ## 11. Reading Messages
 
@@ -404,18 +412,23 @@ GET {runtime_prefix}/threads/{threadId}/stream        (WebSocket upgrade)
 ```typescript
 type ThreadStreamFrame =
   | { type: 'thread_status'; status: ThreadStatus }
-  | { type: 'message_data'; message_id: string; depth: number; data: Message }
+  | { type: 'message_data'; message_id: string; depth: number; data: StreamMessage }
   | { type: 'message_chunk'; message_id: string; depth: number; chunk: string }
   | { type: 'reasoning_chunk'; message_id: string; depth: number; chunk: string }
   | { type: 'event'; eventType: string; data: unknown; timestamp: number }
+
+type StreamMessage = Omit<Message, 'attachments' | 'silent'> & {
+  attachments?: AttachmentRef[] | string | null    // a string is the JSON encoding of the array
+  silent?: boolean | 0 | 1
+}
 ```
 
 1. Every frame the runtime sends **MUST** be a text frame containing a JSON object with a string `type`. The heartbeat reply (§16.3) is the only exception.
 2. `thread_status` carries the thread's [run status](/0.2.0/specification/threads/execution-state#4-run-status).
-3. `message_data` carries a complete [message record](/0.2.0/specification/threads/messages#1-message-structure) in `data`. `message_id` **MUST** equal `data.id`.
-4. In a `message_data` frame, the runtime **SHOULD** send the decoded form of the record. A client **MUST** also accept `data.attachments` as a JSON-encoded string of the array, and `data.silent` as `0` or `1`.
+3. `message_data` carries a complete [message record](/0.2.0/specification/threads/messages#1-message-structure) in `data`, as a `StreamMessage`. `message_id` **MUST** equal `data.id`.
+4. A `StreamMessage` differs from the record returned by message reads (§11) in two fields only. `attachments` is either the array or the JSON encoding of that array. `silent` is either a boolean or the number `0` or `1`. A client **MUST** accept both forms of each field.
 5. `message_chunk` carries a fragment of the visible content of the assistant message identified by `message_id`.
-6. `reasoning_chunk` carries a fragment of model reasoning that accompanies the assistant message identified by `message_id`.
+6. `reasoning_chunk` carries a transient fragment of model reasoning that accompanies the assistant message identified by `message_id`.
 7. `event` carries one [`state.emit(eventType, data)`](/0.2.0/specification/threads#5-events) call.
 
 ### 16.2 Delivery
@@ -431,7 +444,9 @@ type ThreadStreamFrame =
 9. Delivery is at-most-once. The stream carries no history and no acknowledgements.
 10. A client **MUST** treat `message_data` as a replacement for any record it holds with the same `message_id`.
 11. The content of a `message_data` frame is authoritative. It supersedes the `message_chunk` fragments received for the same `message_id`.
-12. Reasoning fragments are not persisted. They are not part of the message record.
+12. The `reasoning` opt-in governs `reasoning_chunk` frames only. A `reasoning_chunk` fragment is transient: it is not stored, and it cannot be read back.
+13. The runtime **MUST** persist the reasoning a model returns with an assistant message in that message's `reasoning_content` and `reasoning_details` ([Messages §1.3](/0.2.0/specification/threads/messages#13-reasoning)).
+14. The runtime **MUST** carry `reasoning_content` and `reasoning_details` identically in message reads (§11) and in `message_data` frames, on every connection regardless of the `reasoning` opt-in.
 
 ### 16.3 Heartbeat
 

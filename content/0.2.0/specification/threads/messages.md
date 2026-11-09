@@ -19,8 +19,8 @@ This page documents the message record, the APIs for manipulating the list, and 
 | `tool_status` | `'success' \| 'error' \| null` | Outcome of the tool call (for results) |
 | `status` | `'pending' \| 'completed' \| 'failed' \| null` | Lifecycle state. `pending` while the message is queued or still being generated |
 | `attachments` | `AttachmentRef[] \| null` | Files delivered with the message ([§1.2](#12-attachment-references)) |
-| `reasoning_content` | `string \| null` | Model reasoning text persisted with an assistant message, when the runtime retains it |
-| `reasoning_details` | `string \| null` | Provider-specific reasoning data, JSON-encoded |
+| `reasoning_content` | `string \| null` | Model reasoning text returned with an assistant message ([§1.3](#13-reasoning)) |
+| `reasoning_details` | `string \| null` | Provider-specific reasoning data returned with an assistant message, JSON-encoded ([§1.3](#13-reasoning)) |
 | `prompt` | `string \| null` | Name of the prompt that produced the message |
 | `created_at` | `number` | Creation timestamp |
 | `parent_id` | `string \| null` | Parent message (sub-prompts) |
@@ -65,6 +65,14 @@ interface AttachmentRef {
   description?: string;
 }
 ```
+
+### 1.3 Reasoning
+
+Many models require the reasoning of their earlier turns to be returned to them on later requests. Reasoning is therefore part of the persisted message record.
+
+1. When a model returns reasoning with an assistant message, the runtime **MUST** persist it with that message: the reasoning text in `reasoning_content`, and any provider-specific reasoning data in `reasoning_details`.
+2. The runtime **MUST** supply the persisted reasoning of earlier assistant messages to the provider on later requests in the same thread.
+3. `reasoning_content` and `reasoning_details` **MUST** be `null` or absent only when the model returned no reasoning for the message.
 
 ## 2. Reading Messages
 

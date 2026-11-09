@@ -319,6 +319,7 @@ interface AgentDefinition<N extends string = string> {
   title?: string;
   description?: string;
   icon?: string;
+  primary?: boolean;
   exposeAsTool?: boolean;
   toolDescription?: string;
   env?: Record<string, string>;
