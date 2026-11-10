@@ -119,7 +119,7 @@ Instead of installing an MCP server for Gmail and expecting a model to sort out 
 
   <details class="faq-item">
     <summary>Is Standard Agents a framework or a specification?</summary>
-    <p>It is an open source specification. Anyone can build or use a compatible runtime to execute any compliant agent. <a href="https://standardagentbuilder.com">AgentBuilder</a> is one such implementation.</p>
+    <p>It is an open source specification. Anyone can build or use a compatible runtime to execute any compliant agent. <a href="https://standardagents.ai">AgentBuilder</a> is one such implementation.</p>
   </details>
 
   <details class="faq-item">
@@ -154,7 +154,7 @@ The Standard Agent Specification was published in 2026 by the FormKit and Standa
     <span class="cta-title">Continue to the Specification</span>
     <span class="cta-description">Learn about providers, models, tools, and more.</span>
   </a>
-  <a href="https://standardagentbuilder.com" class="cta-card">
+  <a href="https://standardagents.ai" class="cta-card">
     <svg class="cta-icon icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" fill="#9ca3af"><path opacity="0.5" d="M133.816,92.912L108.064,59.193C103.573,53.307 101.473,45.937 102.197,38.566L105.475,5.046L99.553,4.466L96.312,37.643C95.895,41.808 91.44,44.27 87.71,42.369L30.34,13.394L27.659,18.7L84.686,47.494C87.184,48.762 87.076,52.347 84.504,53.452L0.387,89.671L2.741,95.139L86.189,59.211C88.76,58.106 91.422,60.587 90.48,63.231L62.918,141.119L68.532,143.111L96.384,64.408C97.507,61.257 101.672,60.605 103.7,63.249L129.107,96.498L133.834,92.876L133.816,92.912Z"/><path d="M133.925,90.214L107.648,7.346C106.036,2.257 100.875,-0.821 95.624,0.193L32.64,12.344C29.959,12.869 27.605,14.408 26.066,16.6C25.523,17.36 25.07,18.211 24.744,19.117L0.622,86.284C-0.917,90.594 0.459,95.375 4.081,98.164L59.568,141.137C61.469,142.604 63.733,143.346 66.015,143.346C68.079,143.346 70.144,142.731 71.937,141.517L129.832,102.111C133.707,99.468 135.355,94.687 133.943,90.232L133.925,90.214ZM116.92,85.922L47.127,53.923C44.374,52.673 43.994,48.925 46.421,47.132L94.175,11.873C97.416,9.483 102.034,10.95 103.284,14.771C108.173,29.548 118.64,62.054 124.218,79.457C125.631,83.876 121.121,87.859 116.902,85.94L116.92,85.922ZM79.162,15.567L42.455,42.659C40.083,44.415 36.696,43.057 36.189,40.16L33.781,26.342C33.038,22.05 35.845,17.94 40.119,17.089C49.409,15.241 65.254,12.145 76.681,9.917C79.995,9.265 81.879,13.557 79.162,15.567ZM29.126,34.238L31.716,49.069C31.915,50.21 31.607,51.388 30.865,52.275L16.559,69.587C15.291,71.127 12.846,69.732 13.516,67.849L25.704,33.93C26.32,32.21 28.8,32.427 29.126,34.22L29.126,34.238ZM12.882,83.386L29.543,63.231C31.517,60.84 35.356,61.547 36.352,64.499L56.308,123.661C57.322,126.668 53.809,129.149 51.31,127.193C41.223,119.297 24.4,106.132 14.404,98.164C9.84,94.542 9.152,87.878 12.864,83.386L12.882,83.386ZM63.498,126.305L43.161,66.002C42.056,62.706 45.407,59.681 48.576,61.13L117.337,92.677C121.375,94.524 121.864,100.083 118.206,102.6C107.358,110.061 88.326,123.064 76.826,130.815C71.991,134.074 65.381,131.829 63.516,126.305L63.498,126.305Z"/></svg>
     <span class="cta-label">Build</span>
     <span class="cta-title">Try AgentBuilder</span>
