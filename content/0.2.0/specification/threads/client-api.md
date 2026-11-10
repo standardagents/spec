@@ -92,7 +92,7 @@ interface StreamTicketResponse {
 ```
 
 1. A successful request **MUST** return `200` with a `StreamTicketResponse` and the response header `Cache-Control: no-store`.
-2. The runtime **MUST** return `400` when `pathname` is absent, is not a normalized path beneath `{runtime_prefix}`, or contains a query or fragment. A path is normalized when it has no `.` or `..` segment, no empty segment, no trailing slash, and no percent-encoded `.`, `/`, or `\\` (`%2E`, `%2F`, `%5C`, in either letter case).
+2. The runtime **MUST** return `400` when `pathname` is absent, is not a normalized path beneath `{runtime_prefix}`, or contains a query or fragment. A path is normalized when it has no `.` or `..` segment, no empty segment, no trailing slash, and no percent-encoded `.`, `/`, or `\` (`%2E`, `%2F`, `%5C`, in either letter case).
 3. A client presents the ticket as the query parameter `ticket` on the WebSocket upgrade request.
 4. The runtime **MUST** authenticate an upgrade that presents a valid ticket as the caller who requested the ticket.
 5. A ticket **MUST** be valid only for an upgrade whose path equals `pathname`. The comparison is of the exact strings.
