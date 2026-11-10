@@ -61,10 +61,21 @@ content/
 
 The homepage at `/` is the Overview of every current version and lives in
 `src/data/home.md`, outside the version folders. Only specification pages are
-versioned. Archived versions keep their own Overview. Homepage and Community
-links to specification pages use `/latest/`, which resolves to the latest
-version at build time. The Community page at `/community`, which includes
+versioned. Archived versions keep their own Overview. Homepage, Runtimes, and
+Community links to specification pages use `/latest/` in an HTML `href`, which
+resolves to the latest version at build time. The Community page at `/community`, which includes
 governance, lives in `src/data/community.md`, and every version's navigation links to it.
+
+The Runtimes page at `/runtimes` lives in `src/data/runtimes.md`, and every
+version's navigation links to it. It lists the runtimes that implement the
+specification, and it explains how to submit one. A reader submits through
+Discord, where a maintainer opens the pull request, or by pull request when the
+reader has access to the repository. Keep the Discord route while the
+repository is private, so the page never depends on repository access. Each runtime
+is one card in the `runtime-list`, in alphabetical order, and the dashed
+`is-open` card stays last to show that the list is expected to grow. Keep each
+entry factual and neutral: the specification is independently governed, so the
+page does not rank, endorse, or certify a runtime.
 
 Older version folders are archived, immutable content. Edit only the current
 version's folder; the version selector and `llms.txt` derive the latest
@@ -107,6 +118,8 @@ src/
 │   ├── index.md.ts                    # Homepage raw markdown
 │   ├── community.astro                # Community page, rendered from src/data/community.md
 │   ├── community.md.ts                # Community raw markdown
+│   ├── runtimes.astro                 # Runtimes page, rendered from src/data/runtimes.md
+│   ├── runtimes.md.ts                 # Runtimes raw markdown
 │   ├── [...slug].md.ts                # Raw markdown endpoint
 │   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
 │   ├── models.md.ts                   # Live curated models markdown endpoint
@@ -117,6 +130,7 @@ src/
 ├── data/
 │   ├── home.md             # Version-independent homepage content
 │   ├── community.md        # Version-independent community and governance content
+│   ├── runtimes.md         # Version-independent list of runtimes and how to submit one
 │   └── models.md           # Curated live model guidance consumed by /models.md
 ├── styles/
 │   └── global.css         # Tailwind + prose styles

@@ -1,0 +1,26 @@
+---
+import DocLayout from '../layouts/DocLayout.astro'
+import DocColumn from '../components/DocColumn.astro'
+import PageActions from '../components/PageActions.astro'
+import PageNavigation from '../components/PageNavigation.astro'
+import { getLatestVersion, getPrevNextPages, resolveLatestLinks } from '../lib/content'
+import { compiledContent, getHeadings } from '../data/runtimes.md'
+
+const version = await getLatestVersion()
+const headings = getHeadings()
+const html = resolveLatestLinks(await compiledContent(), version)
+const { prev, next } = await getPrevNextPages(version, '/runtimes')
+---
+
+<DocLayout
+  title="Runtimes - Standard Agent Specification"
+  version={version}
+  currentPath="/runtimes"
+  headings={headings}
+>
+  <DocColumn headings={headings}>
+    <PageActions markdownUrl="/runtimes.md" />
+    <article class="prose-content is-overview" set:html={html} />
+    <PageNavigation prev={prev} next={next} />
+  </DocColumn>
+</DocLayout>

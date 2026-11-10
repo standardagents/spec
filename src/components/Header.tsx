@@ -398,8 +398,6 @@ export default function Header({ currentVersion, currentGroup, currentSlug, curr
                 </div>
               ))}
             </nav>
-
-            {/* Agent Builder link */}
           </div>
         </div>
     </>

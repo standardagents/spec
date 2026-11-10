@@ -1065,6 +1065,50 @@ html.dark .cta-card.primary .cta-description {
   color: #94a3b8;
 }
 
+/* Runtime list on the Runtimes page. The dashed card is an open slot that
+   shows the list is expected to grow. */
+.runtime-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .runtime-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cta-card.runtime-card.is-open {
+  border-style: dashed;
+  border-color: #cbd5e1;
+  background-color: transparent;
+}
+
+.cta-card.runtime-card.is-open:hover {
+  border-color: #94a3b8;
+  box-shadow: none;
+}
+
+html.dark .cta-card.runtime-card.is-open {
+  border-color: #475569;
+  background-color: transparent;
+}
+
+html.dark .cta-card.runtime-card.is-open:hover {
+  border-color: #64748b;
+  box-shadow: none;
+}
+
+.cta-card.runtime-card.is-open .cta-title {
+  color: #64748b;
+}
+
+html.dark .cta-card.runtime-card.is-open .cta-title {
+  color: #94a3b8;
+}
+
 /* Component cards grid */
 .component-cards {
   display: grid;
