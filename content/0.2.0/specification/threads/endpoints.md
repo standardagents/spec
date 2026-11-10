@@ -120,13 +120,17 @@ export default defineThreadEndpoint(async (req, state) => {
 
 ## 6. Error Handling
 
-Thread endpoints automatically handle common errors:
+The runtime answers the conditions below itself, before any package code runs.
 
-| Condition | Response |
-|-----------|----------|
-| Thread not found | 404: `{ error: "Thread not found: {threadId}" }` |
-| Missing thread ID | 400: `{ error: "Thread ID required" }` |
-| No matching thread endpoint route under the thread endpoint prefix | 404 |
+| Condition | Status |
+|-----------|--------|
+| The addressed thread does not exist | `404` |
+| The request carries no thread ID | `400` |
+| No thread endpoint route matches the path under the thread endpoint prefix | `404` |
+
+1. For each condition, the runtime **MUST** return the status in the table.
+2. Each of these responses **MUST** carry the error body of the [Thread Client API](/0.2.0/specification/threads/client-api#32-bodies-and-errors): `{ "error": { "code": string, "message": string } }`. The body **MAY** carry other members. A client decides the outcome from the status.
+3. The response a thread endpoint's own handler returns, including an error response, is the package's to define.
 
 ## 7. Examples
 
