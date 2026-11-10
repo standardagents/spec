@@ -8,7 +8,7 @@ Most examples use OpenRouter. Your runtime needs an `OPENROUTER_API_KEY` value f
 npm install @standardagents/spec @standardagents/openrouter zod
 ```
 
-The file trees show AgentBuilder's layout inside its `agents/` folder. The specification does not define a folder layout.
+The file trees show the layout that Standard Agents Builder, one of the [available runtimes](/runtimes), uses inside its `agents/` folder. The specification does not define a folder layout.
 
 ## 1. Hello, World
 

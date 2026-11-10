@@ -29,7 +29,7 @@ const groupOrder = ['getting-started', 'guides', 'specification', 'infrastructur
 const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'handlers', 'agents', 'subagents', 'threads', 'users', 'hooks', 'type-registry']
 
 // Explicit page ordering within the getting-started group ('overview' always sorts first)
-const gettingStartedOrder = ['overview', 'examples', 'community']
+const gettingStartedOrder = ['overview', 'examples', 'runtimes', 'community']
 
 // Explicit ordering of subpages under a parent slug (per group)
 // Key is "{group}/{parent}", value is the ordered list of child slugs.
@@ -51,6 +51,9 @@ const homeItem: BuiltItem = { slug: 'overview', title: 'Overview', href: '/', _o
 
 // Community applies to the project as a whole, so every version links to one page.
 const communityItem: BuiltItem = { slug: 'community', title: 'Community', href: '/community', _orderKey: 'community' }
+
+// The list of runtimes is not part of any version's contract, so every version links to one page.
+const runtimesItem: BuiltItem = { slug: 'runtimes', title: 'Runtimes', href: '/runtimes', _orderKey: 'runtimes' }
 
 // Pages to exclude from navigation (group/slug)
 const excludedPages: Record<string, string[]> = {
@@ -183,7 +186,7 @@ export async function getNavigation(version: string): Promise<NavGroup[]> {
   if (!startItems.some(item => item.slug === 'overview')) {
     startItems.push(homeItem)
   }
-  startItems.push(communityItem)
+  startItems.push(runtimesItem, communityItem)
 
   // Attach children to their matching top-level items
   for (const group of Object.keys(topLevelByGroup)) {
