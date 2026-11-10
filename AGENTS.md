@@ -74,7 +74,10 @@ Discord, where a maintainer opens the pull request, or by pull request when the
 reader has access to the repository. Keep the Discord route while the
 repository is private, so the page never depends on repository access. Each runtime
 is one card in the `runtime-list`, in alphabetical order, and the dashed
-`is-open` card stays last to show that the list is expected to grow. Keep each
+`is-open` card stays last to show that the list is expected to grow. Each card
+starts with the runtime's square logo in a `runtime-logo` element, 40 pixels
+wide. Inline the mark as an SVG that uses `currentColor`, so it follows the
+theme. The open card shows a dashed placeholder in the same position. Keep each
 entry factual and neutral: the specification is independently governed, so the
 page does not rank, endorse, or certify a runtime.
 

@@ -1109,6 +1109,39 @@ html.dark .cta-card.runtime-card.is-open .cta-title {
   color: #94a3b8;
 }
 
+/* Runtime logo. Each card starts with a 40px square mark. Inline marks use
+   currentColor so they follow the theme. */
+.runtime-card .runtime-logo {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+html.dark .runtime-card .runtime-logo {
+  color: #f1f5f9;
+}
+
+.runtime-card .runtime-logo.is-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.5rem;
+  color: #94a3b8;
+}
+
+html.dark .runtime-card .runtime-logo.is-placeholder {
+  border-color: #475569;
+  color: #64748b;
+}
+
+.runtime-card .runtime-logo.is-placeholder svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* Component cards grid */
 .component-cards {
   display: grid;
