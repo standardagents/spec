@@ -49,7 +49,7 @@ GET    {runtime_prefix}/threads/{threadId}/stream        (WebSocket upgrade)
 
 1. Request and response bodies **MUST** be JSON, except the file response in §14.
 2. Property names are case-sensitive and **MUST** be spelled exactly as given in this section.
-3. A failed request **MUST** return a non-2xx status with the body `{ "error": string }`. The `error` text is informational.
+3. A failed request **MUST** return a non-2xx status with the body `{ "error": { "code": string, "message": string } }`. The body **MAY** carry other members. A client **MUST** decide the outcome from the status. The `code` and `message` values are informational.
 4. For each condition in the table below, the runtime **MUST** return the corresponding status.
 5. For an internal failure or temporary unavailability, the runtime **MUST** return a `5xx` status. It **MUST NOT** report such a failure with a status from the table.
 
@@ -459,7 +459,7 @@ Requirements 2 to 12 apply to a runtime that exposes the thread client API.
 | 1 | Expose the thread client API (§1) | SHOULD |
 | 2 | Every route in §2, mounted beneath `{runtime_prefix}` | MUST |
 | 3 | Bearer credentials, stream tickets, and thread access enforcement (§3.1, §4) | MUST |
-| 4 | Error statuses, `5xx` for internal failures, and the `{ "error": string }` body (§3.2) | MUST |
+| 4 | Error statuses, `5xx` for internal failures, and the `{ "error": { "code", "message" } }` body (§3.2) | MUST |
 | 5 | Agent listing (§5) | MUST |
 | 6 | Thread creation, listing, and reading (§6, §7, §8) | MUST |
 | 7 | Thread update and deletion (§9, §10) | MUST |
