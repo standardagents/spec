@@ -52,6 +52,7 @@ GET    {runtime_prefix}/threads/{threadId}/stream        (WebSocket upgrade)
 3. A failed request **MUST** return a non-2xx status with the body `{ "error": { "code": string, "message": string } }`. The body **MAY** carry other members. A client **MUST** decide the outcome from the status. The `code` and `message` values are informational.
 4. For each condition in the table below, the runtime **MUST** return the corresponding status.
 5. For an internal failure or temporary unavailability, the runtime **MUST** return a `5xx` status. It **MUST NOT** report such a failure with a status from the table.
+6. Termination closes a thread to new work only. Every route other than message sending (§12) **MUST** behave on a terminated thread as it does on an open thread.
 
 | Status | Condition |
 |--------|-----------|
@@ -59,7 +60,7 @@ GET    {runtime_prefix}/threads/{threadId}/stream        (WebSocket upgrade)
 | `401` | The caller is not authenticated |
 | `403` | The caller is denied access to the thread |
 | `404` | The addressed thread, message, or file, or the agent named in a create request, does not exist |
-| `423` | The thread is terminated |
+| `423` | A message is sent (§12) to a terminated thread |
 
 ### 3.3 Timestamps
 
@@ -90,7 +91,7 @@ interface StreamTicketResponse {
 ```
 
 1. A successful request **MUST** return `200` with a `StreamTicketResponse` and the response header `Cache-Control: no-store`.
-2. The runtime **MUST** return `400` when `pathname` is absent, is not a normalized path beneath `{runtime_prefix}`, or contains a query or fragment.
+2. The runtime **MUST** return `400` when `pathname` is absent, is not a normalized path beneath `{runtime_prefix}`, or contains a query or fragment. A path is normalized when it has no `.` or `..` segment, no empty segment, and no trailing slash.
 3. A client presents the ticket as the query parameter `ticket` on the WebSocket upgrade request.
 4. The runtime **MUST** authenticate an upgrade that presents a valid ticket as the caller who requested the ticket.
 5. A ticket **MUST** be valid only for an upgrade whose path equals `pathname`.
@@ -103,6 +104,10 @@ interface StreamTicketResponse {
 ```text
 GET {runtime_prefix}/agents
 ```
+
+| Query parameter | Default | Meaning |
+|-----------------|---------|---------|
+| `primary` | absent | `true` restricts the result to agents whose `primary` is `true` |
 
 ```typescript
 interface AgentList {
@@ -126,6 +131,8 @@ interface AgentListEntry {
 3. `title` **MUST** be the agent's `title`, or its `name` when the agent defines no title.
 4. `primary` **MUST** be `false` when the [agent definition](/0.2.0/specification/agents#22-optional) sets `primary: false`, and `true` otherwise.
 5. `side_a_backing` and `side_b_backing` **MUST** report the [backing](/0.2.0/specification/agents) of each side.
+6. The list **MUST** contain every agent for which the caller may create a thread (§6), and no other agent. Of a [packed](/0.2.0/distribution/packaging) package's agents, only its entry agents are listed.
+7. When the request sets `primary=true`, the runtime **MUST** return only the entries whose `primary` is `true`.
 
 ## 6. Creating a Thread
 
@@ -149,8 +156,8 @@ interface CreateThreadResponse {
 1. The runtime **MUST** set the owner of the new thread from the authenticated caller. The request **MUST NOT** be able to name a different owner.
 2. Creating a thread **MUST NOT** start an execution.
 3. A successful request **MUST** return `200` with a `CreateThreadResponse`.
-4. The runtime **MUST** return `400` when `agent_id` is absent or `tags` is not an array of strings.
-5. The runtime **MUST** return `404` when no agent is identified by `agent_id`.
+4. The runtime **MUST** return `400` when `agent_id` is absent, when `tags` is not an array of strings, or when `env` is not an object whose values are all strings.
+5. The runtime **MUST** return `404` when `agent_id` is not the `id` of an agent in the caller's agent list (§5).
 
 ## 7. Listing Threads
 
@@ -316,6 +323,9 @@ interface MessagesPage {
 3. Under `order=desc`, the runtime **MUST** return the selected messages in ascending `created_at` order, so the newest selected message is last.
 4. The runtime **MUST** exclude silent messages unless `includeSilent` is `true`.
 5. The runtime **MUST** exclude messages whose `depth` exceeds the `depth` parameter.
+6. Under `order=asc`, the runtime **MUST** return the selected messages in ascending `created_at` order.
+7. `total` **MUST** be the number of messages that satisfy `includeSilent` and `depth`, before `limit` and `offset` are applied.
+8. `hasMore` **MUST** be `true` if and only if matching messages exist beyond the returned page.
 
 ## 12. Sending a Message
 
@@ -388,8 +398,9 @@ POST {runtime_prefix}/threads/{threadId}/stop
 
 1. The request has no body.
 2. The runtime **MUST** abort the execution in flight on the thread, if one exists. That run **MUST** settle as `idle` with reason `aborted_by_user`.
-3. The route **MUST** be idempotent. A request addressed to a thread with no execution in flight **MUST** succeed.
+3. The route **MUST** be idempotent. A request addressed to a thread with no execution in flight **MUST** succeed and **MUST NOT** change the thread: it stores no message and sends no stream frame.
 4. A successful request **MUST** return `200` with the body `{ "status": "stopped" }`.
+5. A request that aborts an execution **MAY** record the stop in the thread as one message.
 
 ## 16. Thread Stream
 
@@ -420,11 +431,12 @@ type ThreadStreamFrame =
 
 1. Every frame the runtime sends **MUST** be a text frame containing a JSON object with a string `type`. The heartbeat reply (§16.3) is the only exception.
 2. `thread_status` carries the thread's [run status](/0.2.0/specification/threads/execution-state#4-run-status).
-3. `message_data` carries a complete [message record](/0.2.0/specification/threads/messages#1-message-structure) in `data`. `message_id` **MUST** equal `data.id`.
+3. `message_data` carries a complete [message record](/0.2.0/specification/threads/messages#1-message-structure) in `data`: every member that a message read (§11) returns for that message **MUST** be present with the same value. While the message is still being generated, its `status` is `'pending'` and its `content` may be incomplete. `message_id` **MUST** equal `data.id`.
 4. The record in a `message_data` frame **MUST** have the same form as the record returned by message reads (§11): `attachments` is an array or `null`, and `silent` is a boolean. A runtime **MUST NOT** send a stored encoding of a field in place of that form.
 5. `message_chunk` carries a fragment of the visible content of the assistant message identified by `message_id`.
 6. `reasoning_chunk` carries a transient fragment of model reasoning that accompanies the assistant message identified by `message_id`.
 7. `event` carries one [`state.emit(eventType, data)`](/0.2.0/specification/threads#5-events) call.
+8. The `depth` of a `message_data`, `message_chunk`, or `reasoning_chunk` frame **MUST** equal the `depth` of the message identified by `message_id`.
 
 ### 16.2 Delivery
 
@@ -442,6 +454,8 @@ type ThreadStreamFrame =
 12. The `reasoning` opt-in governs `reasoning_chunk` frames only. A `reasoning_chunk` fragment is transient: it is not stored, and it cannot be read back.
 13. The runtime **MUST** persist the reasoning a model returns with an assistant message in that message's `reasoning_content` and `reasoning_details` ([Messages §1.3](/0.2.0/specification/threads/messages#13-reasoning)).
 14. The runtime **MUST** carry `reasoning_content` and `reasoning_details` identically in message reads (§11) and in `message_data` frames, on every connection regardless of the `reasoning` opt-in.
+15. When the provider delivers an assistant message's content incrementally, the runtime **MUST** send that content as `message_chunk` frames as it arrives.
+16. When the provider delivers reasoning incrementally, the runtime **MUST** send it as `reasoning_chunk` frames to every connection that opted in.
 
 ### 16.3 Heartbeat
 
