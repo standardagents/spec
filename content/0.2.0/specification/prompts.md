@@ -234,7 +234,7 @@ For models with extended thinking capabilities:
 | `level` | `number` | Reasoning level from 0 to 100 |
 | `maxTokens` | `number` | Max tokens for reasoning |
 | `exclude` | `boolean` | Exclude reasoning from response |
-| `include` | `boolean` | Include reasoning in history |
+| `include` | `boolean` | Supply the persisted reasoning of earlier messages on later requests. Defaults to `true` |
 
 ### 6.2 Reasoning Levels
 
@@ -243,7 +243,8 @@ The `level` property uses the [reasoning scale](/0.2.0/specification/providers#2
 ### 6.3 Reasoning Visibility
 
 - When `exclude` is `true`, reasoning is used internally but not returned
-- When `include` is `true`, reasoning is preserved in message history
+- When `include` is `true` or unset, the runtime supplies the persisted reasoning of earlier assistant messages on later requests ([Messages §1.3](/0.2.0/specification/threads/messages#13-reasoning))
+- When `include` is `false`, the runtime does not supply it. The reasoning stays in the persisted message record
 - These can be combined for different use cases
 
 ## 7. Image Context Management
