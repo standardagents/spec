@@ -74,7 +74,7 @@ Many models require the reasoning of their earlier turns to be returned to them 
 2. On a later request in the same thread, the runtime **MUST** supply the persisted reasoning of each assistant message that remains in the request context after [context assembly](/0.2.0/infrastructure/runtime#4-context-assembly) and request-context hooks, in a form the selected provider and model accept.
 3. The runtime **MUST NOT** supply the reasoning of a message that is excluded from the request context.
 4. When the selected provider or model does not accept a message's `reasoning_details`, the runtime **MUST** omit them from the request or convert them to a form it accepts. It **MUST NOT** send them unchanged. The persisted record is not altered.
-5. `reasoning_content` and `reasoning_details` **MUST** be `null` or absent only when the model returned no reasoning for the message.
+5. `reasoning_content` **MUST** be `null` or absent when, and only when, the model returned no reasoning text for the message. `reasoning_details` **MUST** be `null` or absent when, and only when, the model returned no provider-specific reasoning data for the message.
 
 ## 2. Reading Messages
 
