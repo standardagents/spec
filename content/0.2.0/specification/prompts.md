@@ -184,7 +184,7 @@ The `toolChoice` property controls how the LLM calls tools:
 | Value | Behavior |
 |-------|----------|
 | `'auto'` | Model decides when to call tools (default) |
-| `'none'` | Disable tool calling entirely |
+| `'none'` | The model must not call tools (definitions may still be sent) |
 | `'required'` | Force the model to call at least one tool |
 
 ### 4.2 Tool Choice Behavior
@@ -194,8 +194,9 @@ When `toolChoice` is `'required'`:
 - Implementations **SHOULD** retry if the LLM fails to call a tool
 
 When `toolChoice` is `'none'`:
-- Tool definitions are not sent to the LLM
-- The `tools` array is ignored for that request
+- The LLM **MUST NOT** call a tool in its response
+- Implementations **MUST** pass `toolChoice: 'none'` to the provider with any tool definitions they send
+- Tool definitions **MAY** still be sent. Sending them keeps the request prefix identical to that of a prompt that shares the same tools, which preserves provider prompt caching. An implementation that sends no tool definitions may omit the tool choice.
 
 ## 5. Input Validation
 
