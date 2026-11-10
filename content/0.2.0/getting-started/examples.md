@@ -1276,7 +1276,7 @@ export default defineModel({
 {
   "type": "module",
   "dependencies": {
-    "standardagent-triage": "^1.0.0",
+    "standardagent-triage": "^0.3.1",
     "@standardagents/openrouter": "^0.44.0",
     "@standardagents/spec": "^0.44.0"
   }

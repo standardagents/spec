@@ -97,7 +97,7 @@ export const effects = {
 
 export const __meta: PackedMeta = {
   packageId: 'standardagent-my-workflow',
-  version: '1.0.0',
+  version: '0.3.1',
   entryAgents: ['my_agent'],
   packedAt: 1705012800000,
 };
@@ -149,7 +149,7 @@ Packed agents are identified by the `standardagent` field in `package.json`:
 ```json
 {
   "name": "standardagent-my-workflow",
-  "version": "1.0.0",
+  "version": "0.3.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

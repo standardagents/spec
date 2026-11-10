@@ -97,9 +97,9 @@ export async function getLatestVersion(): Promise<string> {
 }
 
 // The homepage is not versioned, so src/data/home.md links to specification
-// pages through /latest/.
+// pages through /latest/ and names the current version as {latestVersion}.
 export function resolveLatestLinks(content: string, version: string): string {
-  return content.replaceAll('"/latest/', `"/${version}/`)
+  return content.replaceAll('"/latest/', `"/${version}/`).replaceAll('{latestVersion}', version)
 }
 
 // Check if a page exists
