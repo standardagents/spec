@@ -1313,8 +1313,8 @@ html.dark .prose-content .section-intro em {
   color: #60a5fa;
 }
 
-/* Install command card on the homepage. It shares the cta-card treatment but
-   is not a link, so it has no hover state. */
+/* Coding-agent instruction card on the homepage. It shares the cta-card
+   treatment but is not a link, so it has no hover state. */
 .skill-cta {
   margin-top: 1.5rem;
 }
@@ -1364,8 +1364,9 @@ html.dark .skill-cta-command {
   font-family: var(--font-mono);
   font-size: 0.9375rem;
   line-height: 1.5;
-  white-space: nowrap;
+  white-space: normal;
   word-break: normal;
+  overflow-wrap: anywhere;
   color: #111827;
 }
 
@@ -1373,12 +1374,6 @@ html.dark .prose-content .skill-cta-command code {
   border: 0;
   background: none;
   color: #f3f4f6;
-}
-
-.skill-cta-prompt {
-  margin-right: 0.625rem;
-  color: #64748b;
-  user-select: none;
 }
 
 .skill-cta-command button {
