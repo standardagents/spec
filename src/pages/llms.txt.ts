@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro'
 import { getLatestVersion, getNavigation } from '../lib/content'
 
-const BASE_URL = 'https://standardagentspec.com'
-
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ site }) => {
+  // The canonical origin is `site` in astro.config.mjs.
+  const BASE_URL = site!.origin
   const latestVersion = await getLatestVersion()
   const navigation = await getNavigation(latestVersion)
 

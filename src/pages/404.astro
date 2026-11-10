@@ -1,0 +1,27 @@
+---
+import DocLayout from '../layouts/DocLayout.astro'
+import DocColumn from '../components/DocColumn.astro'
+import { getLatestVersion } from '../lib/content'
+
+// Cloudflare Pages serves this page with status 404 for any unknown URL.
+const version = await getLatestVersion()
+---
+
+<DocLayout
+  title="Page not found - Standard Agent Specification"
+  version={version}
+  currentPath="/404"
+  headings={[]}
+  noindex
+>
+  <DocColumn headings={[]}>
+    <article class="prose-content">
+      <h1>Page not found</h1>
+      <p>No page exists at this address. It may have moved, or the link may be wrong.</p>
+      <p>
+        Start from the <a href="/">Overview</a>, or pick a page from the navigation. The current version of the
+        specification is {version}.
+      </p>
+    </article>
+  </DocColumn>
+</DocLayout>

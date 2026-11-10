@@ -16,6 +16,7 @@ pnpm dev      # Start dev server
 pnpm build    # Build for production (static)
 pnpm preview  # Preview production build
 pnpm deploy   # Deploy to Cloudflare Pages
+pnpm test     # Build, then check the built site in dist/ (tests/site.test.mjs)
 ```
 
 `pnpm dev` and `pnpm build` clear Astro's generated caches first. This avoids stale content-store warnings in long-lived worktrees when content files are renamed or moved.
@@ -101,6 +102,7 @@ src/
 │   ├── file-viewer-client.js      # Small script that file viewers inline
 │   ├── rehype-file-viewers.mjs    # Builds file viewers from code fences
 │   ├── rehype-inline-diagrams.mjs # Inlines src/diagrams files at build time
+│   ├── latest-redirects.mjs       # Adds the /latest/ redirects to dist/_redirects
 │   └── remark-faux-threads.mjs    # Renders ```thread fences as static threads
 ├── pages/
 │   ├── index.astro                    # Homepage, rendered from src/data/home.md
@@ -109,6 +111,8 @@ src/
 │   ├── community.md.ts                # Community raw markdown
 │   ├── [...slug].md.ts                # Raw markdown endpoint
 │   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
+│   ├── robots.txt.ts                  # robots.txt, which names the sitemap
+│   ├── 404.astro                      # Page for unknown URLs, served with status 404
 │   ├── models.md.ts                   # Live curated models markdown endpoint
 │   ├── api/navigation/[version].json.ts
 │   └── [version]/
@@ -206,6 +210,35 @@ a document load, and it prefetches links on hover. Pages swap with no animation.
 - Links to non-HTML routes load normally, because the router falls back to a document
   load for them. Link to a page with `ClientRouter`, and avoid the redirect page at
   `/{version}`, which forces a document load.
+
+### Search, Sharing, and Unknown URLs
+
+`site` in `astro.config.mjs` is the canonical origin, `https://standardagentspec.org`.
+Build every absolute URL from it, and never write the domain in a page or endpoint.
+`tests/site.test.mjs` checks the rules in this section against the built site.
+
+- **Current version:** `src/data/home.md` states the current version with the
+  `{latestVersion}` token. `resolveLatestLinks` in `src/lib/content.ts` replaces
+  it, together with the `/latest/` links, in the page and in its raw Markdown.
+- **Example versions:** an example package in the current version's pages uses a
+  version such as `0.3.1`. Never use `1.0.0`, because a reader can take it for
+  the specification's version.
+- **`/latest/` URLs:** `src/lib/latest-redirects.mjs` appends Cloudflare Pages
+  rules to `dist/_redirects` at build time. They send `/latest/*` to the latest
+  version's pages and `/latest` to the homepage. Fixed redirects stay in
+  `public/_redirects`.
+- **404 page:** `src/pages/404.astro` builds `dist/404.html`. Cloudflare Pages
+  serves it with status 404 for an unknown URL. Without that file, Pages serves the
+  homepage with status 200.
+- **Crawling:** `src/pages/robots.txt.ts` serves `robots.txt`, and
+  `@astrojs/sitemap` writes `sitemap-index.xml`. The sitemap leaves out the 404
+  page and the `/{version}` redirect pages.
+- **Share tags:** `BaseLayout.astro` writes the Open Graph and Twitter tags for
+  every page, with `public/og.png` (1200 by 630) as the image. Its `noindex`
+  prop marks a page that is not content.
+- **Email addresses:** `BaseLayout.astro` wraps the body in Cloudflare's
+  `<!--email_off-->` comments, so a code sample shows `user@example.com`
+  unchanged while the zone's email obfuscation is on.
 
 ### Theme System
 

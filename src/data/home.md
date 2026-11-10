@@ -2,6 +2,8 @@
 
 Agents built with this standard can be freely published, installed, and composed with other Standard Agents — and are guaranteed to execute faithfully in all spec-compliant runtimes.
 
+The current version of the specification is {latestVersion}.
+
 ## Core Principles
 
 <p class="section-intro">Agents are <em>deterministic</em> software that harnesses the non-deterministic results produced by models in pursuit of a desired objective.</p>

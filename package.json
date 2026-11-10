@@ -10,10 +10,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "wrangler pages deploy dist"
+    "deploy": "wrangler pages deploy dist",
+    "test": "pnpm build && node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",
+    "@astrojs/sitemap": "^3.7.4",
     "astro": "^5.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -14,9 +14,10 @@ interface Props {
   subSlug?: string
   currentPath: string
   headings: MarkdownHeading[]
+  noindex?: boolean
 }
 
-const { title, version, group, subSlug, currentPath, headings } = Astro.props
+const { title, version, group, subSlug, currentPath, headings, noindex } = Astro.props
 
 // The redirect page at /{version} has no client router, so the version selector
 // links to each version's first page.
@@ -30,7 +31,7 @@ const versionHomes = Object.fromEntries(
 )
 ---
 
-<BaseLayout title={title}>
+<BaseLayout title={title} noindex={noindex}>
   <div class="min-h-screen bg-gray-50 pt-16 dark:bg-gray-900 flex flex-col">
     <Header
       client:load
