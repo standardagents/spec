@@ -43,6 +43,19 @@ test('no current page shows a 1.0.0 version', () => {
   assert.deepEqual(offenders, [])
 })
 
+test('current pages use the product name Standard Agents Builder', () => {
+  // The product is "Standard Agents Builder" and the company is "Standard
+  // Agents". Archived version folders are immutable, so they are not checked.
+  const versions = readdirSync(join(root, 'content')).filter((name) => /^\d+\.\d+\.\d+$/.test(name))
+  const archived = versions.filter((name) => name !== latest).map((name) => join(dist, name) + '/')
+  const wrong = /AgentBuilder|Agent Builder|StandardAgents(?!pec)|STANDARDAGENTS/
+  const offenders = walk(dist)
+    .filter((path) => /\.(html|md|txt)$/.test(path) && !archived.some((dir) => path.startsWith(dir)))
+    .filter((path) => wrong.test(readFileSync(path, 'utf8')))
+    .map((path) => path.slice(dist.length + 1))
+  assert.deepEqual(offenders, [])
+})
+
 test('llms.txt links to the canonical domain', () => {
   const urls = read('llms.txt').match(/https?:\/\/\S+/g)
   assert.ok(urls.length > 10)
