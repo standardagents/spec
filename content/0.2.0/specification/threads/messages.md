@@ -14,8 +14,14 @@ This page documents the message record, the APIs for manipulating the list, and 
 | `role` | `'system' \| 'user' \| 'assistant' \| 'tool'` | Message role |
 | `content` | `string \| null` | Message content |
 | `name` | `string \| null` | Tool name (for tool results) |
-| `tool_calls` | `string \| null` | JSON-encoded tool calls |
+| `tool_calls` | `string \| null` | JSON-encoded array of tool calls. Each entry is `{ id: string, type: 'function', function: { name: string, arguments: string } }`, where `arguments` is itself JSON-encoded |
 | `tool_call_id` | `string \| null` | Tool call ID (for results) |
+| `tool_status` | `'success' \| 'error' \| null` | Outcome of the tool call (for results) |
+| `status` | `'pending' \| 'completed' \| 'failed' \| null` | Lifecycle state. `pending` while the message is queued or still being generated |
+| `attachments` | `AttachmentRef[] \| null` | Files delivered with the message ([§1.2](#12-attachment-references)) |
+| `reasoning_content` | `string \| null` | Model reasoning text returned with an assistant message ([§1.3](#13-reasoning)) |
+| `reasoning_details` | `string \| null` | Provider-specific reasoning data returned with an assistant message, JSON-encoded ([§1.3](#13-reasoning)) |
+| `prompt` | `string \| null` | Name of the prompt that produced the message |
 | `created_at` | `number` | Creation timestamp |
 | `parent_id` | `string \| null` | Parent message (sub-prompts) |
 | `depth` | `number` | Nesting depth (0 = top-level) |
@@ -41,6 +47,34 @@ Runtimes **SHOULD** set the following OPTIONAL `metadata` keys on messages whose
 | `metadata.forwarded_from` | The origin thread or message of forwarded content |
 
 These are conventions, not requirements: consumers **MUST** tolerate their absence, and runtimes **MUST NOT** rely on them for routing correctness.
+
+### 1.2 Attachment References
+
+An attachment is a file in the thread's [file system](/0.2.0/specification/threads/filesystem) that a message references.
+
+```typescript
+interface AttachmentRef {
+  id: string;
+  type: 'file';
+  path: string;          // path in the thread file system
+  name: string;          // file name
+  mimeType: string;
+  size: number;          // bytes
+  width?: number;        // pixels, for images
+  height?: number;       // pixels, for images
+  description?: string;
+}
+```
+
+### 1.3 Reasoning
+
+Many models require the reasoning of their earlier turns to be returned to them on later requests. Reasoning is therefore part of the persisted message record.
+
+1. When a model returns reasoning with an assistant message, the runtime **MUST** persist it with that message: the reasoning text in `reasoning_content`, and any provider-specific reasoning data in `reasoning_details`.
+2. On a later request in the same thread, the runtime **MUST** supply the persisted reasoning of each assistant message that remains in the request context after [context assembly](/0.2.0/infrastructure/runtime#4-context-assembly) and request-context hooks, in a form the selected provider and model accept.
+3. The runtime **MUST NOT** supply the reasoning of a message that is excluded from the request context.
+4. When the selected provider or model does not accept a message's `reasoning_details`, the runtime **MUST** omit them from the request or convert them to a form it accepts. It **MUST NOT** send them unchanged. The persisted record is not altered.
+5. `reasoning_content` **MUST** be `null` or absent when, and only when, the model returned no reasoning text for the message. `reasoning_details` **MUST** be `null` or absent when, and only when, the model returned no provider-specific reasoning data for the message.
 
 ## 2. Reading Messages
 

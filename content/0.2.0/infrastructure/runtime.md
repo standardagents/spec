@@ -361,7 +361,25 @@ A runtime **SHOULD**:
 
 Runtimes **MAY** enforce implementation-defined caps on key length, value size, and total number of keys per thread. When a cap is exceeded, `setValue` **SHOULD** reject with an error that identifies which limit was hit. Caps **SHOULD** be documented with the runtime.
 
-## 15. Conformance Summary
+## 15. Thread Client API
+
+A runtime **SHOULD** expose the [Thread Client API](/0.2.0/specification/threads/client-api): HTTP routes to list agents, create, list, read, update, and delete threads, read, send, and delete messages, read thread files, and stop execution, plus a WebSocket thread stream and the stream tickets that authorize it. These routes and frames are fixed by the specification so that one client works against any conforming runtime.
+
+A runtime that exposes the API **MUST**:
+- mount every specified route beneath `{runtime_prefix}`
+- authenticate every request, accept bearer credentials on HTTP routes and single-use stream tickets on the stream upgrade, and enforce its thread access policy on thread-addressed routes
+- return a `5xx` status, never a client-error status, for internal failures
+- set a created thread's owner from the authenticated caller
+- accept a sent message durably and respond before the resulting execution completes
+- send a `thread_status` snapshot as the first frame of every stream connection, and again on every run status change
+- publish message creations and updates as `message_data` frames, streamed assistant content as `message_chunk` frames, and `state.emit` calls as `event` frames
+- withhold `reasoning_chunk` frames from connections that did not opt in
+- persist the reasoning a model returns with an assistant message, and carry it in the message record on reads and on the stream
+- on thread deletion, make the thread and its descendants unavailable to new work, abort and discard their work, and close their streams before confirming
+- apply each connection's `depth` and `includeSilent` filters
+- answer the `stream_ping` text frame with `stream_pong`
+
+## 16. Conformance Summary
 
 Implementations **MUST**:
 - preserve sequential step and tool execution within a thread
@@ -372,3 +390,6 @@ Implementations **MUST**:
 - copy attachment files across thread boundaries for subagent communication
 - honor the [Code Execution](#13-code-execution-runtime) runtime contract when `ThreadState.runCode` is exposed
 - back `ThreadState.getValue` / `ThreadState.setValue` with a durable, per-thread key-value store per [§14](#14-durable-key-value-store)
+
+Implementations **SHOULD**:
+- expose the [Thread Client API](#15-thread-client-api)

@@ -11,6 +11,7 @@ This page covers the core ideas: what a thread is, its identity, the `ThreadStat
 - [Execution State](/0.2.0/specification/threads/execution-state) — step counts, turn control, cancellation
 - [Decisions](/0.2.0/specification/threads/decisions) — explicit context and typed question evaluation
 - [Thread Endpoints](/0.2.0/specification/threads/endpoints) — HTTP APIs that receive a `ThreadState`
+- [Thread Client API](/0.2.0/specification/threads/client-api) — runtime HTTP routes and the WebSocket stream for creating, reading, messaging, and watching threads
 
 ## 1. Thread Definition
 
@@ -334,7 +335,11 @@ state.emit('progress', {
 });
 ```
 
-Events are delivered via WebSocket to any connected clients.
+Events are delivered at most once to every client connected to the [thread stream](/0.2.0/specification/threads/client-api#16-thread-stream), as an `event` frame:
+
+```json
+{ "type": "event", "eventType": "progress", "data": { "step": 3, "total": 10 }, "timestamp": 1727870000000 }
+```
 
 ### 5.2 Event Guidelines
 
