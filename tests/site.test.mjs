@@ -1,7 +1,7 @@
 // Checks the built site in dist/. Run `pnpm test`, which builds first.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -13,6 +13,14 @@ const ORIGIN = 'https://standardagentspec.org'
 const latest = readdirSync(join(root, 'content'))
   .filter((name) => /^\d+\.\d+\.\d+$/.test(name))
   .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0]
+
+// Reads the size from a PNG's signature and IHDR chunk.
+function pngSize(file) {
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  const isPng = file.length >= 24 && file.subarray(0, 8).equals(signature) && file.toString('latin1', 12, 16) === 'IHDR'
+  if (!isPng) throw new Error('not a PNG')
+  return { width: file.readUInt32BE(16), height: file.readUInt32BE(20) }
+}
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -76,9 +84,18 @@ test('pages carry share tags', () => {
       assert.match(html, new RegExp(`<meta name="${name}" content="[^"]+"`), `${page} ${name}`)
     }
     const image = html.match(/<meta property="og:image" content="([^"]+)"/)[1]
-    assert.ok(image.startsWith(`${ORIGIN}/`))
-    assert.ok(existsSync(join(dist, new URL(image).pathname)))
+    assert.equal(image, `${ORIGIN}/og.png`)
+    assert.equal(html.match(/<meta name="twitter:image" content="([^"]+)"/)[1], image)
+    // The image is a PNG of the size the tags declare.
+    const { width, height } = pngSize(readFileSync(join(dist, new URL(image).pathname)))
+    assert.equal(html.match(/<meta property="og:image:width" content="(\d+)"/)[1], String(width))
+    assert.equal(html.match(/<meta property="og:image:height" content="(\d+)"/)[1], String(height))
+    assert.deepEqual({ width, height }, { width: 1200, height: 630 })
   }
+})
+
+test('the share image check rejects a file that is not a PNG', () => {
+  assert.throws(() => pngSize(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>')), /not a PNG/)
 })
 
 test('/latest/ redirects to the latest version', () => {

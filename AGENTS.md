@@ -112,6 +112,7 @@ src/
 │   ├── [...slug].md.ts                # Raw markdown endpoint
 │   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
 │   ├── robots.txt.ts                  # robots.txt, which names the sitemap
+│   ├── og.png.ts                      # Share image, rendered from src/assets/og.svg
 │   ├── 404.astro                      # Page for unknown URLs, served with status 404
 │   ├── models.md.ts                   # Live curated models markdown endpoint
 │   ├── api/navigation/[version].json.ts
@@ -234,8 +235,11 @@ Build every absolute URL from it, and never write the domain in a page or endpoi
   `@astrojs/sitemap` writes `sitemap-index.xml`. The sitemap leaves out the 404
   page and the `/{version}` redirect pages.
 - **Share tags:** `BaseLayout.astro` writes the Open Graph and Twitter tags for
-  every page, with `public/og.png` (1200 by 630) as the image. Its `noindex`
-  prop marks a page that is not content.
+  every page. The image is `/og.png`, 1200 by 630, which `src/pages/og.png.ts`
+  renders from `src/assets/og.svg` at build time. The artwork draws its text as
+  outlines, so the image does not depend on the build machine's fonts. Keep the
+  size in the tags equal to the artwork's size. Its `noindex` prop marks a page
+  that is not content.
 - **Email addresses:** `BaseLayout.astro` wraps the body in Cloudflare's
   `<!--email_off-->` comments, so a code sample shows `user@example.com`
   unchanged while the zone's email obfuscation is on.
