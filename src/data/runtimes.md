@@ -15,7 +15,7 @@ The <a href="/latest/infrastructure/runtime">Runtime</a> page defines what a run
   <a href="#submit-a-runtime" class="cta-card runtime-card is-open">
     <span class="cta-label">Open</span>
     <span class="cta-title">Your runtime</span>
-    <span class="cta-description">This list is meant to grow. Submit a runtime by pull request.</span>
+    <span class="cta-description">This list is meant to grow. Submit a runtime through Discord or by pull request.</span>
   </a>
 </div>
 
@@ -23,12 +23,15 @@ Runtimes appear in alphabetical order. A listing is not an endorsement, and it d
 
 ## Submit a Runtime
 
-The list is open to every runtime that implements the specification, whoever builds it. To add one:
+The list is open to every runtime that implements the specification, whoever builds it. An entry needs three things:
 
-1. Open a pull request against the [specification repository](https://github.com/standardagents/standardagentspec.com).
-2. Add a card to the list in `src/data/runtimes.md`, in alphabetical order.
-3. Give the runtime's name, a link to its public home page or documentation, and one factual sentence that describes it.
+- The runtime's name.
+- A link to its public home page or documentation.
+- One factual sentence that describes it.
+
+You can submit an entry in either of two ways:
+
+- **Discord.** Post the three details in the [Discord](https://discord.gg/GrdTtPZq7V). Anyone can do this. A maintainer opens the pull request for you.
+- **Pull request.** Open a pull request against the [specification repository](https://github.com/standardagents/standardagentspec.com) that adds a card to the list in `src/data/runtimes.md`, in alphabetical order. This needs access to the repository.
 
 A listed runtime must be available for other people to use, and its entry must stay factual. The maintainers review an entry for accuracy only. They do not rank runtimes.
-
-To discuss a runtime before you submit it, join the [Discord](https://discord.gg/GrdTtPZq7V).

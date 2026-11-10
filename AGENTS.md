@@ -68,7 +68,10 @@ governance, lives in `src/data/community.md`, and every version's navigation lin
 
 The Runtimes page at `/runtimes` lives in `src/data/runtimes.md`, and every
 version's navigation links to it. It lists the runtimes that implement the
-specification, and it explains how to submit one by pull request. Each runtime
+specification, and it explains how to submit one. A reader submits through
+Discord, where a maintainer opens the pull request, or by pull request when the
+reader has access to the repository. Keep the Discord route while the
+repository is private, so the page never depends on repository access. Each runtime
 is one card in the `runtime-list`, in alphabetical order, and the dashed
 `is-open` card stays last to show that the list is expected to grow. Keep each
 entry factual and neutral: the specification is independently governed, so the
