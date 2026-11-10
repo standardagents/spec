@@ -86,7 +86,7 @@ Do not add per-version changelog pages. Document behavior in the relevant
 specification pages.
 
 Keep specification contracts provider- and runtime-neutral. Application logging
-is an implementation concern; document AgentBuilder logging and provider-native
+is an implementation concern; document Standard Agents Builder logging and provider-native
 conversion examples in their own package documentation, not this specification.
 
 ### Source Structure
@@ -186,7 +186,7 @@ Without script, every link still jumps to its file and every file stays readable
   diagram and write-up explain rules and runtime behavior, so a thread has no such
   notes. A tool line's arguments and result stay behind a native disclosure.
 
-The specification does not define a folder layout. The viewers show AgentBuilder's
+The specification does not define a folder layout. The viewers show Standard Agents Builder's
 layout with the `agents/` folder as their root, and one sentence in the page's
 introduction says so. Code comments and file links keep the full path. Keep these
 visuals free of captions, tags, and other meta notes.
