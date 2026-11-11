@@ -51,6 +51,7 @@ content/
     │   │   ├── decisions.md
     │   │   ├── endpoints.md
     │   │   └── client-api.md
+    │   ├── mcp-servers.md
     │   ├── hooks.md
     │   └── type-registry.md
     ├── infrastructure/

@@ -26,7 +26,7 @@ const groupTitles: Record<string, string> = {
 const groupOrder = ['getting-started', 'guides', 'specification', 'infrastructure', 'distribution']
 
 // Explicit page ordering within specification group (primitives -> complex)
-const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'handlers', 'agents', 'subagents', 'threads', 'users', 'hooks', 'type-registry']
+const specOrder = ['providers', 'models', 'tools', 'effects', 'prompts', 'handlers', 'agents', 'subagents', 'threads', 'users', 'mcp-servers', 'hooks', 'type-registry']
 
 // Explicit page ordering within the getting-started group ('overview' always sorts first)
 const gettingStartedOrder = ['overview', 'examples', 'runtimes', 'community']
