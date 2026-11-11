@@ -17,11 +17,11 @@ The <a href="/latest/infrastructure/runtime">Runtime</a> page defines what a run
     <span class="runtime-logo is-placeholder" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span>
     <span class="cta-label">Open</span>
     <span class="cta-title">Your runtime</span>
-    <span class="cta-description">This list is meant to grow. Submit a runtime through Discord or by pull request.</span>
+    <span class="cta-description">This list is meant to grow. Submit a runtime by pull request.</span>
   </a>
 </div>
 
-Runtimes appear in alphabetical order. A listing is not an endorsement, and it does not certify conformance.
+A listing is not an endorsement, and it does not certify conformance.
 
 ## Submit a Runtime
 
@@ -32,9 +32,6 @@ The list is open to every runtime that implements the specification, whoever bui
 - One factual sentence that describes it.
 - A square logo as an SVG file. It must stay legible at 40 pixels in light and dark themes.
 
-You can submit an entry in either of two ways:
+To submit an entry, open a pull request against the [specification repository](https://github.com/standardagents/spec) that adds a card with its logo to the list in `src/data/runtimes.md`.
 
-- **Discord.** Post the four details in the [Discord](https://discord.gg/GrdTtPZq7V). Anyone can do this. A maintainer opens the pull request for you.
-- **Pull request.** Open a pull request against the [specification repository](https://github.com/standardagents/spec) that adds a card with its logo to the list in `src/data/runtimes.md`, in alphabetical order. This needs access to the repository.
-
-A listed runtime must be available for other people to use, and its entry must stay factual. The maintainers review an entry for accuracy only. They do not rank runtimes.
+A listed runtime must be available for other people to use, and its entry must stay factual. The maintainers review an entry for accuracy only.
