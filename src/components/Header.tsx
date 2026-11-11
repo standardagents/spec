@@ -261,7 +261,7 @@ export default function Header({ currentVersion, currentGroup, currentSlug, curr
 
             <div className="flex items-center gap-1">
               <a
-                href="https://github.com/standardagents"
+                href="https://github.com/standardagents/spec"
                 className="rounded-md p-2 text-gray-800 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
               >
                 <GitHubIcon className="h-5 w-5" />
