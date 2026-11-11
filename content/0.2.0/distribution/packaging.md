@@ -37,6 +37,8 @@ import type {
   ModelDefinition,
   PackedMeta,
 } from '@standardagents/spec';
+import { defineTool } from '@standardagents/spec';
+import { openai } from '@standardagents/openai';
 
 type DefinitionLoader<T> = () => Promise<T>;
 
@@ -54,6 +56,7 @@ export const handlers = {} as Record<string, DefinitionLoader<HandlerDefinition>
 export const prompts = {
   main_prompt: async (): Promise<PromptDefinition> => ({
     name: 'main_prompt',
+    toolDescription: 'General purpose assistant',
     model: 'gpt_4o',
     prompt: 'You are a helpful assistant...',
     tools: ['search'],
@@ -61,19 +64,20 @@ export const prompts = {
 } as const;
 
 export const tools = {
-  search: async (): Promise<ToolDefinition> => ({
-    description: 'Search for information',
-    execute: async (state, args) => {
-      return { status: 'success', result: 'Found results' };
-    },
-  }),
+  search: async (): Promise<ToolDefinition> =>
+    defineTool({
+      description: 'Search for information',
+      execute: async (state) => {
+        return { status: 'success', result: 'Found results' };
+      },
+    }),
 } as const;
 
 export const models = {
   gpt_4o: async (): Promise<ModelDefinition> => ({
     name: 'gpt_4o',
     model: 'gpt-4o',
-    provider: 'openai',
+    provider: openai,
   }),
 } as const;
 
