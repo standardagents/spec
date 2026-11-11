@@ -7,7 +7,7 @@ Tools are callable capabilities exposed to models during execution.
 | Type | Description | Where Defined |
 |------|-------------|---------------|
 | Function tool | Custom executable logic | `defineTool()` |
-| Prompt tool | Nested prompt invocation | `definePrompt({ exposeAsTool: true })` |
+| Prompt tool | Nested prompt invocation | `definePrompt()`, named in another prompt's `tools` |
 | Agent tool | Agent handoff callable | `defineAgent({ exposeAsTool: true })` |
 
 Function tools that evaluate model- or user-authored JavaScript or TypeScript **SHOULD** do so through [`state.runCode`](/0.2.0/specification/threads/code-execution) rather than `eval` or `new Function`. The sandbox enforces isolation, memory caps, and caller-initiated termination.
