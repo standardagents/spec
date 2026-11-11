@@ -21,7 +21,14 @@ Read the [overview](https://standardagentspec.org/) for the principles and struc
 
 ## Runtimes
 
-[Standard Agents Builder](https://standardagents.ai) is a runtime and builder interface from Standard Agents. It runs on Cloudflare Workers. The [runtimes page](https://standardagentspec.org/runtimes) lists available runtimes and explains how to submit one.
+A runtime executes Standard Agents. An agent package that follows the specification runs the same way in each runtime.
+
+| Runtime | Description |
+| --- | --- |
+| [Standard Agents Builder](https://standardagents.ai) | A runtime and builder interface from Standard Agents. It runs on Cloudflare Workers. |
+| Your runtime | The list is open to every runtime that implements the specification. [Submit yours](https://standardagentspec.org/runtimes#submit-a-runtime). |
+
+To add a runtime, open a pull request that adds it to `src/data/runtimes.md`, or post its details in [Discord](https://discord.gg/GrdTtPZq7V). The [runtimes page](https://standardagentspec.org/runtimes#submit-a-runtime) lists what an entry needs.
 
 ## Contributing
 
