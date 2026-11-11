@@ -7,11 +7,8 @@ import { fileURLToPath } from 'node:url'
 
 const read = (path) => readFileSync(fileURLToPath(new URL(`../dist/${path}`, import.meta.url)), 'utf8')
 
-const INSTRUCTION =
-  'Read https://standardagentspec.org/llms.txt and the pages it lists before you write or review a Standard Agent.'
-
-// The specification is documentation. It has no coding-agent skill, so the
-// homepage hands coding agents the documentation index instead of an install.
+// The specification is documentation. It has no coding-agent skill, and a
+// reader starts in a runtime, so the homepage sends readers to the runtimes page.
 for (const page of ['index.html', 'index.md']) {
   test(`${page} offers no skill install`, () => {
     const content = read(page)
@@ -20,13 +17,17 @@ for (const page of ['index.html', 'index.md']) {
     assert.doesNotMatch(content, /Install the (Standard Agent Specification )?skill/i)
   })
 
-  test(`${page} gives coding agents the documentation index`, () => {
-    assert.ok(read(page).includes(INSTRUCTION))
+  test(`${page} points readers to the runtimes page`, () => {
+    const content = read(page)
+    assert.ok(content.includes('Choose a runtime to build with'))
+    assert.match(content, /\/runtimes/)
+  })
+
+  test(`${page} gives no instruction to paste into a coding agent`, () => {
+    assert.doesNotMatch(read(page), /Give the specification to your coding agent/)
   })
 }
 
-test('the copy button copies the instruction shown', () => {
-  const html = read('index.html')
-  assert.ok(html.includes(`data-copy-command="${INSTRUCTION}"`))
-  assert.ok(html.includes('Give the specification to your coding agent'))
+test('the main card links to the runtimes page', () => {
+  assert.match(read('index.html'), /<a href="\/runtimes" class="cta-card runtime-cta">/)
 })

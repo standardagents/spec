@@ -33,30 +33,6 @@ if (parts.length !== 2) {
   <script>
     import { onPage } from '../lib/page-lifecycle'
 
-    onPage('copy-command', () => {
-      document.querySelectorAll<HTMLButtonElement>('[data-copy-command]').forEach((button) => {
-        const label = button.querySelector('[data-copy-label]')
-        let resetTimer: number | undefined
-        button.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(button.dataset.copyCommand ?? '')
-          } catch (error) {
-            console.error(error)
-            return
-          }
-          if (!label) return
-          label.textContent = 'Copied'
-          window.clearTimeout(resetTimer)
-          resetTimer = window.setTimeout(() => {
-            label.textContent = 'Copy'
-          }, 1600)
-        })
-      })
-    })
-  </script>
-  <script>
-    import { onPage } from '../lib/page-lifecycle'
-
     const DURATION = 220
     const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
 

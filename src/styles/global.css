@@ -1348,136 +1348,78 @@ html.dark .prose-content .section-intro em {
 
 /* Coding-agent instruction card on the homepage. It shares the cta-card
    treatment but is not a link, so it has no hover state. */
-.skill-cta {
+.runtime-cta {
   margin-top: 1.5rem;
 }
 
-.cta-card.skill-cta:hover {
-  border-color: #e2e8f0;
-  box-shadow: none;
-  transform: none;
-}
-
-html.dark .cta-card.skill-cta:hover {
-  border-color: #334155;
-  box-shadow: none;
-}
-
-.cta-card.skill-cta:hover .cta-icon {
-  opacity: 0.7;
-}
-
-.skill-cta + .footer-cta {
+.runtime-cta + .footer-cta {
   margin-top: 1rem;
 }
 
-.skill-cta-command {
+.runtime-cta-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.5rem 0.5rem 1.25rem;
-  margin-top: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.625rem;
-  background-color: #f9fafb;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1.25rem;
 }
 
-html.dark .skill-cta-command {
-  border-color: #334155;
-  background-color: #111827;
+.runtime-cta-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
 }
 
-.prose-content .skill-cta-command code {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
+.runtime-cta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
   line-height: 1.5;
-  white-space: normal;
-  word-break: normal;
-  overflow-wrap: anywhere;
-  color: #111827;
+  color: #4b5563;
 }
 
-html.dark .prose-content .skill-cta-command code {
-  border: 0;
-  background: none;
-  color: #f3f4f6;
+html.dark .runtime-cta-item {
+  color: #9ca3af;
 }
 
-.skill-cta-command button {
+.runtime-cta-item svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.runtime-cta-action {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  min-width: 6.5rem;
   padding: 0.625rem 1rem;
-  border: 0;
   border-radius: 0.375rem;
   background-color: #2563eb;
   font-family: var(--font-label);
   font-size: 0.875rem;
-  font-weight: 400;
   color: #fff;
-  cursor: pointer;
   transition: background-color 0.15s;
 }
 
-.skill-cta-command button:hover {
+.runtime-cta:hover .runtime-cta-action {
   background-color: #1d4ed8;
 }
 
-html.dark .skill-cta-command button {
+html.dark .runtime-cta-action {
   background-color: #60a5fa;
   color: #111827;
 }
 
-html.dark .skill-cta-command button:hover {
+html.dark .runtime-cta:hover .runtime-cta-action {
   background-color: #93c5fd;
 }
 
-.skill-cta-command button svg {
+.runtime-cta-action svg {
   width: 1rem;
   height: 1rem;
-}
-
-.prose-content ul.skill-cta-agents {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  margin: 0.75rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.prose-content ul.skill-cta-agents li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin: 0;
-  padding: 0;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: #6b7280;
-}
-
-.prose-content ul.skill-cta-agents li::before {
-  content: none;
-}
-
-.prose-content ul.skill-cta-agents svg {
-  width: 0.875rem;
-  height: 0.875rem;
-  flex-shrink: 0;
-}
-
-html.dark .prose-content ul.skill-cta-agents li {
-  color: #9ca3af;
 }
 
 /* Agent story. `stage` is the one viewport width where the story splits into
