@@ -152,13 +152,7 @@ The current version of the specification is {latestVersion}.
   <span class="cta-label">Runtimes</span>
   <span class="cta-title">Choose a runtime to build with</span>
   <span class="cta-description">A runtime executes Standard Agents. Choose one to create a project and build your first agent. An agent that follows the specification runs the same way in each runtime.</span>
-  <span class="runtime-cta-row">
-    <span class="runtime-cta-list">
-      <span class="runtime-cta-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" fill="currentColor" aria-hidden="true"><path d="M44.06,0v44.08H0v105.92h105.93v-44.07h44.07V0H44.06ZM19.09,130.91c-16.47-16.47-5.29-54.45,24.96-85.18v60.2h60.23c-30.73,30.27-68.71,41.47-85.2,24.98ZM105.93,104.29v-60.21h-60.21C76.46,13.8,114.42,2.6,130.91,19.09c16.51,16.49,5.31,54.47-24.98,85.2Z"/></svg>Standard Agents Builder</span>
-      <span class="runtime-cta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Your runtime</span>
-    </span>
-    <span class="runtime-cta-action">View available runtimes<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
-  </span>
+  <span class="runtime-cta-action">View available runtimes<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
 </a>
 
 <div class="footer-cta">
