@@ -35,6 +35,6 @@ The list is open to every runtime that implements the specification, whoever bui
 You can submit an entry in either of two ways:
 
 - **Discord.** Post the four details in the [Discord](https://discord.gg/GrdTtPZq7V). Anyone can do this. A maintainer opens the pull request for you.
-- **Pull request.** Open a pull request against the [specification repository](https://github.com/standardagents/standardagentspec.com) that adds a card with its logo to the list in `src/data/runtimes.md`, in alphabetical order. This needs access to the repository.
+- **Pull request.** Open a pull request against the [specification repository](https://github.com/standardagents/spec) that adds a card with its logo to the list in `src/data/runtimes.md`, in alphabetical order. This needs access to the repository.
 
 A listed runtime must be available for other people to use, and its entry must stay factual. The maintainers review an entry for accuracy only. They do not rank runtimes.
