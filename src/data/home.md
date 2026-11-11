@@ -18,6 +18,14 @@ The current version of the specification is {latestVersion}.
 
 <p class="section-intro">Because everyone is building agents, but none of us can share them. We believe agents need a standards movement led by practitioners like you — much like the one that grew the early web into the rich ecosystem that we all enjoy today.</p>
 
+<div class="talk-card">
+  <div class="talk-card-body">
+    <span class="talk-card-title">Watch the announcement at AI Engineer 2026 in San Francisco</span>
+    <span class="talk-card-description">Justin Schroeder introduces the Standard Agent Specification and gives a comprehensive overview of why agents need a shared standard.</span>
+  </div>
+  <iframe src="https://www.youtube-nocookie.com/embed/3Krz7Rdd4JI" title="Every Company Is Building Agents That Can't Work Together — Justin Schroeder, Standard Agents" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div>
+
 <div data-agent-story></div>
 
 ## Anatomy of the Specification
