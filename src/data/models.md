@@ -24,6 +24,7 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 - MiniMax M3 doubles to 0.60 / 2.40 as a step function when a request's input crosses 512K tokens.
 - GLM prices use the listed OpenRouter rates for `z-ai/glm-5.1` and `z-ai/glm-4.7-flash`.
 - Nemotron prices use the listed OpenRouter rates for `nvidia/nemotron-3-ultra-550b-a55b` and `nvidia/nemotron-3-super-120b-a12b`.
+- Grok prices are xAI list prices for requests under 200K input tokens; larger requests bill at double. Each `x_search` call has its own fee on top of token cost. xAI's live model list no longer includes the `grok-4-1-fast` models.
 - `conversation` estimates how natural, coherent, and useful the model feels in multi-turn chat, separate from raw reasoning or coding strength.
 - `imageGeneration` measures native image-output capability, not just image understanding.
 
@@ -36,6 +37,7 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 - Cerebras: Best when raw speed matters most, especially for high-throughput inference and low-latency open-model serving.
 - Groq: Best for extremely fast token generation, responsive chat UX, and cheap real-time workloads where latency dominates.
 - Cloudflare Workers AI: Best when you want inference close to the edge, simple deployment inside Cloudflare, and tight integration with Worker-based apps.
+- xAI: The only provider with live X search (`x_search`, a provider tool on every xAI language model). Use it when an agent must read current posts on X.
 
 ## Data
 
@@ -361,6 +363,26 @@ All prices are in USD and shown as cost per 1M input tokens / 1M output tokens.
 				"conversation": 2
 			},
 			"summary": "Sparse open-weight MoE (only 3B active) that is very fast and cheap to serve — including on local hardware. Surprisingly strong coding for its activation size; keep tool sets small and prompts explicit, as discernment thins out with breadth."
+		},
+		{
+			"name": "grok-4.20-0309-non-reasoning",
+			"bestFor": "Live X search at the lowest Grok price",
+			"price": "1.25 / 2.50",
+			"scores": {
+				"reasoning": 2,
+				"coding": 2,
+				"toolUse": 3,
+				"instructionFollowing": 3,
+				"longContext": 4,
+				"vision": 3,
+				"imageGeneration": 0,
+				"structuredOutput": 3,
+				"speed": 3,
+				"costEfficiency": 2,
+				"reliability": 3,
+				"conversation": 3
+			},
+			"summary": "xAI's lowest-priced general Grok model on the live model list, and the default choice for an agent that searches X with the `x_search` provider tool. `grok-4.20-0309-reasoning` has the same price and adds reasoning; `grok-4.3` is the same price tier."
 		}
 	]
 }
