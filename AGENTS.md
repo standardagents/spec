@@ -15,9 +15,11 @@ Standard Agent Specification website - documentation for the Standard Agent Spec
 pnpm dev      # Start dev server
 pnpm build    # Build for production (static)
 pnpm preview  # Preview production build
-pnpm deploy   # Deploy to Cloudflare Pages
+pnpm deploy   # Deploy to Cloudflare Pages, then rebuild standardagents.ai
 pnpm test     # Build, then check the built site in dist/ (tests/site.test.mjs)
 ```
+
+`pnpm deploy` then calls the standardagents.ai deploy hook in `STANDARDAGENTS_AI_DEPLOY_HOOK`, because that site copies this site's `llms-full.txt` at build time. Without the variable, the step prints a notice and the deploy still succeeds.
 
 `pnpm dev` and `pnpm build` clear Astro's generated caches first. This avoids stale content-store warnings in long-lived worktrees when content files are renamed or moved.
 
@@ -127,6 +129,7 @@ src/
 │   ├── runtimes.md.ts                 # Runtimes raw markdown
 │   ├── [...slug].md.ts                # Raw markdown endpoint
 │   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
+│   ├── llms-full.txt.ts               # Every latest-version page in one markdown file
 │   ├── robots.txt.ts                  # robots.txt, which names the sitemap
 │   ├── og.png.ts                      # Share image, rendered from src/assets/og.svg
 │   ├── 404.astro                      # Page for unknown URLs, served with status 404

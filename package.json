@@ -10,7 +10,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "wrangler pages deploy dist",
+    "deploy": "wrangler pages deploy dist && node scripts/rebuild-standardagents-ai.mjs",
     "test": "pnpm build && node --test tests/*.test.mjs"
   },
   "dependencies": {

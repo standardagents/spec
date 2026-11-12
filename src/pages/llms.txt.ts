@@ -13,6 +13,7 @@ export const GET: APIRoute = async ({ site }) => {
     '',
     'This file lists the latest-version documentation as raw markdown links.',
     '',
+    `All pages in one file: ${BASE_URL}/llms-full.txt`,
     `Current models guide: ${BASE_URL}/models.md`,
     '',
     'Documentation:',
