@@ -127,6 +127,7 @@ src/
 │   ├── runtimes.md.ts                 # Runtimes raw markdown
 │   ├── [...slug].md.ts                # Raw markdown endpoint
 │   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
+│   ├── llms-full.txt.ts               # Every latest-version page in one markdown file
 │   ├── robots.txt.ts                  # robots.txt, which names the sitemap
 │   ├── og.png.ts                      # Share image, rendered from src/assets/og.svg
 │   ├── 404.astro                      # Page for unknown URLs, served with status 404

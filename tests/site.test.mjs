@@ -62,6 +62,15 @@ test('llms.txt links to the canonical domain', () => {
   assert.deepEqual(urls.filter((url) => !url.startsWith(`${ORIGIN}/`)), [])
 })
 
+test('llms-full.txt holds every page that llms.txt lists', () => {
+  const full = read('llms-full.txt')
+  const sources = [...full.matchAll(/^Source: (\S+)$/gm)].map((match) => match[1])
+  const listed = [...read('llms.txt').matchAll(/^\s*- [^:]+: (\S+)\.md$/gm)]
+    .map((match) => match[1].replace(/\/index$/, '/'))
+  assert.deepEqual(sources, listed)
+  assert.ok(read('llms.txt').includes(`${ORIGIN}/llms-full.txt`))
+})
+
 test('a 404 page exists and is kept out of search', () => {
   // Cloudflare Pages serves a top-level 404.html with status 404 for unknown
   // URLs. Without it, Pages serves the homepage with status 200.
