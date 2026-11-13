@@ -225,7 +225,7 @@ export const openai: ProviderFactoryWithOptions<typeof openaiProviderOptions> =
 When you use this provider with `defineModel`, TypeScript automatically infers the correct type for `providerOptions`:
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { openai } from '@standardagents/openai';
 
 export default defineModel({
@@ -315,7 +315,7 @@ providerOptions: {
 `providerOptions` is the intended home for sampling and generation parameters — `temperature`, `top_p`, `top_k`, `max_tokens`, `min_p`, seeds, and penalty settings. `defineModel` deliberately has no first-class fields for these: the right values are model-family-specific (one model wants `temperature: 0.3` for deterministic tool loops, another's vendor recommends `1.0` and degrades below it), so they belong on the model definition, next to the model they tune. Options set here are merged onto every request made with the model, after the runtime's standard fields, so they also act as overrides.
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { novita } from '@standardagents/novita';
 
 export default defineModel({
@@ -342,7 +342,7 @@ A prompt can set a [reasoning level and visibility](/0.2.0/specification/prompts
 ### 9.1 Basic Model Definition
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { openai } from '@standardagents/openai';
 
 export default defineModel({
@@ -355,7 +355,7 @@ export default defineModel({
 ### 9.2 Model with Pricing and Capabilities
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { openai } from '@standardagents/openai';
 
 export default defineModel({
@@ -376,7 +376,7 @@ export default defineModel({
 ### 9.3 Model with Reasoning Levels
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { openai } from '@standardagents/openai';
 
 export default defineModel({
@@ -396,7 +396,7 @@ export default defineModel({
 ### 9.4 Model with Fallback Chain
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { openai } from '@standardagents/openai';
 
 export default defineModel({
@@ -412,7 +412,7 @@ export default defineModel({
 ### 9.5 OpenRouter with Typed Provider Options
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { openrouter } from '@standardagents/openrouter';
 
 export default defineModel({
@@ -441,7 +441,7 @@ export default defineModel({
 ### 9.6 OpenAI with Typed Provider Options
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { openai } from '@standardagents/openai';
 
 export default defineModel({
@@ -461,7 +461,7 @@ export default defineModel({
 ### 9.7 Model with Provider Tools
 
 ```typescript
-import { defineModel } from '@standardagents/builder';
+import { defineModel } from '@standardagents/spec';
 import { openai } from '@standardagents/openai';
 
 export default defineModel({

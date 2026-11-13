@@ -52,7 +52,17 @@ export default defineHook({
   hook: 'filter_messages',
   id: 'limit_to_20_messages',
   execute: async (state, messages) => {
-    return messages.slice(-20);
+    let start = Math.max(0, messages.length - 20);
+    for (let i = messages.length - 1; i >= start; i--) {
+      const result = messages[i];
+      if (result.role !== 'tool' || !result.tool_call_id) continue;
+      const callIndex = messages.findIndex((message) => {
+        const calls = JSON.parse(message.tool_calls || '[]') as { id: string }[];
+        return calls.some((call) => call.id === result.tool_call_id);
+      });
+      if (callIndex >= 0) start = Math.min(start, callIndex);
+    }
+    return messages.slice(start);
   },
 });
 ```
@@ -242,8 +252,17 @@ defineHook({
   hook: 'filter_messages',
   id: 'limit_recent_messages',
   execute: async (state, messages) => {
-    // Only include last 20 messages
-    return messages.slice(-20);
+    let start = Math.max(0, messages.length - 20);
+    for (let i = messages.length - 1; i >= start; i--) {
+      const result = messages[i];
+      if (result.role !== 'tool' || !result.tool_call_id) continue;
+      const callIndex = messages.findIndex((message) => {
+        const calls = JSON.parse(message.tool_calls || '[]') as { id: string }[];
+        return calls.some((call) => call.id === result.tool_call_id);
+      });
+      if (callIndex >= 0) start = Math.min(start, callIndex);
+    }
+    return messages.slice(start);
   },
 });
 ```
@@ -652,8 +671,17 @@ export default defineHook({
   hook: 'filter_messages',
   id: 'limit_to_50_messages',
   execute: async (state, messages) => {
-    // Keep only the most recent 50 messages
-    return messages.slice(-50);
+    let start = Math.max(0, messages.length - 50);
+    for (let i = messages.length - 1; i >= start; i--) {
+      const result = messages[i];
+      if (result.role !== 'tool' || !result.tool_call_id) continue;
+      const callIndex = messages.findIndex((message) => {
+        const calls = JSON.parse(message.tool_calls || '[]') as { id: string }[];
+        return calls.some((call) => call.id === result.tool_call_id);
+      });
+      if (callIndex >= 0) start = Math.min(start, callIndex);
+    }
+    return messages.slice(start);
   },
 });
 ```
@@ -751,11 +779,14 @@ export default defineHook({
   execute: async (state, message) => {
     return {
       ...message,
-      metadata: JSON.stringify({
-        flow_id: state.execution.flowId,
-        step: state.execution.stepCount,
-        side: state.execution.currentSide,
-      }),
+      metadata: {
+        ...message.metadata,
+        ...(state.execution ? {
+          flow_id: state.execution.flowId,
+          step: state.execution.stepCount,
+          side: state.execution.currentSide,
+        } : {}),
+      },
     };
   },
 });

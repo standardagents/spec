@@ -625,6 +625,7 @@ export default definePrompt({
 Call schedule_reminder with what the person wants to remember.
 Then tell the person that the reminder arrives in 24 hours.`,
   includeChat: true,
+  includePastTools: true,
   tools: ['schedule_reminder'],
 });
 ```
