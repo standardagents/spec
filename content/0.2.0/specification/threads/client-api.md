@@ -439,7 +439,7 @@ type ThreadStreamFrame =
 4. The record in a `message_data` frame **MUST** have the same form as the record returned by message reads (§11): `attachments` is an array or `null`, and `silent` is a boolean. A runtime **MUST NOT** send a stored encoding of a field in place of that form.
 5. `message_chunk` carries a fragment of the visible content of the assistant message identified by `message_id`.
 6. `reasoning_chunk` carries a transient fragment of model reasoning that accompanies the assistant message identified by `message_id`.
-7. `event` carries one [`state.emit(eventType, data)`](/0.2.0/specification/threads#5-events) call. When the call passes no `data`, the frame's `data` is `null`.
+7. `event` carries one [`state.emit(eventType, data)`](/0.2.0/specification/threads#5-events) call, or one thread event that the runtime broadcasts itself, such as [`tool_call_started`](/0.2.0/specification/hooks#51-tool_call_started) and [`tool_call_done`](/0.2.0/specification/hooks#55-tool_call_done). When the call passes no `data`, the frame's `data` is `null`.
 8. The `depth` of a `message_data`, `message_chunk`, or `reasoning_chunk` frame **MUST** equal the `depth` of the message identified by `message_id`.
 
 ### 16.2 Delivery
