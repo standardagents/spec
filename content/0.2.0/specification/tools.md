@@ -65,7 +65,7 @@ Semantics:
 
 ## 4. Prompt Tool Configuration
 
-When a prompt is used as a tool, callers can configure return shaping and initial input mapping:
+When a prompt is used as a tool, callers can configure text result serialization and initial input mapping. Generated file attachments follow [Prompts §3.3.1](/0.2.0/specification/prompts#331-generated-file-attachments). The text serialization options do not suppress these attachments.
 
 ```typescript
 interface SubpromptConfig {
