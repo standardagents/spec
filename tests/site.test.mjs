@@ -137,3 +137,61 @@ test('pages tell Cloudflare to leave email addresses alone', () => {
   assert.ok(open !== -1 && open < html.indexOf('<main'))
   assert.ok(close > html.lastIndexOf('example.com'))
 })
+
+// The model scout's gateway (agent.standardagentbuilder.com,
+// gateway/model-scout-policy.ts) accepts proposals for exactly these
+// categories, in this order. Change both together.
+const MODEL_CATEGORIES = [
+  'frontier',
+  'workhorse',
+  'open_workhorse',
+  'code_review',
+  'orchestrator',
+  'ui',
+  'ultra_cheap',
+  'decision',
+  'image',
+  'vision',
+]
+
+function modelsGuide() {
+  const markdown = read('models.md')
+  const block = /```json\n([\s\S]*?)\n```/.exec(markdown.slice(markdown.indexOf('\n## Data')))
+  assert.ok(block, 'models.md has a json block under "## Data"')
+  return { markdown, data: JSON.parse(block[1]) }
+}
+
+test('the models guide carries the recommendation data', () => {
+  const { markdown, data } = modelsGuide()
+  assert.match(data.updated, /^\d{4}-\d{2}-\d{2}$/)
+  assert.deepEqual(data.categories.map((category) => category.id), MODEL_CATEGORIES)
+  const prose = markdown.slice(0, markdown.indexOf('\n## Data'))
+  const seen = new Set()
+  for (const pick of data.recommendations) {
+    assert.ok(MODEL_CATEGORIES.includes(pick.category), `${pick.category} is a known category`)
+    assert.ok(!seen.has(pick.category), `${pick.category} has one recommendation`)
+    seen.add(pick.category)
+    for (const field of ['name', 'provider', 'model', 'price', 'why']) {
+      assert.ok(pick[field], `${pick.category} has ${field}`)
+    }
+    assert.ok(pick.modalities.input.length > 0 && pick.modalities.output.length > 0)
+    assert.equal(typeof pick.openWeights, 'boolean')
+    // The table a coding agent reads must name every recommended model.
+    assert.ok(prose.includes(pick.model), `the guide's table names ${pick.model}`)
+  }
+  assert.ok(data.models.length > 0)
+})
+
+test('the Recommended Models page shows every category and pick', () => {
+  const { data } = modelsGuide()
+  const page = read('models/index.html')
+  for (const category of data.categories) {
+    assert.ok(page.includes(`data-model-category="${category.id}"`), `${category.id} has a card`)
+  }
+  for (const pick of data.recommendations) {
+    assert.ok(page.includes(pick.model), `the page shows ${pick.model}`)
+  }
+  const open = data.categories.length - data.recommendations.length
+  assert.equal(page.split('No pick yet.').length - 1, open)
+  assert.ok(read('sitemap-0.xml').includes(`${ORIGIN}/models/`))
+})

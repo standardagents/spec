@@ -83,6 +83,25 @@ theme. The open card shows a dashed placeholder in the same position. Keep each
 entry factual and neutral: the specification is independently governed, so the
 page does not rank, endorse, or certify a runtime.
 
+The Recommended Models page at `/models` is built by `src/pages/models.astro`
+from the JSON block under `## Data` in `src/data/models.md`, and every
+version's navigation links to it. That file is the single source: `/models.md`
+serves it as written, and `agents current-models` prints it for coding agents.
+The data block holds `updated`, `categories`, `recommendations` (at most one
+per category, each with its provider, model ID, price, modalities, and
+alternatives), and the wider `models` catalog. A category with no
+recommendation shows a dashed "No pick yet" card. `src/lib/models.ts` reads the
+block, and a malformed block fails the build.
+
+The model scout, an agent in the `agent.standardagentbuilder.com` project,
+proposes changes to this file by pull request. Its gateway accepts the ten
+category IDs that `tests/site.test.mjs` lists, in that order, and it rejects a
+proposal that changes the `categories` block. To add, rename, or remove a
+category, change the gateway's list, the test's list, and the guide together.
+Keep the table under "Recommended models" in step with `recommendations`,
+because the gateway and the test both require every recommended model ID to
+appear there.
+
 Older version folders are archived, immutable content. Edit only the current
 version's folder; the version selector and `llms.txt` derive the latest
 version automatically from the folder names.
@@ -119,6 +138,7 @@ src/
 │   ├── rehype-file-viewers.mjs    # Builds file viewers from code fences
 │   ├── rehype-inline-diagrams.mjs # Inlines src/diagrams files at build time
 │   ├── latest-redirects.mjs       # Adds the /latest/ redirects to dist/_redirects
+│   ├── models.ts                  # Reads the data block of the models guide
 │   └── remark-faux-threads.mjs    # Renders ```thread fences as static threads
 ├── pages/
 │   ├── index.astro                    # Homepage, rendered from src/data/home.md
@@ -133,6 +153,7 @@ src/
 │   ├── robots.txt.ts                  # robots.txt, which names the sitemap
 │   ├── og.png.ts                      # Share image, rendered from src/assets/og.svg
 │   ├── 404.astro                      # Page for unknown URLs, served with status 404
+│   ├── models.astro                   # Recommended Models page, built from the data block in src/data/models.md
 │   ├── models.md.ts                   # Live curated models markdown endpoint
 │   ├── api/navigation/[version].json.ts
 │   └── [version]/
