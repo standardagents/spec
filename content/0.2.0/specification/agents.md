@@ -241,7 +241,7 @@ defineAgent({
   sideB: {
     label: 'Reviewer',
     prompt: 'asset_reviewer',
-    stopOnResponse: false,
+    stopOnResponse: true,
     sessionStop: {
       name: 'approve_asset',
       messageProperty: 'summary',
