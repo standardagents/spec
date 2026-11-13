@@ -159,6 +159,7 @@ export default defineTool({
     await parent.queueMessage({
       role: 'user',
       content: text,
+      silent: true,
       metadata: { relay_reply: true },
     });
     return { status: 'success', result: text };
@@ -170,6 +171,7 @@ The child's prompt lists `reply_to_user` in `tools`.
 Its prompt instructs the model to call this tool with its answer.
 The child's prompt-backed side binds `sessionStop: { name: 'reply_to_user', messageProperty: 'text' }`.
 The tool queues the answer with an application-defined `relay_reply` flag.
+The queued message is silent, so the person's conversation does not show it as a user message.
 The parent handler displays that answer with `injectMessage`.
 The relationship uses `parentCommunication: 'explicit'` to suppress implicit completion messages.
 The flag is part of this application's message protocol.
