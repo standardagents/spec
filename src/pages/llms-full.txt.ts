@@ -4,6 +4,7 @@ import { getLatestVersion, getNavigation, resolveLatestLinks } from '../lib/cont
 import { rawContent as homeContent } from '../data/home.md'
 import { rawContent as communityContent } from '../data/community.md'
 import { rawContent as runtimesContent } from '../data/runtimes.md'
+import modelsContent from '../data/models.md?raw'
 
 // Every page of the latest version as Markdown, in navigation order, for
 // coding agents and answer engines that read a whole site in one request.
@@ -12,6 +13,8 @@ const unversioned: Record<string, () => string> = {
   '/': homeContent,
   '/community': communityContent,
   '/runtimes': runtimesContent,
+  // The Recommended Models page is built from the models guide, so the guide is its Markdown.
+  '/models': () => modelsContent,
 }
 
 export const GET: APIRoute = async ({ site }) => {

@@ -1,0 +1,142 @@
+---
+import type { MarkdownHeading } from 'astro'
+import DocLayout from '../layouts/DocLayout.astro'
+import DocColumn from '../components/DocColumn.astro'
+import PageActions from '../components/PageActions.astro'
+import PageNavigation from '../components/PageNavigation.astro'
+import { getLatestVersion, getPrevNextPages } from '../lib/content'
+import { formatUpdated, parseModelsGuide, providerLabel } from '../lib/models'
+import modelsContent from '../data/models.md?raw'
+
+const version = await getLatestVersion()
+const guide = parseModelsGuide(modelsContent)
+const picks = new Map(guide.recommendations.map((pick) => [pick.category, pick]))
+const { prev, next } = await getPrevNextPages(version, '/models')
+
+const headings: MarkdownHeading[] = [
+  { depth: 2, slug: 'recommendations', text: 'Recommendations' },
+  ...guide.categories.map((category) => ({ depth: 3, slug: category.id, text: category.label })),
+  { depth: 2, slug: 'how-a-model-is-chosen', text: 'How a Model Is Chosen' },
+  { depth: 2, slug: 'catalog', text: 'Catalog' },
+]
+---
+
+<DocLayout
+  title="Recommended Models - Standard Agent Specification"
+  version={version}
+  currentPath="/models"
+  headings={headings}
+>
+  <DocColumn headings={headings}>
+    <PageActions markdownUrl="/models.md" />
+    <article class="prose-content is-overview">
+      <h1>Recommended Models</h1>
+      <p class="section-intro">One model for each kind of work. Each is a starting point that people who build agents have tested in real use.</p>
+      <p>
+        Prices are in USD for 1M input tokens / 1M output tokens. The list was updated on
+        <time datetime={guide.updated}>{formatUpdated(guide.updated)}</time>. Coding agents read the same
+        list as Markdown at <a href="/models.md">/models.md</a>, or with <code>agents current-models</code>.
+      </p>
+
+      <h2 id="recommendations">Recommendations</h2>
+      <div class="model-list">
+        {guide.categories.map((category) => {
+          const pick = picks.get(category.id)
+          return (
+            <section class:list={['model-card', { 'is-open': !pick }]} data-model-category={category.id}>
+              <h3 id={category.id} class="model-category">{category.label}</h3>
+              <p class="model-category-description">{category.description}</p>
+              {pick ? (
+                <>
+                  <p class="model-name">{pick.name}</p>
+                  <p class="model-id">
+                    <span>{providerLabel(pick.provider)}</span>
+                    <code>{pick.model}</code>
+                  </p>
+                  <dl class="model-facts">
+                    <div>
+                      <dt>Price</dt>
+                      <dd>{pick.price}</dd>
+                    </div>
+                    <div>
+                      <dt>Input</dt>
+                      <dd>{pick.modalities.input.join(', ')}</dd>
+                    </div>
+                    <div>
+                      <dt>Output</dt>
+                      <dd>{pick.modalities.output.join(', ')}</dd>
+                    </div>
+                    <div>
+                      <dt>Weights</dt>
+                      <dd>{pick.openWeights ? 'Open' : 'Closed'}</dd>
+                    </div>
+                  </dl>
+                  <p class="model-why">{pick.why}</p>
+                  {pick.alternatives.length > 0 && (
+                    <div class="model-alternatives">
+                      <p class="model-alternatives-label">Alternatives</p>
+                      <ul>
+                        {pick.alternatives.map((alternative) => (
+                          <li>
+                            <strong>{alternative.name}</strong>
+                            <code>{alternative.model}</code>
+                            <span>{alternative.price}</span>
+                            <span class="model-alternative-note">{alternative.note}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p class="model-empty">No pick yet. No model has been judged for this category.</p>
+              )}
+            </section>
+          )
+        })}
+      </div>
+
+      <h2 id="how-a-model-is-chosen">How a Model Is Chosen</h2>
+      <p>
+        A new model is judged at least three days after its release, so that people have used it for real
+        work. It is compared with the current pick in its category on three things:
+      </p>
+      <ul>
+        <li><strong>What practitioners report</strong> counts for the most. Reports that show work outweigh opinions.</li>
+        <li><strong>Independent benchmarks</strong> count for about a third.</li>
+        <li><strong>Price</strong> decides between models of similar quality. The cheaper model wins.</li>
+      </ul>
+      <p>
+        A new model replaces a pick only when it is clearly the better default. A person reviews every change
+        to this list.
+      </p>
+
+      <h2 id="catalog">Catalog</h2>
+      <p>
+        Other models worth knowing. They are alternatives, and the recommendations above take precedence. The
+        <a href="/models.md">Markdown guide</a> has the scores and the pricing notes for each one.
+      </p>
+      <div class="table-wrapper">
+        <table class="model-catalog">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Best for</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {guide.models.map((model) => (
+              <tr>
+                <td>{model.name}</td>
+                <td>{model.bestFor}</td>
+                <td class="model-price">{model.price}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </article>
+    <PageNavigation prev={prev} next={next} />
+  </DocColumn>
+</DocLayout>
