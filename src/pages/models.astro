@@ -116,24 +116,26 @@ const headings: MarkdownHeading[] = [
         Other models worth knowing. They are alternatives, and the recommendations above take precedence. The
         <a href="/models.md">Markdown guide</a> has the scores and the pricing notes for each one.
       </p>
-      <table class="model-catalog">
-        <thead>
-          <tr>
-            <th>Model</th>
-            <th>Best for</th>
-            <th>Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {guide.models.map((model) => (
+      <div class="table-wrapper">
+        <table class="model-catalog">
+          <thead>
             <tr>
-              <td>{model.name}</td>
-              <td>{model.bestFor}</td>
-              <td class="model-price">{model.price}</td>
+              <th>Model</th>
+              <th>Best for</th>
+              <th>Price</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {guide.models.map((model) => (
+              <tr>
+                <td>{model.name}</td>
+                <td>{model.bestFor}</td>
+                <td class="model-price">{model.price}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </article>
     <PageNavigation prev={prev} next={next} />
   </DocColumn>

@@ -60,25 +60,66 @@ export function providerLabel(id: string): string {
   return PROVIDER_LABELS[id] ?? id
 }
 
+const MODALITIES = ['text', 'image', 'audio', 'video', 'file']
+
+function fail(message: string): never {
+  throw new Error(`src/data/models.md: ${message}`)
+}
+
+function requireText(value: unknown, where: string) {
+  if (typeof value !== 'string' || !value.trim()) fail(`${where} must be non-empty text`)
+}
+
+function requireModalities(value: unknown, where: string) {
+  const valid = Array.isArray(value) && value.length > 0 && value.every((item) => MODALITIES.includes(item))
+  if (!valid) fail(`${where} must list one or more of ${MODALITIES.join(', ')}`)
+}
+
 // A broken data block fails the build, so a bad edit never reaches the site.
 export function parseModelsGuide(markdown: string): ModelsGuide {
   const heading = markdown.indexOf('\n## Data')
   const block = heading < 0 ? null : /```json\n([\s\S]*?)\n```/.exec(markdown.slice(heading))
-  if (!block) throw new Error('src/data/models.md has no json block under "## Data"')
+  if (!block) fail('no json block under "## Data"')
   const data = JSON.parse(block[1]) as ModelsGuide
   for (const key of ['categories', 'recommendations', 'models'] as const) {
-    if (!Array.isArray(data[key])) throw new Error(`src/data/models.md: "${key}" must be an array`)
+    if (!Array.isArray(data[key])) fail(`"${key}" must be an array`)
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(data.updated ?? '')) {
-    throw new Error('src/data/models.md: "updated" must be a YYYY-MM-DD date')
+  if (typeof data.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data.updated)) {
+    fail('"updated" must be a YYYY-MM-DD date')
   }
-  const ids = new Set(data.categories.map((category) => category.id))
+
+  const ids = new Set<string>()
+  data.categories.forEach((category, index) => {
+    const where = `categories[${index}]`
+    for (const field of ['id', 'label', 'description'] as const) requireText(category?.[field], `${where}.${field}`)
+    if (ids.has(category.id)) fail(`category "${category.id}" is listed twice`)
+    ids.add(category.id)
+  })
+
   const used = new Set<string>()
-  for (const pick of data.recommendations) {
-    if (!ids.has(pick.category)) throw new Error(`src/data/models.md: unknown category "${pick.category}"`)
-    if (used.has(pick.category)) throw new Error(`src/data/models.md: "${pick.category}" has two recommendations`)
+  data.recommendations.forEach((pick, index) => {
+    const where = `recommendations[${index}]`
+    for (const field of ['category', 'name', 'provider', 'model', 'price', 'why'] as const) {
+      requireText(pick?.[field], `${where}.${field}`)
+    }
+    if (!ids.has(pick.category)) fail(`unknown category "${pick.category}"`)
+    if (used.has(pick.category)) fail(`"${pick.category}" has two recommendations`)
     used.add(pick.category)
-  }
+    requireModalities(pick.modalities?.input, `${where}.modalities.input`)
+    requireModalities(pick.modalities?.output, `${where}.modalities.output`)
+    if (typeof pick.openWeights !== 'boolean') fail(`${where}.openWeights must be true or false`)
+    if (!Array.isArray(pick.alternatives)) fail(`${where}.alternatives must be an array`)
+    pick.alternatives.forEach((alternative, position) => {
+      for (const field of ['name', 'provider', 'model', 'price', 'note'] as const) {
+        requireText(alternative?.[field], `${where}.alternatives[${position}].${field}`)
+      }
+    })
+  })
+
+  data.models.forEach((model, index) => {
+    requireText(model?.name, `models[${index}].name`)
+    requireText(model?.price, `models[${index}].price`)
+  })
   return data
 }
 
