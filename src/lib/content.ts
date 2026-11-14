@@ -14,7 +14,7 @@ export interface NavGroup {
 }
 
 // Group title mapping
-const groupTitles: Record<string, string> = {
+export const groupTitles: Record<string, string> = {
   'getting-started': 'Get Started',
   'guides': 'Guides',
   'specification': 'Specification',
