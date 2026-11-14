@@ -165,6 +165,7 @@ Queue semantics:
 - If the thread is executing, queued messages are injected before the next LLM request.
 - If the thread is idle, queueing forces a new turn.
 - Queued messages are processed in order.
+- A queued message pending delivery can be cancelled through [`deleteMessage()`](#6-deleting-messages).
 
 ## 5. Updating Messages
 
@@ -185,6 +186,20 @@ const deleted = await state.deleteMessage('msg-123');
 
 Returns `true` if the message was found and removed, `false` otherwise. Tool-result messages cascade with their parent assistant message.
 
+### 6.1 Cancelling a queued message
+
+A **message pending delivery** is a queued message that the runtime has accepted but has not yet admitted as conversation input to an execution step. Delivery starts at that admission. The `status: 'pending'` field alone does not establish that a message is pending delivery, because a message being generated can have the same status (§1).
+
+1. `deleteMessage(messageId)` **MUST** address a message pending delivery by its accepted ID, including the `messageId` returned by [Client API §12](/0.2.0/specification/threads/client-api#12-sending-a-message). This requirement applies before the conversation-history record is persisted.
+2. When the message is pending delivery, the runtime **MUST** cancel its delivery and remove any pending message record. The call **MUST** return `true`.
+3. The runtime **MUST** order cancellation atomically with the start of delivery. If cancellation occurs first, the runtime **MUST NOT** subsequently deliver the message. This guarantee **MUST** hold after the call resolves and across runtime recovery. The runtime **MUST** invalidate queued work that could deliver the cancelled message.
+4. If delivery starts first, `deleteMessage()` **MUST** apply the stored-message deletion semantics in §6. Deletion does not recall content consumed by a model or handler.
+5. The runtime **MUST** release attachment references held by the cancelled message. It **MUST** remove files stored solely for that message from the thread's filesystem. Files retained by another message **MUST** remain available.
+6. Cancellation **MUST NOT** change the relative delivery order of other queued messages.
+7. A cancelled message **MUST** be absent from subsequent `getMessage()` and `getMessages()` results. A later `deleteMessage()` call for that ID **MUST** return `false`.
+
+The corresponding HTTP cancellation result is specified in [Client API §13](/0.2.0/specification/threads/client-api#13-deleting-a-message).
+
 ## 7. Conformance Scenarios
 
 A conforming runtime **MUST** satisfy these portable scenarios.
@@ -198,3 +213,9 @@ A conforming runtime **MUST** satisfy these portable scenarios.
 | Inject from `filter_messages` | Lifecycle hooks run. Context assembly does not restart. The injected message is absent from the current provider request and eligible for the following assembly. |
 | Inject from `prefilter_llm_history` | Same snapshot assignment as injection from `filter_messages`. |
 | Inject from `after_system_message` | The message is persisted before the history snapshot. It is eligible for the current assembly and passes through `filter_messages`. |
+| Cancel before delivery on an idle or active thread | `deleteMessage()` returns `true`. The message is absent from later message reads. No later step receives it, including after runtime recovery. Other queued messages retain their relative order. |
+| Cancel before conversation-history persistence | A message accepted through Client API §12 can be deleted by its returned `messageId`. The DELETE returns `200 { "success": true }`. The message is never delivered. |
+| Race cancellation with delivery | Cancellation and admission to an execution step have a single order. If cancellation occurs first, delivery never starts. If delivery starts first, stored-message deletion applies. |
+| Delete after delivery starts | The stored message is removed under §6. Content consumed by a model or handler cannot be recalled. |
+| Cancel with attachments | The runtime releases the cancelled message's attachment references. Files stored solely for that message are removed. Files retained by another message remain available. |
+| Delete a cancelled or unknown ID | `deleteMessage()` returns `false`. The HTTP DELETE returns `404`. |
