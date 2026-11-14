@@ -1,0 +1,65 @@
+---
+import { getShareImages } from '../../lib/share-images'
+
+// A dev-only page at /dev/share-images that shows every page's share image.
+// The build has no path for this route, so it never ships.
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { preview: 'share-images' } }] : []
+}
+
+const images = await getShareImages()
+
+// Pages that cover each layout case: short and long titles, nested sections,
+// pages outside the versions, the homepage, and the archived version.
+const featured = [
+  '/',
+  '/community',
+  '/runtimes',
+  '/models',
+  '/0.2.0/specification/tools',
+  '/0.2.0/specification/type-registry',
+  '/0.2.0/specification/threads/client-api',
+  '/0.2.0/specification/threads/execution-state',
+  '/0.2.0/getting-started/examples',
+  '/0.2.0/distribution/packaging',
+  '/0.1.0/getting-started/overview',
+  '/0.1.0/specification/threads/runtime-streams',
+]
+const groups = [
+  { heading: 'Representative pages', list: featured.map((page) => images.find((image) => image.page === page)!).filter(Boolean) },
+  { heading: 'Other pages', list: images.filter((image) => !featured.includes(image.page)) },
+]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Share images</title>
+    <style>
+      body { margin: 0; padding: 32px 16px; background: #f9fafb; color: #111827; font: 15px/1.5 system-ui, sans-serif; }
+      h1 { margin: 40px auto 24px; max-width: 1280px; font-size: 22px; font-weight: 600; }
+      ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 24px; margin: 0 auto; max-width: 1280px; padding: 0; list-style: none; }
+      img { display: block; width: 100%; height: auto; border-radius: 8px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.2); }
+      a { color: #1d4ed8; font-family: ui-monospace, Menlo, monospace; font-size: 13px; overflow-wrap: anywhere; }
+      @media (prefers-color-scheme: dark) { body { background: #030712; color: #f3f4f6; } a { color: #60a5fa; } }
+    </style>
+  </head>
+  <body>
+    {groups.map((group) => (
+      <section>
+        <h1>{group.heading} ({group.list.length})</h1>
+        <ul>
+          {group.list.map((image) => (
+            <li>
+              <img src={`/og/${image.image}.png`} alt={image.alt} width="1200" height="630" loading="lazy" />
+              <a href={image.page}>{image.page}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </body>
+</html>

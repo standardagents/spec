@@ -1,6 +1,7 @@
 ---
 import { ClientRouter } from 'astro:transitions'
 import '../styles/global.css'
+import { getShareImage } from '../lib/share-images'
 
 interface Props {
   title?: string
@@ -15,8 +16,11 @@ const {
   noindex = false
 } = Astro.props
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site)
-const shareImage = new URL('/og.png', Astro.site)
-const shareImageAlt = 'Standard Agent Specification'
+// A page with its own share image (src/lib/share-images.ts) names it. Any other
+// page, such as the 404 page, names the default image.
+const pageImage = await getShareImage(Astro.url.pathname)
+const shareImage = new URL(pageImage ? `/og/${pageImage.image}.png` : '/og.png', Astro.site)
+const shareImageAlt = pageImage ? pageImage.alt : 'Standard Agent Specification'
 ---
 
 <!DOCTYPE html>
