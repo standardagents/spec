@@ -29,8 +29,23 @@ const ACCENT = '#60a5fa'
 const BRAND = '#e5e7eb'
 const QUIET = '#9ca3af'
 
-const MARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><path fill="#f3f4f6" d="M44.06,0v44.08H0v105.92h105.93v-44.07h44.07V0H44.06ZM19.09,130.91c-16.47-16.47-5.29-54.45,24.96-85.18v60.2h60.23c-30.73,30.27-68.71,41.47-85.2,24.98ZM105.93,104.29v-60.21h-60.21C76.46,13.8,114.42,2.6,130.91,19.09c16.51,16.49,5.31,54.47-24.98,85.2Z"/></svg>`
-const MARK_URI = `data:image/svg+xml;base64,${Buffer.from(MARK).toString('base64')}`
+// The Standard Agents logo mark (src/components/LogoMark.astro).
+const MARK_PATH =
+  'M44.06,0v44.08H0v105.92h105.93v-44.07h44.07V0H44.06ZM19.09,130.91c-16.47-16.47-5.29-54.45,24.96-85.18v60.2h60.23c-30.73,30.27-68.71,41.47-85.2,24.98ZM105.93,104.29v-60.21h-60.21C76.46,13.8,114.42,2.6,130.91,19.09c16.51,16.49,5.31,54.47-24.98,85.2Z'
+
+function markUri(fill: string, opacity = 1): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><path fill="${fill}" fill-opacity="${opacity}" d="${MARK_PATH}"/></svg>`
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+}
+
+const MARK_URI = markUri('#f3f4f6')
+
+// A large, faint copy of the mark sits behind the text and bleeds off the
+// right edge, top, and bottom of the image.
+const WATERMARK_SIZE = 700
+const WATERMARK_RIGHT = -190
+const WATERMARK_TOP = (HEIGHT - WATERMARK_SIZE) / 2
+const WATERMARK_URI = markUri(TITLE, 0.05)
 
 function fontFile(pkg: string, file: string): Buffer {
   return readFileSync(join(process.cwd(), 'node_modules', '@fontsource', pkg, 'files', file))
@@ -168,16 +183,27 @@ export async function renderShareImage(image: ShareImage): Promise<Buffer> {
   const root = el(
     'div',
     {
+      position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
+      overflow: 'hidden',
       boxSizing: 'border-box',
       width: WIDTH,
       height: HEIGHT,
       padding: PADDING,
       backgroundColor: BACKGROUND,
     },
-    [brand, el('div', { display: 'flex', flexDirection: 'column' }, [section, title])],
+    [
+      el(
+        'img',
+        { position: 'absolute', top: WATERMARK_TOP, right: WATERMARK_RIGHT, width: WATERMARK_SIZE, height: WATERMARK_SIZE },
+        undefined,
+        { src: WATERMARK_URI, width: WATERMARK_SIZE, height: WATERMARK_SIZE },
+      ),
+      brand,
+      el('div', { display: 'flex', flexDirection: 'column' }, [section, title]),
+    ],
   )
 
   const svg = await satori(root as Parameters<typeof satori>[0], { width: WIDTH, height: HEIGHT, fonts: satoriFonts })
