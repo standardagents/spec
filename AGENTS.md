@@ -286,6 +286,17 @@ Build every absolute URL from it, and never write the domain in a page or endpoi
   `<!--email_off-->` comments, so a code sample shows `user@example.com`
   unchanged while the zone's email obfuscation is on.
 
+- **Structured data:** `src/components/StructuredData.astro` emits one JSON-LD
+  graph on each indexable page. It includes WebSite, Organization, CreativeWork,
+  and WebPage nodes. Pages other than the homepage include a BreadcrumbList.
+  The organization ID is `https://standardagents.ai/#organization` on both sites.
+  The latest specification ID is `https://standardagentspec.org/#specification`.
+  Archived specifications use `/{version}/#specification` on this site's origin.
+  Versions and `hasPart` pages come from the content collection.
+  Versioned WebPage nodes belong to their version's CreativeWork.
+  Unversioned guides belong to the WebSite.
+  `tests/structured-data.test.mjs` parses the built pages during `pnpm test`.
+
 ### Theme System
 
 Dark/light mode is handled via inline script in BaseLayout (no React context):
