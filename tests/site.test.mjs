@@ -87,6 +87,10 @@ test('robots.txt allows crawling and names the sitemap', () => {
   assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap-index.xml`))
 })
 
+test('/sitemap.xml serves the generated index without a redirect', () => {
+  assert.ok(read('_redirects').split('\n').includes('/sitemap.xml /sitemap-index.xml 200'))
+})
+
 test('the sitemap lists real pages only', () => {
   assert.ok(read('sitemap-index.xml').includes(`${ORIGIN}/sitemap-0.xml`))
   const urls = [...read('sitemap-0.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
