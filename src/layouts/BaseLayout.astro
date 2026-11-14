@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions'
+import StructuredData from '../components/StructuredData.astro'
 import '../styles/global.css'
 
 interface Props {
@@ -27,6 +28,7 @@ const shareImageAlt = 'Standard Agent Specification'
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {!noindex && <StructuredData title={title} description={description} />}
     {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonicalUrl} />}
     <meta property="og:site_name" content="Standard Agent Specification" />
     <meta property="og:type" content="website" />
