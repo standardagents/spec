@@ -4,6 +4,8 @@ An agent is the top-level conversation orchestrator in Standard Agents. An agent
 
 A consistent division of responsibility runs through this page and every page it links to: prompts and handlers own turns, tools provide capabilities, hooks decorate turns, effects defer work, and subagent relationships define composition.
 
+[MCP server definitions](/0.2.0/specification/mcp-servers) bind agents independently of agent definitions.
+
 ## 1. Sides and Backings
 
 ### 1.1 The Three Backings

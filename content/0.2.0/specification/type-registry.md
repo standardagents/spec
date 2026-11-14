@@ -139,6 +139,10 @@ interface AgentDefinition<N extends string = string> {
 
 Relationship names (`as`, defaulting to `agent`) — not agent names — are what the runtime-injected `subagent_create` / `subagent_message` tools enumerate in their `agent` argument. See [Subagents §2.3](/0.2.0/specification/subagents#23-aliases).
 
+### 2.4 In MCP Server Definitions
+
+[MCP server definitions](/0.2.0/specification/mcp-servers) use `StandardAgentSpec.Agents` for the bound agent and `StandardAgentSpec.Tools` for declared function tools. MCP server names are not callable registry entries.
+
 ## 3. Augmenting the Namespace
 
 ### 3.1 Declaration Merging

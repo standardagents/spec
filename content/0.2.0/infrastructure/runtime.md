@@ -379,7 +379,17 @@ A runtime that exposes the API **MUST**:
 - apply each connection's `depth` and `includeSilent` filters
 - answer the `stream_ping` text frame with `stream_pong`
 
-## 16. Conformance Summary
+## 16. MCP Servers
+
+A runtime **MAY** support [MCP servers](/0.2.0/specification/mcp-servers). A runtime that supports them **MUST**:
+- expose each valid server at its own authenticated endpoint
+- enforce per-server token audience, tool scopes, and thread access
+- implement the declared tools and conversation tools under that section
+- preserve home threads and accepted send results durably
+
+A runtime without this capability **MUST** ignore packed MCP server definitions without failing the package on their account.
+
+## 17. Conformance Summary
 
 Implementations **MUST**:
 - preserve sequential step and tool execution within a thread
@@ -393,3 +403,6 @@ Implementations **MUST**:
 
 Implementations **SHOULD**:
 - expose the [Thread Client API](#15-thread-client-api)
+
+Implementations **MAY**:
+- support [MCP servers](#16-mcp-servers)
