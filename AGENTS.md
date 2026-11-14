@@ -139,6 +139,8 @@ src/
 │   ├── rehype-inline-diagrams.mjs # Inlines src/diagrams files at build time
 │   ├── latest-redirects.mjs       # Adds the /latest/ redirects to dist/_redirects
 │   ├── models.ts                  # Reads the data block of the models guide
+│   ├── share-images.ts            # Pages with a share image, their titles and sections
+│   ├── share-image-render.ts      # Lays out and renders one share image
 │   └── remark-faux-threads.mjs    # Renders ```thread fences as static threads
 ├── pages/
 │   ├── index.astro                    # Homepage, rendered from src/data/home.md
@@ -151,7 +153,9 @@ src/
 │   ├── llms.txt.ts                    # Latest-version markdown doc index for LLMs
 │   ├── llms-full.txt.ts               # Every latest-version page in one markdown file
 │   ├── robots.txt.ts                  # robots.txt, which names the sitemap
-│   ├── og.png.ts                      # Share image, rendered from src/assets/og.svg
+│   ├── og.png.ts                      # Default share image, rendered from src/assets/og.svg
+│   ├── og/[...image].png.ts           # Share image of each page (src/lib/share-images.ts)
+│   ├── dev/[preview].astro            # Dev-only gallery of share images at /dev/share-images
 │   ├── 404.astro                      # Page for unknown URLs, served with status 404
 │   ├── models.astro                   # Recommended Models page, built from the data block in src/data/models.md
 │   ├── models.md.ts                   # Live curated models markdown endpoint
@@ -276,11 +280,21 @@ Build every absolute URL from it, and never write the domain in a page or endpoi
   `@astrojs/sitemap` writes `sitemap-index.xml`. The sitemap leaves out the 404
   page and the `/{version}` redirect pages.
 - **Share tags:** `BaseLayout.astro` writes the Open Graph and Twitter tags for
-  every page. The image is `/og.png`, 1200 by 630, which `src/pages/og.png.ts`
-  renders from `src/assets/og.svg` at build time. The artwork draws its text as
-  outlines, so the image does not depend on the build machine's fonts. Keep the
-  size in the tags equal to the artwork's size. Its `noindex` prop marks a page
-  that is not content.
+  every page. Its `noindex` prop marks a page that is not content.
+- **Share images:** every specification page in every version, the homepage,
+  Community, Runtimes, and Recommended Models has its own 1200 by 630 image at
+  `/og/{page path}.png` (`/og/index.png` for the homepage).
+  `src/lib/share-images.ts` lists the pages with each title and section, and
+  `BaseLayout.astro` looks up the entry for its page.
+  `src/pages/og/[...image].png.ts` renders each image at build time through
+  `src/lib/share-image-render.ts`: Satori lays out the image and draws its text
+  as outlines, and sharp rasterizes it. The fonts come from the `@fontsource`
+  packages, so the result does not depend on the build machine's fonts. A title
+  wraps to at most three balanced lines and then shrinks. A title that cannot
+  fit fails the build. A page without an entry, such as the 404 page, uses
+  `/og.png`, which `src/pages/og.png.ts` renders from `src/assets/og.svg`. Keep
+  the size in the tags equal to the images' size. In `pnpm dev`,
+  `/dev/share-images` shows every image; the build does not ship that page.
 - **Email addresses:** `BaseLayout.astro` wraps the body in Cloudflare's
   `<!--email_off-->` comments, so a code sample shows `user@example.com`
   unchanged while the zone's email obfuscation is on.

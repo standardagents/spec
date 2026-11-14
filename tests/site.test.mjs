@@ -96,23 +96,60 @@ test('the sitemap lists real pages only', () => {
   assert.deepEqual(urls.filter((url) => /\/404\/?$|\/\d+\.\d+\.\d+\/?$/.test(url)), [])
 })
 
+// Each content page names its own share image, and the 404 page names the default.
+const shareImages = {
+  'index.html': '/og/index.png',
+  'community/index.html': '/og/community.png',
+  'runtimes/index.html': '/og/runtimes.png',
+  'models/index.html': '/og/models.png',
+  [`${latest}/specification/agents/index.html`]: `/og/${latest}/specification/agents.png`,
+  [`${latest}/specification/threads/messages/index.html`]: `/og/${latest}/specification/threads/messages.png`,
+  '0.1.0/specification/tools/index.html': '/og/0.1.0/specification/tools.png',
+  '404.html': '/og.png',
+}
+
 test('pages carry share tags', () => {
-  for (const page of ['index.html', `${latest}/specification/agents/index.html`]) {
+  for (const [page, path] of Object.entries(shareImages)) {
     const html = read(page)
-    for (const property of ['og:title', 'og:description', 'og:type', 'og:url', 'og:site_name', 'og:image']) {
+    const properties = ['og:title', 'og:description', 'og:type', 'og:site_name', 'og:image']
+    // A page that is not content, such as the 404 page, has no canonical URL.
+    if (page !== '404.html') properties.push('og:url')
+    for (const property of properties) {
       assert.match(html, new RegExp(`<meta property="${property}" content="[^"]+"`), `${page} ${property}`)
     }
     for (const name of ['twitter:card', 'twitter:title', 'twitter:description', 'twitter:image']) {
       assert.match(html, new RegExp(`<meta name="${name}" content="[^"]+"`), `${page} ${name}`)
     }
     const image = html.match(/<meta property="og:image" content="([^"]+)"/)[1]
-    assert.equal(image, `${ORIGIN}/og.png`)
+    assert.equal(image, `${ORIGIN}${path}`, page)
+    assert.match(html, /<meta property="og:image:alt" content="[^"]+"/, `${page} og:image:alt`)
     assert.equal(html.match(/<meta name="twitter:image" content="([^"]+)"/)[1], image)
     // The image is a PNG of the size the tags declare.
     const { width, height } = pngSize(readFileSync(join(dist, new URL(image).pathname)))
     assert.equal(html.match(/<meta property="og:image:width" content="(\d+)"/)[1], String(width))
     assert.equal(html.match(/<meta property="og:image:height" content="(\d+)"/)[1], String(height))
     assert.deepEqual({ width, height }, { width: 1200, height: 630 })
+  }
+})
+
+test('every content page has its own share image', () => {
+  const pages = []
+  const walk = (dir) => {
+    for (const entry of readdirSync(join(dist, dir), { withFileTypes: true })) {
+      const path = join(dir, entry.name)
+      if (entry.isDirectory() && path !== 'og') walk(path)
+      else if (entry.name === 'index.html') pages.push(path)
+    }
+  }
+  walk('')
+  for (const page of pages) {
+    const html = read(page)
+    // The /{version} pages redirect and carry no tags.
+    if (!html.includes('og:image')) continue
+    const image = html.match(/<meta property="og:image" content="([^"]+)"/)[1]
+    assert.notEqual(image, `${ORIGIN}/og.png`, page)
+    const { width, height } = pngSize(readFileSync(join(dist, new URL(image).pathname)))
+    assert.deepEqual({ width, height }, { width: 1200, height: 630 }, page)
   }
 })
 
