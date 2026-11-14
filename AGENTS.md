@@ -273,7 +273,8 @@ Build every absolute URL from it, and never write the domain in a page or endpoi
   serves it with status 404 for an unknown URL. Without that file, Pages serves the
   homepage with status 200.
 - **Crawling:** `src/pages/robots.txt.ts` serves `robots.txt`, and
-  `@astrojs/sitemap` writes `sitemap-index.xml`. The sitemap leaves out the 404
+  `@astrojs/sitemap` writes `sitemap-index.xml`. `public/_redirects` serves that index at `/sitemap.xml` with status 200.
+  The sitemap leaves out the 404
   page and the `/{version}` redirect pages.
 - **Share tags:** `BaseLayout.astro` writes the Open Graph and Twitter tags for
   every page. The image is `/og.png`, 1200 by 630, which `src/pages/og.png.ts`
