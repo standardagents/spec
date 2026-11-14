@@ -40,12 +40,12 @@ function markUri(fill: string, opacity = 1): string {
 
 const MARK_URI = markUri('#f3f4f6')
 
-// A large, faint copy of the mark sits behind the text and bleeds off the
-// right edge, top, and bottom of the image.
-const WATERMARK_SIZE = 700
-const WATERMARK_RIGHT = -190
-const WATERMARK_TOP = (HEIGHT - WATERMARK_SIZE) / 2
-const WATERMARK_URI = markUri(TITLE, 0.05)
+// A large, faint copy of the mark sits behind the text on the right. It fills
+// the height inside the image padding, so it never touches an edge.
+const WATERMARK_SIZE = HEIGHT - PADDING * 2
+const WATERMARK_RIGHT = PADDING
+const WATERMARK_TOP = PADDING
+const WATERMARK_URI = markUri(TITLE, 0.035)
 
 function fontFile(pkg: string, file: string): Buffer {
   return readFileSync(join(process.cwd(), 'node_modules', '@fontsource', pkg, 'files', file))
