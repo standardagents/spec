@@ -107,18 +107,29 @@ A user-facing thread that does **zero model work**: every inbound user message i
 
 ```typescript
 // agents/handlers/relay_pipe.ts
+import { defineHandler } from '@standardagents/spec';
+
 export default defineHandler({
-  description: 'Pipe user traffic to the assistant child; relay answers outward.',
+  description: 'Forwards user messages and displays replies from the assistant child.',
   execute: async (state, message) => {
-    const child = state.children.find(c => c.relationship === 'assistant_agent');
-    if (child) {
-      const thread = await state.getChildThread(child.reference);
-      await thread?.queueMessage({ role: 'user', content: message.content ?? '' });
+    if (message.metadata?.relay_reply === true) {
+      await state.injectMessage({ role: 'assistant', content: message.content ?? '' });
+      return;
     }
+
+    const child = state.children.find((c) => c.relationship === 'assistant_agent');
+    if (!child) throw new Error('The assistant child is unavailable.');
+    const thread = await state.getChildThread(child.reference);
+    if (!thread) throw new Error('The assistant thread is unavailable.');
+    await thread.queueMessage({ role: 'user', content: message.content ?? '' });
   },
 });
+```
 
+```typescript
 // agents/agents/relay_agent.ts
+import { defineAgent } from '@standardagents/spec';
+
 export default defineAgent({
   name: 'relay_agent',
   sideA: {
@@ -134,7 +145,39 @@ export default defineAgent({
 });
 ```
 
-The child's answers arrive as inbound messages on side A (the owning side) and get their own handler turns, where the handler calls the project's outbound messaging tool. No model participates at any point.
+```typescript
+// agents/tools/reply_to_user.ts
+import { defineTool } from '@standardagents/spec';
+import { z } from 'zod';
+
+export default defineTool({
+  description: 'Return a text reply to the person through the parent relay.',
+  args: z.object({ text: z.string().min(1).describe('The reply for the person') }),
+  execute: async (state, { text }) => {
+    const parent = await state.getParentThread();
+    if (!parent) return { status: 'error', error: 'The parent relay is unavailable.' };
+    await parent.queueMessage({
+      role: 'user',
+      content: text,
+      silent: true,
+      metadata: { relay_reply: true },
+    });
+    return { status: 'success', result: text };
+  },
+});
+```
+
+The child's prompt lists `reply_to_user` in `tools`.
+Its prompt instructs the model to call this tool with its answer.
+The child's prompt-backed side binds `sessionStop: { name: 'reply_to_user', messageProperty: 'text' }`.
+The tool queues the answer with an application-defined `relay_reply` flag.
+The queued message is silent, so the person's conversation does not show it as a user message.
+The parent handler displays that answer with `injectMessage`.
+The relationship uses `parentCommunication: 'explicit'` to suppress implicit completion messages.
+The flag is part of this application's message protocol.
+The explicit flag works when a runtime omits provenance metadata.
+
+The relay thread sends no model requests. The assistant child owns the model work.
 
 ## 10. TypeScript Reference
 

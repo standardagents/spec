@@ -556,7 +556,7 @@ Tools that access `_notPackableRuntimeContext` cannot be packed, shared, or publ
 ### 10.2 Example: Accessing a Host-Provided Binding
 
 ```typescript
-import { defineTool } from '@standardagents/builder';
+import { defineTool } from '@standardagents/spec';
 import { z } from 'zod';
 
 export default defineTool({

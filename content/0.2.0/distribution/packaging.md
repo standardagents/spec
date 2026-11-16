@@ -37,7 +37,7 @@ import type {
   ModelDefinition,
   PackedMeta,
 } from '@standardagents/spec';
-import { defineTool } from '@standardagents/spec';
+import { defineEffect, defineHook, defineTool } from '@standardagents/spec';
 import { openai } from '@standardagents/openai';
 
 type DefinitionLoader<T> = () => Promise<T>;
@@ -82,21 +82,32 @@ export const models = {
 } as const;
 
 export const hooks = {
-  limit_messages: async () => ({
+  limit_messages: async () => defineHook({
     hook: 'filter_messages' as const,
     id: 'limit_messages',
-    execute: async (state: any, messages: any[]) => messages.slice(-50),
+    execute: async (_state, messages) => {
+      let start = Math.max(0, messages.length - 50);
+      for (let i = messages.length - 1; i >= start; i--) {
+        const result = messages[i];
+        if (result.role !== 'tool' || !result.tool_call_id) continue;
+        const callIndex = messages.findIndex((message) => {
+          const calls = JSON.parse(message.tool_calls || '[]') as { id: string }[];
+          return calls.some((call) => call.id === result.tool_call_id);
+        });
+        if (callIndex >= 0) start = Math.min(start, callIndex);
+      }
+      return messages.slice(start);
+    },
   }),
 } as const;
 
 export const effects = {
-  send_digest: async () => ([
+  send_digest: async () => defineEffect(
     'Send a digest email',
-    null,
-    async (state: any) => {
+    async (_state) => {
       // effect work
     },
-  ]),
+  ),
 } as const;
 
 export const __meta: PackedMeta = {

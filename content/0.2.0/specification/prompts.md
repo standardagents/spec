@@ -436,6 +436,7 @@ export default definePrompt({
     If you cannot help, offer to escalate.`,
   tools: ['search_knowledge_base', 'create_ticket'],
   includeChat: true,
+  includePastTools: true,
   requiredSchema: z.object({
     query: z.string().describe('The customer inquiry'),
   }),
@@ -458,6 +459,8 @@ export default definePrompt({
     { type: 'text', content: '\n\nBe helpful and persuasive.' },
   ],
   tools: ['get_pricing', 'schedule_demo'],
+  includeChat: true,
+  includePastTools: true,
 });
 ```
 
@@ -491,6 +494,7 @@ export default definePrompt({
   prompt: 'You are a customer support agent. Be helpful and concise.',
   tools: ['search_knowledge_base', 'create_ticket'],
   includeChat: true,
+  includePastTools: true,
   hooks: ['limit_to_20_messages', 'log_tool_calls', 'redact_credit_cards'],
 });
 ```
