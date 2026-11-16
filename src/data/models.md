@@ -14,10 +14,10 @@ One model is recommended in each category. The [Recommended Models](/models) pag
 | Code review | GLM 5.3 | Novita: `zai-org/glm-5.3` | 1.40 / 4.40 |
 | Orchestrator | GPT-6.1 Sol | OpenAI: `gpt-6.1-sol` | 2.00 / 10.00 |
 | UI and frontend | Claude Opus 5.5 | Anthropic: `claude-opus-5-5` | 4.00 / 20.00 |
-| Ultra-cheap | No pick yet | | |
-| Decision | No pick yet | | |
+| Ultra-cheap | GPT-6 Luna | OpenAI: `gpt-6-luna` | 0.10 / 0.50 |
+| Decision | Jev | TypeSafe AI: `jev-latest` | 0.042 / 0.00 |
 | Image generation | Gemini 3 Pro Image Preview | Google: `gemini-3-pro-image-preview` | 2.00 / 12.00 text, 120.00 image out |
-| Vision and documents | No pick yet | | |
+| Vision and documents | GPT-6.1 Terra | OpenAI: `gpt-6.1-terra` | 1.00 / 5.00 |
 
 **Start non-coding work with GPT-6 Luna.** It is the default for cheap or small
 tasks: extraction, classification, summaries, tool calls, and focused
@@ -28,9 +28,14 @@ snapshot; the undated `deepseek-v4.1-flash` is not recommended.
 Give difficult work, including coding, to Claude Opus 5.5. Use GLM 5.3 for code
 review and security tasks, and GPT-6.1 Sol when coordination is the hard part;
 simple coordination still starts with Luna. These are task-selection
-recommendations, not automatic runtime fallbacks. A category with no pick yet has no model that
-has been judged for it. Additional catalog entries below are alternatives, not
-the default recommendations.
+recommendations, not automatic runtime fallbacks. Additional catalog entries
+below are alternatives, not the default recommendations.
+
+A model can be the pick in more than one category. GPT-6 Luna is also the
+ultra-cheap pick for high-volume simple work, with DeepSeek V4.1 Flash 1017 as
+the alternative. Use TypeSafe AI's Jev for the routing and yes-or-no decisions
+an agent makes between steps, and GPT-6.1 Terra to read images, screenshots,
+PDFs, and scanned documents.
 
 Run `agents current-models` for this guide and
 `agents available-models --provider=<name>` to confirm availability and the exact
@@ -63,7 +68,8 @@ and latency.
 - First-party list prices are used where available.
 - Claude Fable 5.2 uses Anthropic's standard list price of 8.00 / 40.00; optional fast mode is 16.00 / 80.00. Cache and service-tier rates can differ. Artificial Analysis measured 26.54 per task and 41.6 minutes at Max, Default Fallback, versus Astra Max at 6.24 and 20.8 minutes; these are workload- and effort-specific measurements, not universal costs or latency.
 - Open-weight and aggregator-distributed models use representative public API pricing.
-- Recommended-model prices were checked on October 6, 2026: [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), [Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/overview), and [Novita pricing](https://novita.ai/pricing) for GLM 5.3. DeepSeek V4.1 Flash 1017 was checked against Novita's model list on November 16, 2026. Listed rates are standard input/output rates; cache, long-context, service-tier, and routing charges can differ.
+- Recommended-model prices were checked on October 6, 2026: [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), [Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/overview), and [Novita pricing](https://novita.ai/pricing) for GLM 5.3. DeepSeek V4.1 Flash 1017 was checked against Novita's model list on November 16, 2026. GPT-6.1 Terra (1.00 / 5.00) was checked against the Standard Agents pricing catalog on November 16, 2026. Listed rates are standard input/output rates; cache, long-context, service-tier, and routing charges can differ.
+- Jev bills input tokens only: 0.042 per 1M input tokens, and output is free. `jev-latest` is an alias, currently Jev 1.14 (`jev-1.14.0`); pin `jev-1.14.0` where a fixed version and price are required. Alias and price checked November 16, 2026 at [TypeSafe AI](https://docs.typesafe.ai/models).
 - Kimi K3 always reasons (`reasoning_effort` locked to max) and reasoning tokens bill as output tokens; cached input is 0.30.
 - Hy3 prices use the listed OpenRouter rate for `tencent/hy3` (first-party Tencent Cloud pricing is ~0.15 / 0.59).
 - MiniMax M3 doubles to 0.60 / 2.40 as a step function when a request's input crosses 512K tokens.
@@ -74,8 +80,9 @@ and latency.
 
 ## Providers
 
-- OpenAI: GPT-6 Luna for cheap non-coding work and GPT-6.1 Sol for coordination-heavy efforts. GPT-6 Astra is a frontier alternative.
+- OpenAI: GPT-6 Luna for cheap non-coding work, GPT-6.1 Terra for vision and documents, and GPT-6.1 Sol for coordination-heavy efforts. GPT-6 Astra is a frontier alternative.
 - Novita: Direct access to the recommended DeepSeek V4.1 Flash 1017 low-cost model and GLM 5.3 security specialist.
+- TypeSafe AI: Jev, the recommended decision model.
 - Anthropic: Claude Opus 5.5 is the frontier default and the pick for demanding UI work. Claude Fable 5.2 is the escalation above it.
 - OpenRouter: Broad access across labs and alternate provider routes. Confirm model IDs, endpoint availability, and prices rather than assuming they match direct providers.
 - Google: Best for vision-heavy workflows, large context windows, and fast multimodal models that are cheap enough for broad deployment.
@@ -166,8 +173,14 @@ and latency.
 					"model": "gpt-6-astra",
 					"price": "10.00 / 50.00",
 					"modalities": {
-						"input": ["text", "image", "file"],
-						"output": ["text"]
+						"input": [
+							"text",
+							"image",
+							"file"
+						],
+						"output": [
+							"text"
+						]
 					},
 					"openWeights": false,
 					"note": "The previous frontier pick. Choose it when a workload measurably does better on it and the higher price is acceptable."
@@ -178,8 +191,14 @@ and latency.
 					"model": "claude-fable-5-2",
 					"price": "8.00 / 40.00",
 					"modalities": {
-						"input": ["text", "image", "file"],
-						"output": ["text"]
+						"input": [
+							"text",
+							"image",
+							"file"
+						],
+						"output": [
+							"text"
+						]
 					},
 					"openWeights": false,
 					"note": "Choose for especially difficult technical and agentic work when higher measured peak capability justifies effort-dependent token use and latency."
@@ -284,6 +303,63 @@ and latency.
 			"alternatives": []
 		},
 		{
+			"category": "ultra_cheap",
+			"name": "GPT-6 Luna",
+			"provider": "openai",
+			"model": "gpt-6-luna",
+			"price": "0.10 / 0.50",
+			"modalities": {
+				"input": [
+					"text",
+					"image",
+					"file"
+				],
+				"output": [
+					"text"
+				]
+			},
+			"openWeights": false,
+			"why": "The cheapest recommended model, for high-volume extraction, classification, and other simple work. It is also the workhorse pick.",
+			"alternatives": [
+				{
+					"name": "DeepSeek V4.1 Flash 1017",
+					"provider": "novita",
+					"model": "deepseek/deepseek-v4.1-flash-1017",
+					"price": "0.30 / 1.20",
+					"modalities": {
+						"input": [
+							"text",
+							"image"
+						],
+						"output": [
+							"text"
+						]
+					},
+					"openWeights": true,
+					"note": "Choose it when open weights matter. Use the dated 1017 snapshot."
+				}
+			]
+		},
+		{
+			"category": "decision",
+			"name": "Jev",
+			"provider": "typesafe",
+			"model": "jev-latest",
+			"price": "0.042 / 0.00",
+			"modalities": {
+				"input": [
+					"text",
+					"image"
+				],
+				"output": [
+					"text"
+				]
+			},
+			"openWeights": false,
+			"why": "Built for the routing and yes-or-no decisions an agent makes between steps. Input costs 0.042 per 1M tokens and output is free. The jev-latest alias currently points to jev-1.14.0; pin that ID where a fixed version and price are required.",
+			"alternatives": []
+		},
+		{
 			"category": "image",
 			"name": "Gemini 3 Pro Image Preview",
 			"provider": "google",
@@ -301,6 +377,26 @@ and latency.
 			},
 			"openWeights": false,
 			"why": "Image generation with strong prompt understanding. Image output costs far more than text.",
+			"alternatives": []
+		},
+		{
+			"category": "vision",
+			"name": "GPT-6.1 Terra",
+			"provider": "openai",
+			"model": "gpt-6.1-terra",
+			"price": "1.00 / 5.00",
+			"modalities": {
+				"input": [
+					"text",
+					"image",
+					"file"
+				],
+				"output": [
+					"text"
+				]
+			},
+			"openWeights": false,
+			"why": "Reads images, screenshots, PDFs, and scanned documents.",
 			"alternatives": []
 		}
 	],
@@ -344,8 +440,14 @@ and latency.
 			"bestFor": "Frontier alternative for especially difficult technical and agentic work",
 			"price": "8.00 / 40.00",
 			"modalities": {
-				"input": ["text", "image", "file"],
-				"output": ["text"]
+				"input": [
+					"text",
+					"image",
+					"file"
+				],
+				"output": [
+					"text"
+				]
 			},
 			"openWeights": false,
 			"summary": "Higher measured peak capability than Astra on the Artificial Analysis Intelligence Index, but max-effort runs used substantially more output tokens and took longer. Choose when difficult work warrants escalation; measure cost and latency at your chosen effort. Optional fast mode costs 16.00 / 80.00. Claude Opus 5.5 is the frontier default."
