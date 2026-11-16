@@ -489,6 +489,8 @@ interface HookToolResult {
 
 Files returned by a tool are surfaced through `attachments`. Each entry is either a new `ToolAttachment` (binary data to store) or an `AttachmentRef` (pointer to an existing file in the thread filesystem). Hooks that inspect tool output can read these; hooks that rewrite tool results **MUST** preserve or replace this field deliberately.
 
+A sub-prompt tool result includes model-generated file attachments under [Prompts §3.3.1](/0.2.0/specification/prompts#331-generated-file-attachments). Hooks receive these attachments in the same `attachments` field.
+
 ### 6.4 LLMMessage
 
 ```typescript

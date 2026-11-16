@@ -374,6 +374,8 @@ interface ProviderGeneratedImage {
 }
 ```
 
+When a model runs as a sub-prompt, the runtime **MUST** return its generated images through tool result attachments under [Prompts §3.3.1](/0.2.0/specification/prompts#331-generated-file-attachments).
+
 ## 6. Streaming
 
 ```typescript
