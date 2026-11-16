@@ -69,7 +69,7 @@ and latency.
 - Claude Fable 5.2 uses Anthropic's standard list price of 8.00 / 40.00; optional fast mode is 16.00 / 80.00. Cache and service-tier rates can differ. Artificial Analysis measured 26.54 per task and 41.6 minutes at Max, Default Fallback, versus Astra Max at 6.24 and 20.8 minutes; these are workload- and effort-specific measurements, not universal costs or latency.
 - Open-weight and aggregator-distributed models use representative public API pricing.
 - Recommended-model prices were checked on October 6, 2026: [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), [Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/overview), and [Novita pricing](https://novita.ai/pricing) for GLM 5.3. DeepSeek V4.1 Flash 1017 was checked against Novita's model list on November 16, 2026. GPT-6.1 Terra (1.00 / 5.00) was checked against the Standard Agents pricing catalog on November 16, 2026. Listed rates are standard input/output rates; cache, long-context, service-tier, and routing charges can differ.
-- Jev bills input tokens only: 0.042 per 1M input tokens, and output is free. `jev-latest` is an alias, currently Jev 1.13; pin `jev-1.13.0` where a fixed version and price are required. Price checked October 6, 2026 at [TypeSafe AI](https://docs.typesafe.ai/models).
+- Jev bills input tokens only: 0.042 per 1M input tokens, and output is free. `jev-latest` is an alias, currently Jev 1.14 (`jev-1.14.0`); pin `jev-1.14.0` where a fixed version and price are required. Alias and price checked November 16, 2026 at [TypeSafe AI](https://docs.typesafe.ai/models).
 - Kimi K3 always reasons (`reasoning_effort` locked to max) and reasoning tokens bill as output tokens; cached input is 0.30.
 - Hy3 prices use the listed OpenRouter rate for `tencent/hy3` (first-party Tencent Cloud pricing is ~0.15 / 0.59).
 - MiniMax M3 doubles to 0.60 / 2.40 as a step function when a request's input crosses 512K tokens.
@@ -348,14 +348,15 @@ and latency.
 			"price": "0.042 / 0.00",
 			"modalities": {
 				"input": [
-					"text"
+					"text",
+					"image"
 				],
 				"output": [
 					"text"
 				]
 			},
 			"openWeights": false,
-			"why": "Built for the routing and yes-or-no decisions an agent makes between steps. Input costs 0.042 per 1M tokens and output is free. Pin jev-1.13.0 where a fixed version and price are required.",
+			"why": "Built for the routing and yes-or-no decisions an agent makes between steps. Input costs 0.042 per 1M tokens and output is free. The jev-latest alias currently points to jev-1.14.0; pin that ID where a fixed version and price are required.",
 			"alternatives": []
 		},
 		{
