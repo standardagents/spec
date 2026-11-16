@@ -1,6 +1,6 @@
 # Current Models
 
-Working snapshot of practical model tradeoffs. Recommendations updated November 12, 2026.
+Working snapshot of practical model tradeoffs. Recommendations updated November 16, 2026.
 
 ## Recommended models
 
@@ -8,9 +8,9 @@ One model is recommended in each category. The [Recommended Models](/models) pag
 
 | Category | Recommended model | Provider model ID | Price |
 | --- | --- | --- | --- |
-| Frontier | GPT-6 Astra | OpenAI: `gpt-6-astra` | 10.00 / 50.00 |
+| Frontier | Claude Opus 5.5 | Anthropic: `claude-opus-5-5` | 4.00 / 20.00 |
 | Workhorse | GPT-6 Luna | OpenAI: `gpt-6-luna` | 0.10 / 0.50 |
-| Open-weight workhorse | DeepSeek V4.1 Flash | Novita: `deepseek/deepseek-v4.1-flash` | 0.30 / 1.20 |
+| Open-weight workhorse | DeepSeek V4.1 Flash 1017 | Novita: `deepseek/deepseek-v4.1-flash-1017` | 0.30 / 1.20 |
 | Code review | GLM 5.3 | Novita: `zai-org/glm-5.3` | 1.40 / 4.40 |
 | Orchestrator | GPT-6.1 Sol | OpenAI: `gpt-6.1-sol` | 2.00 / 10.00 |
 | UI and frontend | Claude Opus 5.5 | Anthropic: `claude-opus-5-5` | 4.00 / 20.00 |
@@ -19,15 +19,16 @@ One model is recommended in each category. The [Recommended Models](/models) pag
 | Image generation | Gemini 3 Pro Image Preview | Google: `gemini-3-pro-image-preview` | 2.00 / 12.00 text, 120.00 image out |
 | Vision and documents | No pick yet | | |
 
-**Start most work with GPT-6 Luna.** It is the default for cheap or small tasks,
-routine coding, extraction, classification, summaries, tool calls, and focused
-subagents. DeepSeek V4.1 Flash is the other recommended low-cost option, and its
-weights are open.
+**Start non-coding work with GPT-6 Luna.** It is the default for cheap or small
+tasks: extraction, classification, summaries, tool calls, and focused
+subagents. Luna is not a coding model. DeepSeek V4.1 Flash 1017 is the other
+recommended low-cost option, and its weights are open. Use the dated 1017
+snapshot; the undated `deepseek-v4.1-flash` is not recommended.
 
-Use GLM 5.3 for code review and security tasks. Reserve Astra, Opus, and Sol for
-work that needs their respective strengths; routine UI edits and simple
-coordination still start with Luna. These are task-selection recommendations,
-not automatic runtime fallbacks. A category with no pick yet has no model that
+Give difficult work, including coding, to Claude Opus 5.5. Use GLM 5.3 for code
+review and security tasks, and GPT-6.1 Sol when coordination is the hard part;
+simple coordination still starts with Luna. These are task-selection
+recommendations, not automatic runtime fallbacks. A category with no pick yet has no model that
 has been judged for it. Additional catalog entries below are alternatives, not
 the default recommendations.
 
@@ -52,11 +53,17 @@ above take precedence over these older comparison scores.
 | 3 | Above average |
 | 4 | State of the art |
 
+For especially difficult technical work, Claude Fable 5.2 (`claude-fable-5-2`)
+is a frontier alternative to Claude Opus 5.5, not the default. Its higher measured peak
+capability can justify escalation, but budget for effort-dependent token use
+and latency.
+
 ## Notes
 
 - First-party list prices are used where available.
+- Claude Fable 5.2 uses Anthropic's standard list price of 8.00 / 40.00; optional fast mode is 16.00 / 80.00. Cache and service-tier rates can differ. Artificial Analysis measured 26.54 per task and 41.6 minutes at Max, Default Fallback, versus Astra Max at 6.24 and 20.8 minutes; these are workload- and effort-specific measurements, not universal costs or latency.
 - Open-weight and aggregator-distributed models use representative public API pricing.
-- Recommended-model prices were checked on October 6, 2026: [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), [Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/overview), and [Novita pricing](https://novita.ai/pricing) for DeepSeek V4.1 Flash and GLM 5.3. Listed rates are standard input/output rates; cache, long-context, service-tier, and routing charges can differ.
+- Recommended-model prices were checked on October 6, 2026: [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), [Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/overview), and [Novita pricing](https://novita.ai/pricing) for GLM 5.3. DeepSeek V4.1 Flash 1017 was checked against Novita's model list on November 16, 2026. Listed rates are standard input/output rates; cache, long-context, service-tier, and routing charges can differ.
 - Kimi K3 always reasons (`reasoning_effort` locked to max) and reasoning tokens bill as output tokens; cached input is 0.30.
 - Hy3 prices use the listed OpenRouter rate for `tencent/hy3` (first-party Tencent Cloud pricing is ~0.15 / 0.59).
 - MiniMax M3 doubles to 0.60 / 2.40 as a step function when a request's input crosses 512K tokens.
@@ -67,9 +74,9 @@ above take precedence over these older comparison scores.
 
 ## Providers
 
-- OpenAI: Default starting point through GPT-6 Luna. Reserve GPT-6 Astra for heavy work and GPT-6.1 Sol for coordination-heavy efforts.
-- Novita: Direct access to the recommended DeepSeek V4.1 Flash low-cost alternative and GLM 5.3 security specialist.
-- Anthropic: Claude Opus 5.5 for demanding UI work; budget it as a very expensive specialist.
+- OpenAI: GPT-6 Luna for cheap non-coding work and GPT-6.1 Sol for coordination-heavy efforts. GPT-6 Astra is a frontier alternative.
+- Novita: Direct access to the recommended DeepSeek V4.1 Flash 1017 low-cost model and GLM 5.3 security specialist.
+- Anthropic: Claude Opus 5.5 is the frontier default and the pick for demanding UI work. Claude Fable 5.2 is the escalation above it.
 - OpenRouter: Broad access across labs and alternate provider routes. Confirm model IDs, endpoint availability, and prices rather than assuming they match direct providers.
 - Google: Best for vision-heavy workflows, large context windows, and fast multimodal models that are cheap enough for broad deployment.
 - Cerebras: Best when raw speed matters most, especially for high-throughput inference and low-latency open-model serving.
@@ -80,7 +87,7 @@ above take precedence over these older comparison scores.
 
 ```json
 {
-	"updated": "2026-11-12",
+	"updated": "2026-11-16",
 	"categories": [
 		{
 			"id": "frontier",
@@ -90,7 +97,7 @@ above take precedence over these older comparison scores.
 		{
 			"id": "workhorse",
 			"label": "Workhorse",
-			"description": "Affordable, dependable models for the bulk of everyday agent and coding work."
+			"description": "Affordable, dependable models for the bulk of everyday agent work: tool calls, extraction, summaries, and focused subagents. Not for coding."
 		},
 		{
 			"id": "open_workhorse",
@@ -136,10 +143,10 @@ above take precedence over these older comparison scores.
 	"recommendations": [
 		{
 			"category": "frontier",
-			"name": "GPT-6 Astra",
-			"provider": "openai",
-			"model": "gpt-6-astra",
-			"price": "10.00 / 50.00",
+			"name": "Claude Opus 5.5",
+			"provider": "anthropic",
+			"model": "claude-opus-5-5",
+			"price": "4.00 / 20.00",
 			"modalities": {
 				"input": [
 					"text",
@@ -151,8 +158,33 @@ above take precedence over these older comparison scores.
 				]
 			},
 			"openWeights": false,
-			"why": "Reserve for difficult reasoning, complex debugging, and heavy implementation where the extra capability justifies the cost.",
-			"alternatives": []
+			"why": "The default for difficult reasoning, complex debugging, and heavy implementation. Developers currently prefer it for hard work, and it costs less than half as much as GPT-6 Astra.",
+			"alternatives": [
+				{
+					"name": "GPT-6 Astra",
+					"provider": "openai",
+					"model": "gpt-6-astra",
+					"price": "10.00 / 50.00",
+					"modalities": {
+						"input": ["text", "image", "file"],
+						"output": ["text"]
+					},
+					"openWeights": false,
+					"note": "The previous frontier pick. Choose it when a workload measurably does better on it and the higher price is acceptable."
+				},
+				{
+					"name": "Claude Fable 5.2",
+					"provider": "anthropic",
+					"model": "claude-fable-5-2",
+					"price": "8.00 / 40.00",
+					"modalities": {
+						"input": ["text", "image", "file"],
+						"output": ["text"]
+					},
+					"openWeights": false,
+					"note": "Choose for especially difficult technical and agentic work when higher measured peak capability justifies effort-dependent token use and latency."
+				}
+			]
 		},
 		{
 			"category": "workhorse",
@@ -171,14 +203,14 @@ above take precedence over these older comparison scores.
 				]
 			},
 			"openWeights": false,
-			"why": "Start here for routine coding, focused subagents, tool calls, classification, extraction, summaries, and everyday writing.",
+			"why": "Start here for focused subagents, tool calls, classification, extraction, summaries, and everyday writing. Not a coding model.",
 			"alternatives": []
 		},
 		{
 			"category": "open_workhorse",
-			"name": "DeepSeek V4.1 Flash",
+			"name": "DeepSeek V4.1 Flash 1017",
 			"provider": "novita",
-			"model": "deepseek/deepseek-v4.1-flash",
+			"model": "deepseek/deepseek-v4.1-flash-1017",
 			"price": "0.30 / 1.20",
 			"modalities": {
 				"input": [
@@ -190,7 +222,7 @@ above take precedence over these older comparison scores.
 				]
 			},
 			"openWeights": true,
-			"why": "The recommended low-cost option with open weights, for focused agent and coding work. Novita cache reads are $0.006 per million tokens.",
+			"why": "The recommended low-cost option with open weights, for focused agent and coding work. Use the dated 1017 snapshot; the undated deepseek-v4.1-flash is not recommended.",
 			"alternatives": []
 		},
 		{
@@ -248,7 +280,7 @@ above take precedence over these older comparison scores.
 				]
 			},
 			"openWeights": false,
-			"why": "Use for difficult UI implementation, design fidelity, and visual refinement. Routine UI changes still start with Luna.",
+			"why": "Use for difficult UI implementation, design fidelity, and visual refinement.",
 			"alternatives": []
 		},
 		{
@@ -277,17 +309,17 @@ above take precedence over these older comparison scores.
 			"name": "GPT-6 Luna",
 			"provider": "openai",
 			"model": "gpt-6-luna",
-			"bestFor": "Default for most work, especially all cheap/small tasks",
+			"bestFor": "Default for cheap and small non-coding tasks",
 			"price": "0.10 / 0.50",
-			"summary": "Start here for routine coding, focused subagents, tool calls, classification, extraction, summaries, and everyday writing. Escalate only when the task needs a specialist or Luna does not meet the required quality."
+			"summary": "Start here for focused subagents, tool calls, classification, extraction, summaries, and everyday writing. It is not a coding model: give coding to Claude Opus 5.5 or DeepSeek V4.1 Flash 1017."
 		},
 		{
-			"name": "DeepSeek V4.1 Flash",
+			"name": "DeepSeek V4.1 Flash 1017",
 			"provider": "novita",
-			"model": "deepseek/deepseek-v4.1-flash",
+			"model": "deepseek/deepseek-v4.1-flash-1017",
 			"bestFor": "Low-cost alternative for focused agent and coding work",
 			"price": "0.30 / 1.20",
-			"summary": "The other recommended low-cost option alongside Luna. Novita cache reads are $0.006 per million tokens; measure the full workload cost, including cache hits and output length."
+			"summary": "The other recommended low-cost option alongside Luna. Use the dated 1017 snapshot, not the undated deepseek-v4.1-flash. Measure the full workload cost, including cache hits and output length."
 		},
 		{
 			"name": "GLM 5.3",
@@ -301,17 +333,30 @@ above take precedence over these older comparison scores.
 			"name": "GPT-6 Astra",
 			"provider": "openai",
 			"model": "gpt-6-astra",
-			"bestFor": "Very expensive specialist for heavy work",
+			"bestFor": "Frontier alternative for heavy work",
 			"price": "10.00 / 50.00",
-			"summary": "Reserve for difficult reasoning, complex debugging, and heavy implementation where the extra capability justifies the cost. Most tasks should start with Luna."
+			"summary": "A frontier alternative to Claude Opus 5.5 for difficult reasoning, complex debugging, and heavy implementation. It costs more than twice as much, so choose it only where a workload measurably does better on it."
+		},
+		{
+			"name": "Claude Fable 5.2",
+			"provider": "anthropic",
+			"model": "claude-fable-5-2",
+			"bestFor": "Frontier alternative for especially difficult technical and agentic work",
+			"price": "8.00 / 40.00",
+			"modalities": {
+				"input": ["text", "image", "file"],
+				"output": ["text"]
+			},
+			"openWeights": false,
+			"summary": "Higher measured peak capability than Astra on the Artificial Analysis Intelligence Index, but max-effort runs used substantially more output tokens and took longer. Choose when difficult work warrants escalation; measure cost and latency at your chosen effort. Optional fast mode costs 16.00 / 80.00. Claude Opus 5.5 is the frontier default."
 		},
 		{
 			"name": "Claude Opus 5.5",
 			"provider": "anthropic",
 			"model": "claude-opus-5-5",
-			"bestFor": "Very expensive specialist for demanding UI work",
+			"bestFor": "Frontier default, and the specialist for demanding UI work",
 			"price": "4.00 / 20.00",
-			"summary": "Use for difficult UI implementation, design fidelity, and visual refinement. Routine UI changes still start with Luna."
+			"summary": "The default for difficult reasoning, complex debugging, heavy implementation, and demanding UI work: design fidelity and visual refinement."
 		},
 		{
 			"name": "GPT-6.1 Sol",
