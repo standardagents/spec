@@ -53,6 +53,7 @@ const PROVIDER_LABELS: Record<string, string> = {
   novita: 'Novita',
   openai: 'OpenAI',
   openrouter: 'OpenRouter',
+  typesafe: 'TypeSafe AI',
   xai: 'xAI',
 }
 
