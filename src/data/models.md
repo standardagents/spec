@@ -1,6 +1,6 @@
 # Current Models
 
-Working snapshot of practical model tradeoffs. Recommendations updated November 12, 2026.
+Working snapshot of practical model tradeoffs. Recommendations updated November 16, 2026.
 
 ## Recommended models
 
@@ -52,9 +52,15 @@ above take precedence over these older comparison scores.
 | 3 | Above average |
 | 4 | State of the art |
 
+For especially difficult technical work, Claude Fable 5.2 (`claude-fable-5-2`)
+is a frontier alternative to Astra, not the default. Its higher measured peak
+capability can justify escalation, but budget for effort-dependent token use
+and latency.
+
 ## Notes
 
 - First-party list prices are used where available.
+- Claude Fable 5.2 uses Anthropic's standard list price of 8.00 / 40.00; optional fast mode is 16.00 / 80.00. Cache and service-tier rates can differ. Artificial Analysis measured 26.54 per task and 41.6 minutes at Max, Default Fallback, versus Astra Max at 6.24 and 20.8 minutes; these are workload- and effort-specific measurements, not universal costs or latency.
 - Open-weight and aggregator-distributed models use representative public API pricing.
 - Recommended-model prices were checked on October 6, 2026: [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), [Claude Opus 5.5](https://platform.claude.com/docs/en/models/opus-5-5/overview), and [Novita pricing](https://novita.ai/pricing) for DeepSeek V4.1 Flash and GLM 5.3. Listed rates are standard input/output rates; cache, long-context, service-tier, and routing charges can differ.
 - Kimi K3 always reasons (`reasoning_effort` locked to max) and reasoning tokens bill as output tokens; cached input is 0.30.
@@ -80,7 +86,7 @@ above take precedence over these older comparison scores.
 
 ```json
 {
-	"updated": "2026-11-12",
+	"updated": "2026-11-16",
 	"categories": [
 		{
 			"id": "frontier",
@@ -152,7 +158,20 @@ above take precedence over these older comparison scores.
 			},
 			"openWeights": false,
 			"why": "Reserve for difficult reasoning, complex debugging, and heavy implementation where the extra capability justifies the cost.",
-			"alternatives": []
+			"alternatives": [
+				{
+					"name": "Claude Fable 5.2",
+					"provider": "anthropic",
+					"model": "claude-fable-5-2",
+					"price": "8.00 / 40.00",
+					"modalities": {
+						"input": ["text", "image", "file"],
+						"output": ["text"]
+					},
+					"openWeights": false,
+					"note": "Choose for especially difficult technical and agentic work when higher measured peak capability justifies effort-dependent token use and latency."
+				}
+			]
 		},
 		{
 			"category": "workhorse",
@@ -304,6 +323,19 @@ above take precedence over these older comparison scores.
 			"bestFor": "Very expensive specialist for heavy work",
 			"price": "10.00 / 50.00",
 			"summary": "Reserve for difficult reasoning, complex debugging, and heavy implementation where the extra capability justifies the cost. Most tasks should start with Luna."
+		},
+		{
+			"name": "Claude Fable 5.2",
+			"provider": "anthropic",
+			"model": "claude-fable-5-2",
+			"bestFor": "Frontier alternative for especially difficult technical and agentic work",
+			"price": "8.00 / 40.00",
+			"modalities": {
+				"input": ["text", "image", "file"],
+				"output": ["text"]
+			},
+			"openWeights": false,
+			"summary": "Higher measured peak capability than Astra on the Artificial Analysis Intelligence Index, but max-effort runs used substantially more output tokens and took longer. Choose when difficult work warrants escalation; measure cost and latency at your chosen effort. Optional fast mode costs 16.00 / 80.00. Astra remains the frontier default."
 		},
 		{
 			"name": "Claude Opus 5.5",
