@@ -365,8 +365,8 @@ interface SendMessageResponse {
 4. The runtime **MUST** store each attachment in the thread's [file system](/0.2.0/specification/threads/filesystem) and reference it from the message's `attachments` as an [`AttachmentRef`](/0.2.0/specification/threads/messages#12-attachment-references). When an attachment's `data` is not valid base64, or the attachment cannot be stored, the runtime **MUST NOT** accept the message: it returns `400` for invalid `data` and a `5xx` status for a storage failure.
 5. The runtime **MUST** accept the message durably and return `202` with a `SendMessageResponse` without waiting for the resulting execution.
 6. The runtime **MUST NOT** return `202` for a message it did not accept durably. When acceptance fails, the runtime **MUST** return a `5xx` status (§3.2), and the message **MUST NOT** be delivered.
-7. The runtime **MUST** deliver the accepted message with the semantics of [`queueMessage`](/0.2.0/specification/threads/messages#4-queueing-messages).
-8. `messageId` **MUST** be the `id` of the message record once it is persisted.
+7. The runtime **MUST** deliver the accepted message with the semantics of [`queueMessage`](/0.2.0/specification/threads/messages#4-queueing-messages), unless its delivery is cancelled under §13.
+8. `messageId` **MUST** be the `id` of the message record once it is persisted. The runtime **MUST** accept this ID for deletion under §13 while the message is pending delivery, including before conversation-history persistence.
 9. The runtime **MUST** publish the accepted message to the thread stream (§16) as a `message_data` frame carrying that `messageId`. Until the message is persisted, the frame's record has `status: 'pending'`.
 
 ## 13. Deleting a Message
@@ -376,8 +376,8 @@ DELETE {runtime_prefix}/threads/{threadId}/messages/{messageId}
 ```
 
 1. The runtime **MUST** delete the message with the semantics of [`deleteMessage`](/0.2.0/specification/threads/messages#6-deleting-messages).
-2. A successful request **MUST** return `200` with the body `{ "success": true }`.
-3. The runtime **MUST** return `404` when the thread holds no message with that id.
+2. A successful request **MUST** return `200` with the body `{ "success": true }`. This includes cancellation of a message pending delivery under [Messages §6.1](/0.2.0/specification/threads/messages#61-cancelling-a-queued-message).
+3. The runtime **MUST** return `404` when the thread holds neither a stored message nor a message pending delivery with that id. A message pending delivery counts as present for this operation regardless of its visibility through message reads (§11).
 4. This section defines no stream frame for a deletion.
 
 ## 14. Reading a File

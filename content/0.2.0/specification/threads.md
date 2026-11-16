@@ -62,7 +62,7 @@ The methods directory below is grouped by topic. Topics with their own page link
 | `injectMessage(input)` | `Promise<Message>` | Inject a new message |
 | `queueMessage(input)` | `Promise<void>` | Queue a message for delivery on next step |
 | `updateMessage(messageId, updates)` | `Promise<Message>` | Update existing message |
-| `deleteMessage(messageId)` | `Promise<boolean>` | Delete a message |
+| `deleteMessage(messageId)` | `Promise<boolean>` | Delete a stored message or cancel a message pending delivery ([Messages §6](/0.2.0/specification/threads/messages#6-deleting-messages)) |
 
 **File System** — [File System →](/0.2.0/specification/threads/filesystem)
 
@@ -635,6 +635,12 @@ interface ThreadState {
   injectMessage(input: InjectMessageInput): Promise<Message>;
   queueMessage(input: QueueMessageInput): Promise<void>;
   updateMessage(messageId: string, updates: MessageUpdates): Promise<Message>;
+  /**
+   * Delete a stored message or cancel a message pending delivery.
+   * Returns true when a message is removed or cancelled, false when absent.
+   * Cancellation prevents subsequent delivery, including after recovery.
+   * See Messages §6 for delivery races and attachment cleanup.
+   */
   deleteMessage(messageId: string): Promise<boolean>;
 
   // ─────────────────────────────────────────────────────────────────────────
