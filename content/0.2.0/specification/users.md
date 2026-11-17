@@ -4,6 +4,8 @@
 
 A **user** is a scope owned by a runtime principal. It comprises durable values, packaged HTTP endpoints, an event stream, and credential grants. Threads reference users; the surfaces in this section are addressable independently of any thread.
 
+[MCP servers](/0.2.0/specification/mcp-servers) execute requests as the authenticated user and maintain a home thread per user and server.
+
 ## 1. Identity
 
 1. A runtime MUST resolve every authenticated request to a stable user id.

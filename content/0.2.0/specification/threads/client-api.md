@@ -4,6 +4,8 @@ The **thread client API** is the set of HTTP routes and the WebSocket stream thr
 
 [Thread endpoints](/0.2.0/specification/threads/endpoints) are a separate surface: routes that a package defines beneath a thread. The in-process forms of the operations in this section are specified by [`ThreadState`](/0.2.0/specification/threads) and [`UserState`](/0.2.0/specification/users).
 
+[MCP servers](/0.2.0/specification/mcp-servers) are a separate optional surface and use MCP and OAuth error bodies.
+
 ## 1. Scope
 
 1. A runtime **SHOULD** expose the thread client API.
